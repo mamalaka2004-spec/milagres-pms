@@ -7,12 +7,12 @@ import { calculateReservationTotals } from "@/lib/validations/reservation";
 import { apiSuccess, apiError, apiServerError } from "@/lib/api/response";
 
 const bodySchema = z.object({
-  slug: z.string().min(1),
+  slug: z.string().min(1).max(120),
   check_in_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   check_out_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   num_guests: z.coerce.number().int().min(1).max(50),
   guest_full_name: z.string().min(2).max(200),
-  guest_email: z.string().email(),
+  guest_email: z.string().email().max(254),
   guest_phone: z.string().min(6).max(40),
   guest_country: z.string().max(2).optional(),
   guest_language: z.string().max(10).default("pt-BR"),
@@ -20,6 +20,9 @@ const bodySchema = z.object({
   // Anti-spam: simple honeypot
   hp: z.string().max(0).optional().or(z.literal("")),
 });
+
+const MAX_BOOKING_NIGHTS = 365;
+const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const BOOKING_PREFIX = "MIL";
 
@@ -33,6 +36,19 @@ export async function POST(request: NextRequest) {
     const data = validation.data;
     if (data.check_out_date <= data.check_in_date) {
       return apiError("Check-out must be after check-in", 400);
+    }
+    // Reject past-dated and absurdly-long bookings — common spam/fraud signals.
+    if (data.check_in_date < todayISO()) {
+      return apiError("Check-in must be today or in the future", 400);
+    }
+    {
+      const ms =
+        new Date(data.check_out_date).getTime() -
+        new Date(data.check_in_date).getTime();
+      const nights = Math.round(ms / (24 * 60 * 60 * 1000));
+      if (nights > MAX_BOOKING_NIGHTS) {
+        return apiError(`Reservation cannot exceed ${MAX_BOOKING_NIGHTS} nights`, 400);
+      }
     }
     if (data.hp && data.hp.length > 0) {
       // Honeypot tripped. Return a generic validation error indistinguishable
@@ -81,14 +97,17 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Dedup guest by email or phone
+    // Dedup guest by email (case-insensitive) or phone.
+    // Normalizing keeps `Guest@x.com` and `guest@x.com` as the same record and
+    // prevents enumeration via case variation.
+    const normalizedEmail = data.guest_email.trim().toLowerCase();
     let guestId: string | null = null;
     {
       const { data: byEmail } = await supabase
         .from("guests")
         .select("id")
         .eq("company_id", property.company_id)
-        .eq("email", data.guest_email)
+        .ilike("email", normalizedEmail)
         .limit(1)
         .maybeSingle();
       if (byEmail) {
@@ -110,7 +129,7 @@ export async function POST(request: NextRequest) {
         .insert({
           company_id: property.company_id,
           full_name: data.guest_full_name,
-          email: data.guest_email,
+          email: normalizedEmail,
           phone: data.guest_phone,
           country: data.guest_country || null,
           language: data.guest_language,

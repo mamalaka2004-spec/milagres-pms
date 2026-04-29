@@ -49,9 +49,10 @@ export async function getOrCreateConversation(opts: {
     if (row.company_id !== opts.companyId) {
       throw new Error("Conversation belongs to a different company");
     }
-    // Conversations are user-private; prevent users from appending to or reading
-    // each other's threads even within the same company.
-    if (row.user_id && row.user_id !== opts.userId) {
+    // Conversations are user-private. Reject any conversation whose user_id
+    // doesn't match the caller — including null user_id rows (orphaned/seeded),
+    // which would otherwise bypass the user-isolation check.
+    if (row.user_id !== opts.userId) {
       throw new Error("Conversation belongs to a different user");
     }
     return row;
