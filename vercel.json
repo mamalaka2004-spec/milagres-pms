@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["gru1"],
+  "functions": {
+    "src/app/api/properties/import-airbnb/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/properties/[id]/sync-calendar/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/ai/chat/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
