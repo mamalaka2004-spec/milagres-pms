@@ -4,7 +4,7 @@ Production deployment to **Vercel** + **Supabase**.
 
 ## Prerequisites
 
-- Supabase project (already provisioned: `xmmuenaaodlqubfotwzr`)
+- Supabase project (already provisioned by the team)
 - Vercel account connected to GitHub
 - Domain (optional)
 - OpenAI API key
