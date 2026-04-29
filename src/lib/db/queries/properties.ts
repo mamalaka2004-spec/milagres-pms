@@ -39,9 +39,12 @@ export async function getProperties(
   }
 
   if (filters.search) {
-    query = query.or(
-      `name.ilike.%${filters.search}%,code.ilike.%${filters.search}%,city.ilike.%${filters.search}%`
-    );
+    const term = filters.search.replace(/[%,()*_:]/g, "").slice(0, 80);
+    if (term.length > 0) {
+      query = query.or(
+        `name.ilike.%${term}%,code.ilike.%${term}%,city.ilike.%${term}%`
+      );
+    }
   }
 
   if (filters.is_featured !== undefined) {

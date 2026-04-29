@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
       return apiError("Check-out must be after check-in", 400);
     }
     if (data.hp && data.hp.length > 0) {
-      // Honeypot tripped — silently succeed without writing
-      return apiSuccess({ booking_code: "MIL-XXXX-XXXX", status: "received" });
+      // Honeypot tripped. Return a generic validation error indistinguishable
+      // from a normal failure so bots can't easily detect they hit a trap, but
+      // also don't get a fake success that they could misuse.
+      return apiError("Validation failed", 400);
     }
 
     const property = await getPropertyBySlug(data.slug);

@@ -127,19 +127,73 @@ export async function syncPropertyICal(
   return result;
 }
 
+/** Whitelist of allowed iCal hosts — defends against SSRF on user-controlled URLs. */
+const ALLOWED_ICAL_HOSTS: Record<ICalSource, RegExp[]> = {
+  airbnb: [/^([a-z0-9-]+\.)*airbnb\.(com|com\.br)$/i],
+  booking: [/^([a-z0-9-]+\.)*booking\.com$/i, /^admin\.booking\.com$/i],
+};
+
+function isAllowedICalUrl(url: string, source: ICalSource): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return false;
+    return ALLOWED_ICAL_HOSTS[source].some((re) => re.test(u.hostname));
+  } catch {
+    return false;
+  }
+}
+
 export async function syncAllForProperty(propertyId: string): Promise<SyncResult[]> {
   const supabase = createAdminClient();
   const { data: prop, error } = await supabase
     .from("properties")
-    .select("id, airbnb_ical_url, booking_ical_url")
+    .select("id, airbnb_ical_url, booking_ical_url, deleted_at")
     .eq("id", propertyId)
-    .single();
-  if (error || !prop) throw error || new Error("Property not found");
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  if (!prop) throw new Error("Property not found");
 
   const p = prop as { id: string; airbnb_ical_url: string | null; booking_ical_url: string | null };
   const tasks: Array<Promise<SyncResult>> = [];
-  if (p.airbnb_ical_url) tasks.push(syncPropertyICal(p.id, "airbnb", p.airbnb_ical_url));
-  if (p.booking_ical_url) tasks.push(syncPropertyICal(p.id, "booking", p.booking_ical_url));
+  if (p.airbnb_ical_url) {
+    if (!isAllowedICalUrl(p.airbnb_ical_url, "airbnb")) {
+      tasks.push(
+        Promise.resolve({
+          source: "airbnb" as const,
+          url: p.airbnb_ical_url,
+          fetched: 0,
+          blocking: 0,
+          inserted: 0,
+          updated: 0,
+          removed: 0,
+          synced_at: new Date().toISOString(),
+          error: "Airbnb iCal URL must point to a valid airbnb.com / airbnb.com.br host over HTTPS",
+        })
+      );
+    } else {
+      tasks.push(syncPropertyICal(p.id, "airbnb", p.airbnb_ical_url));
+    }
+  }
+  if (p.booking_ical_url) {
+    if (!isAllowedICalUrl(p.booking_ical_url, "booking")) {
+      tasks.push(
+        Promise.resolve({
+          source: "booking" as const,
+          url: p.booking_ical_url,
+          fetched: 0,
+          blocking: 0,
+          inserted: 0,
+          updated: 0,
+          removed: 0,
+          synced_at: new Date().toISOString(),
+          error: "Booking iCal URL must point to a valid booking.com host over HTTPS",
+        })
+      );
+    } else {
+      tasks.push(syncPropertyICal(p.id, "booking", p.booking_ical_url));
+    }
+  }
   if (tasks.length === 0) return [];
   return Promise.all(tasks);
 }

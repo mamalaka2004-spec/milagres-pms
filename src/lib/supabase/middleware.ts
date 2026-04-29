@@ -70,7 +70,12 @@ export async function updateSession(request: NextRequest) {
   if (isDashboardPage && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    // Only allow safe relative paths in redirectTo to avoid open-redirect attacks
+    // (e.g. /login?redirectTo=https://evil.com after login would forward there).
+    const target = request.nextUrl.pathname;
+    if (target.startsWith("/") && !target.startsWith("//") && !target.includes(":")) {
+      url.searchParams.set("redirectTo", target);
+    }
     return NextResponse.redirect(url);
   }
 

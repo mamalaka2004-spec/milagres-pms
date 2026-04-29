@@ -181,9 +181,16 @@ export function BookingWidget({
         </div>
       )}
 
-      {datesValid && nights > 0 && availability.state === "available" && basePriceCents > 0 && (
+      {datesValid && nights > 0 && availability.state === "available" && (
         <div className="space-y-1.5 mb-4 text-sm">
-          <Row label={`R$ ${(basePriceCents / 100).toFixed(0)} × ${nights} ${nights === 1 ? "noite" : "noites"}`} value={formatCurrency(baseTotal)} />
+          {basePriceCents > 0 ? (
+            <Row label={`R$ ${(basePriceCents / 100).toFixed(0)} × ${nights} ${nights === 1 ? "noite" : "noites"}`} value={formatCurrency(baseTotal)} />
+          ) : (
+            <Row
+              label={`${nights} ${nights === 1 ? "noite" : "noites"} (valor a confirmar)`}
+              value="—"
+            />
+          )}
           {cleaningFeeCents > 0 && <Row label="Taxa de limpeza" value={formatCurrency(cleaningFeeCents)} />}
           {extraGuestTotal > 0 && (
             <Row
@@ -191,10 +198,12 @@ export function BookingWidget({
               value={formatCurrency(extraGuestTotal)}
             />
           )}
-          <div className="flex justify-between pt-2 border-t border-brand-100">
-            <span className="font-semibold text-gray-900">Total</span>
-            <span className="font-bold text-gray-900">{formatCurrency(subTotal)}</span>
-          </div>
+          {basePriceCents > 0 && (
+            <div className="flex justify-between pt-2 border-t border-brand-100">
+              <span className="font-semibold text-gray-900">Total</span>
+              <span className="font-bold text-gray-900">{formatCurrency(subTotal)}</span>
+            </div>
+          )}
         </div>
       )}
 

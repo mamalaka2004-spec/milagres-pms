@@ -124,7 +124,18 @@ export async function POST(request: NextRequest) {
             companyId: user.company_id,
             mode: conversation.mode as AiMode,
           });
-          const resultStr = JSON.stringify(result);
+          // Cap tool result size — keeps token cost bounded if a tool returns
+          // an unexpectedly large payload (e.g. a wide search returning 100KB).
+          let resultStr = JSON.stringify(result);
+          const MAX_TOOL_RESULT = 12000;
+          if (resultStr.length > MAX_TOOL_RESULT) {
+            console.warn(
+              `[ai] tool ${tc.function.name} returned ${resultStr.length} bytes, truncating`
+            );
+            resultStr =
+              resultStr.slice(0, MAX_TOOL_RESULT) +
+              `…[truncated, original ${resultStr.length} bytes]`;
+          }
           await appendMessage(conversation.id, "tool", resultStr, {
             metadata: { tool_call_id: tc.id, tool_name: tc.function.name } as never,
           });

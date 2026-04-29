@@ -111,8 +111,10 @@ export async function getReservations(
   if (filters.to_date) query = query.lte("check_in_date", filters.to_date);
 
   if (filters.search) {
-    const term = filters.search.replace(/[%,]/g, "");
-    query = query.or(`booking_code.ilike.%${term}%`);
+    const term = filters.search.replace(/[%,()*_:]/g, "").slice(0, 80);
+    if (term.length > 0) {
+      query = query.ilike("booking_code", `%${term}%`);
+    }
   }
 
   const { data, error } = await query;

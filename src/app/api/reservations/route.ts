@@ -9,6 +9,7 @@ import {
   checkAvailability,
   getNextBookingSequence,
 } from "@/lib/db/queries/reservations";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth, requireRole } from "@/lib/auth";
 import {
   apiSuccess,
@@ -50,6 +51,24 @@ export async function POST(request: NextRequest) {
       return apiError("Validation failed", 400, validation.error.flatten());
     }
     const data = validation.data;
+
+    // Property must belong to the user's company AND respect its capacity
+    const supabase = createAdminClient();
+    const { data: propRow } = await supabase
+      .from("properties")
+      .select("id, company_id, max_guests, deleted_at")
+      .eq("id", data.property_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    const property = propRow as { id: string; company_id: string; max_guests: number } | null;
+    if (!property) return apiError("Property not found", 404);
+    if (property.company_id !== user.company_id) return apiForbidden();
+    if (data.num_guests > property.max_guests) {
+      return apiError(
+        `Esta propriedade aceita até ${property.max_guests} hóspedes.`,
+        400
+      );
+    }
 
     // Availability gate
     const availability = await checkAvailability({

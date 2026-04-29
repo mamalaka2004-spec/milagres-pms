@@ -41,10 +41,15 @@ export async function getGuests(companyId: string, filters: GuestFilters = {}) {
     .order("full_name");
 
   if (filters.search) {
-    const term = filters.search.replace(/[%,]/g, "");
-    query = query.or(
-      `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`
-    );
+    // Strip PostgREST .or() control characters: comma (separator), parens (groups),
+    // wildcards (%, _), and asterisk-style operators. Belt-and-suspenders against
+    // .or() filter-expression injection.
+    const term = filters.search.replace(/[%,()*_:]/g, "").slice(0, 80);
+    if (term.length > 0) {
+      query = query.or(
+        `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`
+      );
+    }
   }
 
   if (filters.is_vip !== undefined) {

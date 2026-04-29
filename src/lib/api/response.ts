@@ -24,7 +24,11 @@ export function apiNotFound(resource: string = "Resource") {
 }
 
 export function apiServerError(error: unknown) {
+  // Log the full error server-side (caught by Vercel logs / future Sentry)
   console.error("API Error:", error);
-  const message = error instanceof Error ? error.message : "Internal server error";
+  // Don't leak DB schema, stack traces, or internals to clients in production.
+  // Dev mode keeps the original message to make debugging easier.
+  const isDev = process.env.NODE_ENV === "development";
+  const message = isDev && error instanceof Error ? error.message : "Internal server error";
   return apiError(message, 500);
 }
