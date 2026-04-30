@@ -41,7 +41,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname === "/booking-success" ||
     request.nextUrl.pathname === "/faq" ||
     request.nextUrl.pathname === "/contact" ||
-    request.nextUrl.pathname.startsWith("/api/booking/");
+    request.nextUrl.pathname.startsWith("/api/booking/") ||
+    request.nextUrl.pathname.startsWith("/api/webhooks/");
 
   const isDashboardPage =
     request.nextUrl.pathname === "/dashboard" ||
@@ -50,6 +51,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/guests") ||
     request.nextUrl.pathname.startsWith("/properties") ||
     request.nextUrl.pathname.startsWith("/owners") ||
+    request.nextUrl.pathname.startsWith("/conversations") ||
     request.nextUrl.pathname === "/finance" ||
     request.nextUrl.pathname === "/operations" ||
     request.nextUrl.pathname === "/ai-assistant" ||

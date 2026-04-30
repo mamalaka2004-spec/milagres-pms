@@ -21,6 +21,17 @@ export type TaskType = "checkout_clean" | "checkin_prep" | "deep_clean" | "inspe
 export type Priority = "low" | "normal" | "high" | "urgent";
 export type AiMode = "guest" | "operations" | "management";
 export type BlockedDateReason = "owner_use" | "maintenance" | "cleaning" | "seasonal" | "other";
+export type WaLinePurpose = "booking" | "sales" | "other";
+export type WaLineProvider = "evolution" | "uazapi";
+export type WaConversationStatus = "open" | "snoozed" | "closed";
+export type WaMessageDirection = "inbound" | "outbound";
+export type WaMessageSender = "guest" | "agent" | "ai" | "system";
+export type WaMessageType = "text" | "image" | "audio" | "video" | "document" | "note" | "status";
+export type WaMessageStatus = "pending" | "sent" | "delivered" | "read" | "failed";
+export type WaBusinessHours = Record<
+  "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun",
+  { open: string; close: string } | null
+>;
 
 export interface Database {
   public: {
@@ -257,7 +268,7 @@ export interface Database {
         Row: {
           id: string;
           conversation_id: string;
-          role: "user" | "assistant" | "system";
+          role: "user" | "assistant" | "system" | "tool";
           content: string;
           metadata: Json | null;
           tokens_used: number | null;
@@ -265,6 +276,77 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["ai_messages"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["ai_messages"]["Insert"]>;
+      };
+      whatsapp_lines: {
+        Row: {
+          id: string;
+          company_id: string;
+          phone: string;
+          label: string;
+          purpose: WaLinePurpose;
+          provider: WaLineProvider;
+          provider_instance: string | null;
+          business_hours: WaBusinessHours | null;
+          ai_enabled: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_lines"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_lines"]["Insert"]>;
+      };
+      whatsapp_line_users: {
+        Row: {
+          line_id: string;
+          user_id: string;
+          can_send: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_line_users"]["Row"], "created_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_line_users"]["Insert"]>;
+      };
+      whatsapp_conversations: {
+        Row: {
+          id: string;
+          company_id: string;
+          line_id: string;
+          guest_id: string | null;
+          reservation_id: string | null;
+          contact_phone: string;
+          contact_name: string | null;
+          status: WaConversationStatus;
+          ai_active: boolean;
+          last_message_text: string | null;
+          last_message_at: string | null;
+          unread_count: number;
+          pinned: boolean;
+          metadata: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_conversations"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_conversations"]["Insert"]>;
+      };
+      whatsapp_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          direction: WaMessageDirection;
+          sender: WaMessageSender;
+          sender_user_id: string | null;
+          text: string | null;
+          message_type: WaMessageType;
+          media_url: string | null;
+          media_mime_type: string | null;
+          file_name: string | null;
+          external_id: string | null;
+          reply_to_id: string | null;
+          status: WaMessageStatus;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_messages"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_messages"]["Insert"]>;
       };
     };
   };
