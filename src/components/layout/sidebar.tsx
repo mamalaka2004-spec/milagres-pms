@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, Users, Home, DollarSign,
   ClipboardList, Sparkles, Settings, ChevronLeft, ChevronRight,
-  X, Leaf, Menu, UserCheck, MessageSquare,
+  X, Leaf, Menu, UserCheck, MessageSquare, Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -15,7 +15,8 @@ const navItems = [
   { id: "reservations", label: "Reservations", href: "/reservations", icon: CalendarDays },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: CalendarDays },
   { id: "guests", label: "Guests", href: "/guests", icon: Users },
-  { id: "conversations", label: "Conversations", href: "/conversations", icon: MessageSquare },
+  { id: "conversations", label: "Reservas Chat", href: "/conversations", icon: MessageSquare },
+  { id: "vendas", label: "Vendas Chat", href: "/vendas", icon: Target },
   { id: "properties", label: "Properties", href: "/properties", icon: Home },
   { id: "owners", label: "Owners", href: "/owners", icon: UserCheck },
   { id: "finance", label: "Finance", href: "/finance", icon: DollarSign },

@@ -32,6 +32,32 @@ export type WaBusinessHours = Record<
   "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun",
   { open: string; close: string } | null
 >;
+export type LeadStage =
+  | "apresentacao"
+  | "qualificacao_objetivo"
+  | "qualificacao_orcamento"
+  | "apresentacao_imoveis"
+  | "handoff"
+  | "encerramento";
+export type LeadOrigem = "inbound" | "prospeccao_fria";
+
+export const LEAD_STAGE_ORDER: LeadStage[] = [
+  "apresentacao",
+  "qualificacao_objetivo",
+  "qualificacao_orcamento",
+  "apresentacao_imoveis",
+  "handoff",
+  "encerramento",
+];
+
+export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
+  apresentacao: "Apresentação",
+  qualificacao_objetivo: "Qualificação · Objetivo",
+  qualificacao_orcamento: "Qualificação · Orçamento",
+  apresentacao_imoveis: "Apresentação de Imóveis",
+  handoff: "Handoff",
+  encerramento: "Encerramento",
+};
 
 export interface Database {
   public: {
@@ -347,6 +373,24 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["whatsapp_messages"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["whatsapp_messages"]["Insert"]>;
+      };
+      whatsapp_lead_data: {
+        Row: {
+          conversation_id: string;
+          origem: LeadOrigem | null;
+          lead_stage: LeadStage | null;
+          objetivo: string | null;
+          orcamento: string | null;
+          confidence_score: number | null;
+          reasoning: string | null;
+          property_of_interest: string | null;
+          marcelo_handoff_at: string | null;
+          closed_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_lead_data"]["Row"], "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_lead_data"]["Insert"]>;
       };
     };
   };
