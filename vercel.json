@@ -11,6 +11,9 @@
     },
     "src/app/api/ai/chat/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/whatsapp/lines/[id]/backfill/route.ts": {
+      "maxDuration": 60
     }
   }
 }

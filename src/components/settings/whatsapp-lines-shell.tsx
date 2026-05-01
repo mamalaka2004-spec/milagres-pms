@@ -14,6 +14,7 @@ import {
   BotOff,
   Phone,
   Clock,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import type { Database, WaLinePurpose, WaBusinessHours } from "@/types/database";
@@ -40,6 +41,7 @@ export function WhatsappLinesShell() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [grantsFor, setGrantsFor] = useState<LineRow | null>(null);
+  const [backfillFor, setBackfillFor] = useState<LineRow | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -150,6 +152,13 @@ export function WhatsappLinesShell() {
                   </td>
                   <td className="px-3 py-3 text-right space-x-1">
                     <button
+                      onClick={() => setBackfillFor(l)}
+                      title="Importar histórico do Evolution"
+                      className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
                       onClick={() => setGrantsFor(l)}
                       title="Gerenciar usuários"
                       className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100"
@@ -177,7 +186,140 @@ export function WhatsappLinesShell() {
       {grantsFor && (
         <GrantsModal line={grantsFor} onClose={() => setGrantsFor(null)} />
       )}
+      {backfillFor && (
+        <BackfillModal line={backfillFor} onClose={() => setBackfillFor(null)} />
+      )}
     </div>
+  );
+}
+
+interface BackfillResult {
+  chats_found: number;
+  chats_processed: number;
+  messages_imported: number;
+  messages_skipped_or_dup: number;
+  chat_errors: Array<{ jid: string; error: string }>;
+}
+
+function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }) {
+  const [limitPerChat, setLimitPerChat] = useState(200);
+  const [maxChats, setMaxChats] = useState(100);
+  const [sinceDays, setSinceDays] = useState<number | "">("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<BackfillResult | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const run = async () => {
+    if (!confirm(`Vou puxar o histórico do Evolution para a linha "${line.label}". Pode demorar até 60s. Continuar?`)) return;
+    setBusy(true);
+    setErr(null);
+    setResult(null);
+    try {
+      const data = await api<BackfillResult>(`/api/whatsapp/lines/${line.id}/backfill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          limit_per_chat: limitPerChat,
+          max_chats: maxChats,
+          since_days: typeof sinceDays === "number" ? sinceDays : undefined,
+        }),
+      });
+      setResult(data);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Falha");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose} title={`Importar histórico · ${line.label}`}>
+      <div className="space-y-4">
+        <div className="text-xs text-gray-500 bg-amber-50 border border-amber-100 rounded p-2 flex items-start gap-2">
+          <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+          <span>
+            Puxa as últimas conversas do Evolution para o PMS. Idempotente — mensagens
+            já importadas (mesmo <code>key.id</code>) são ignoradas. Requer
+            <code className="bg-white px-1 rounded mx-1">EVOLUTION_API_URL</code> +
+            <code className="bg-white px-1 rounded">EVOLUTION_API_KEY</code> nas envs do servidor
+            e <code className="bg-white px-1 rounded">provider_instance</code> setado nesta linha
+            (atual: <strong>{line.provider_instance || "—"}</strong>).
+          </span>
+        </div>
+
+        <Field label="Mensagens por chat (1-500)">
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={limitPerChat}
+            onChange={(e) => setLimitPerChat(parseInt(e.target.value || "200", 10))}
+            className="input"
+          />
+        </Field>
+        <Field label="Máximo de chats (1-500)">
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={maxChats}
+            onChange={(e) => setMaxChats(parseInt(e.target.value || "100", 10))}
+            className="input"
+          />
+        </Field>
+        <Field label="Dias atrás (opcional)" hint="Vazio = sem limite de data">
+          <input
+            type="number"
+            min={1}
+            max={365}
+            value={sinceDays}
+            onChange={(e) => setSinceDays(e.target.value ? parseInt(e.target.value, 10) : "")}
+            className="input"
+            placeholder="ex: 90"
+          />
+        </Field>
+
+        {err && <div className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
+
+        {result && (
+          <div className="bg-emerald-50 border border-emerald-100 rounded p-3 text-xs space-y-1">
+            <div className="font-semibold text-emerald-700 flex items-center gap-1"><Check size={12} /> Concluído</div>
+            <div className="text-gray-700 grid grid-cols-2 gap-1">
+              <div>Chats encontrados</div><div className="font-mono text-right">{result.chats_found}</div>
+              <div>Chats processados</div><div className="font-mono text-right">{result.chats_processed}</div>
+              <div>Mensagens importadas</div><div className="font-mono text-right">{result.messages_imported}</div>
+              <div>Duplicadas / puladas</div><div className="font-mono text-right">{result.messages_skipped_or_dup}</div>
+            </div>
+            {result.chat_errors.length > 0 && (
+              <details className="text-amber-700 mt-2">
+                <summary className="cursor-pointer">{result.chat_errors.length} erro(s) por chat</summary>
+                <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                  {result.chat_errors.map((e, i) => (
+                    <li key={i} className="font-mono text-[10px]">{e.jid}: {e.error}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50">
+            {result ? "Fechar" : "Cancelar"}
+          </button>
+          <button
+            onClick={run}
+            disabled={busy}
+            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5"
+          >
+            {busy && <Loader2 className="animate-spin" size={14} />}
+            {result ? "Rodar de novo" : "Importar"}
+          </button>
+        </div>
+      </div>
+      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); }
+       .input:focus { outline: none; border-color: rgb(107,127,94); }`}</style>
+    </Modal>
   );
 }
 
