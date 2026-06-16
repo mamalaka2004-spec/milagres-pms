@@ -6,16 +6,30 @@ type User = Database["public"]["Tables"]["users"]["Row"];
 export async function getAuthUser(): Promise<User | null> {
   const supabase = await createServerClient();
 
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT signature locally (no network round-trip) when the
+  // project uses asymmetric signing keys, cutting ~1 latency hop per page navigation.
+  // The middleware already does the authoritative getUser() refresh on each request.
+  let userId: string | undefined;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    userId = data?.claims?.sub as string | undefined;
+  } catch {
+    userId = undefined;
+  }
 
-  if (!authUser) return null;
+  // Fallback: full network validation if claims are unavailable.
+  if (!userId) {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (!authUser) return null;
+    userId = authUser.id;
+  }
 
   const { data: user, error } = await supabase
     .from("users")
     .select("*")
-    .eq("id", authUser.id)
+    .eq("id", userId)
     .single();
 
   if (error || !user) return null;

@@ -2,6 +2,24 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  const isPublicPage =
+    pathname === "/" ||
+    pathname.startsWith("/p/") ||
+    pathname.startsWith("/book/") ||
+    pathname === "/booking-success" ||
+    pathname === "/faq" ||
+    pathname === "/contact" ||
+    pathname.startsWith("/api/booking/") ||
+    pathname.startsWith("/api/webhooks/");
+
+  // Fast path: public pages need no auth — skip the Supabase client and the
+  // getUser() network round-trip entirely so they render with zero auth latency.
+  if (isPublicPage) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -34,16 +52,6 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname === "/login" ||
     request.nextUrl.pathname === "/forgot-password";
 
-  const isPublicPage =
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname.startsWith("/p/") ||
-    request.nextUrl.pathname.startsWith("/book/") ||
-    request.nextUrl.pathname === "/booking-success" ||
-    request.nextUrl.pathname === "/faq" ||
-    request.nextUrl.pathname === "/contact" ||
-    request.nextUrl.pathname.startsWith("/api/booking/") ||
-    request.nextUrl.pathname.startsWith("/api/webhooks/");
-
   const isDashboardPage =
     request.nextUrl.pathname === "/dashboard" ||
     request.nextUrl.pathname.startsWith("/reservations") ||
@@ -57,11 +65,6 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname === "/operations" ||
     request.nextUrl.pathname === "/ai-assistant" ||
     request.nextUrl.pathname === "/settings";
-
-  // Public pages: no auth needed
-  if (isPublicPage) {
-    return supabaseResponse;
-  }
 
   // Auth pages: redirect to dashboard if already logged in
   if (isAuthPage && user) {

@@ -55,11 +55,21 @@ const config: Config = {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "progress-indeterminate": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.5s ease-out",
         "slide-in-right": "slide-in-right 0.25s ease-out",
         "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
+        "fade-in": "fade-in 0.2s ease-out",
+        "progress-indeterminate": "progress-indeterminate 0.9s ease-in-out infinite",
       },
     },
   },
