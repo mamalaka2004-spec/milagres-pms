@@ -90,12 +90,12 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
                 }
               }}
               disabled={pending !== null}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 ${TONE_CLASS[cfg.tone]}`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50 ${TONE_CLASS[cfg.tone]}`}
             >
               {pending === s ? (
-                <Loader2 size={14} className="animate-spin" />
+                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
               ) : (
-                <Icon size={14} />
+                <Icon size={14} aria-hidden="true" />
               )}
               {cfg.label}
             </button>
@@ -112,14 +112,15 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Reason (optional)"
-            className="w-full px-3 py-2 rounded border border-red-200 text-sm bg-white"
+            aria-label="Cancellation reason"
+            className="w-full px-3 py-2 rounded border border-red-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => transition("canceled", reason || undefined)}
               disabled={pending !== null}
-              className="px-4 py-1.5 rounded bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+              className="px-4 py-1.5 rounded bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
             >
               {pending === "canceled" ? "Cancelling..." : "Yes, cancel"}
             </button>
@@ -129,7 +130,7 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
                 setConfirmCancel(false);
                 setReason("");
               }}
-              className="px-4 py-1.5 rounded border border-gray-200 text-sm font-semibold hover:bg-gray-50"
+              className="px-4 py-1.5 rounded border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
               Keep reservation
             </button>

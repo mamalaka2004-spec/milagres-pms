@@ -36,9 +36,10 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/properties"
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
+            aria-label="Back to properties"
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} aria-hidden="true" />
           </Link>
           <div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{property.name}</h1>
@@ -47,9 +48,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         </div>
         <Link
           href={`/properties/${id}/edit`}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Edit size={15} /> Edit
+          <Edit size={15} aria-hidden="true" /> Edit
         </Link>
       </div>
 
@@ -71,9 +72,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           { icon: BedDouble, label: "Beds", value: property.beds },
           { icon: Bath, label: "Bathrooms", value: property.bathrooms },
         ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4">
+          <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <stat.icon size={14} />
+              <stat.icon size={14} aria-hidden="true" />
               <span className="text-xs font-medium uppercase tracking-wider">{stat.label}</span>
             </div>
             <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
@@ -82,7 +83,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       </div>
 
       {/* Pricing */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -109,10 +110,10 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Location */}
       {(property.address || property.neighborhood || property.city) && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
           <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Location</h2>
           <div className="flex items-start gap-3 text-sm text-gray-600">
-            <MapPin size={16} className="text-brand-500 mt-0.5 shrink-0" />
+            <MapPin size={16} aria-hidden="true" className="text-brand-500 mt-0.5 shrink-0" />
             <div>
               {property.address && <div>{property.address}</div>}
               <div>
@@ -125,7 +126,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Description */}
       {property.description && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
           <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">About</h2>
           <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
             {property.description}
@@ -135,22 +136,22 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* House Rules */}
       {property.house_rules && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
           <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">House Rules</h2>
           <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{property.house_rules}</p>
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <Clock size={12} /> Check-in: {property.check_in_time}
+              <Clock size={12} aria-hidden="true" /> Check-in: {property.check_in_time}
             </span>
             <span className="flex items-center gap-1">
-              <Clock size={12} /> Check-out: {property.check_out_time}
+              <Clock size={12} aria-hidden="true" /> Check-out: {property.check_out_time}
             </span>
           </div>
         </div>
       )}
 
       {/* Photos */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Photos</h2>
         <PhotoGallery
           propertyId={property.id}
@@ -164,7 +165,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       </div>
 
       {/* Amenities */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Amenities</h2>
         <AmenitySelector
           propertyId={property.id}
@@ -173,7 +174,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       </div>
 
       {/* Channel Sync */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Channel Sync</h2>
         <ChannelSyncPanel
           propertyId={property.id}
@@ -187,7 +188,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       </div>
 
       {/* Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Settings</h2>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">

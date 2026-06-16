@@ -21,7 +21,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-brand-800/50 via-brand-700/30 to-brand-800/70" />
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
           <div className="w-12 h-12 rounded-full bg-brand-100/15 border border-brand-100/20 flex items-center justify-center mb-7 backdrop-blur-sm">
-            <Leaf size={22} className="text-brand-100" strokeWidth={1.5} />
+            <Leaf size={22} className="text-brand-100" strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-normal leading-[1.05] text-brand-100 max-w-3xl mb-4 tracking-tight">
             Sua estadia perfeita em{" "}
@@ -33,7 +33,7 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
             <a
               href="#properties"
-              className="px-8 py-4 sm:py-3.5 rounded-full bg-brand-100 text-brand-700 font-semibold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+              className="px-8 py-4 sm:py-3.5 rounded-full bg-brand-100 text-brand-700 font-semibold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
               Explorar Propriedades
             </a>
@@ -41,9 +41,9 @@ export default async function HomePage() {
               href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 sm:py-3.5 rounded-full bg-brand-100/10 hover:bg-brand-100/20 border border-brand-100/30 text-brand-100 font-medium text-sm inline-flex items-center justify-center gap-2 backdrop-blur-sm transition"
+              className="px-8 py-4 sm:py-3.5 rounded-full bg-brand-100/10 hover:bg-brand-100/20 border border-brand-100/30 text-brand-100 font-medium text-sm inline-flex items-center justify-center gap-2 backdrop-blur-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <MessageCircle size={16} /> Falar Conosco
+              <MessageCircle size={16} aria-hidden="true" /> Falar Conosco
             </a>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default async function HomePage() {
                   <Link
                     key={p.id}
                     href={`/p/${p.slug}`}
-                    className="group bg-white rounded-2xl overflow-hidden border border-brand-200/40 hover:shadow-[0_16px_40px_rgba(74,90,64,0.1)] hover:-translate-y-1 transition-all"
+                    className="group bg-white rounded-2xl overflow-hidden border border-brand-200/40 shadow-sm hover:shadow-[0_16px_40px_rgba(74,90,64,0.1)] hover:-translate-y-1 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                   >
                     <div className="relative h-44 md:h-56 bg-gradient-to-br from-brand-300 to-brand-600 overflow-hidden">
                       {coverUrl ? (
@@ -108,13 +108,13 @@ export default async function HomePage() {
                       )}
                       <div className="flex gap-4 mb-5 text-xs text-gray-500">
                         <span className="inline-flex items-center gap-1">
-                          <Users size={13} className="text-brand-400" /> {p.max_guests}
+                          <Users size={13} className="text-brand-400" aria-hidden="true" /> {p.max_guests}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <BedDouble size={13} className="text-brand-400" /> {p.bedrooms}
+                          <BedDouble size={13} className="text-brand-400" aria-hidden="true" /> {p.bedrooms}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Bath size={13} className="text-brand-400" /> {p.bathrooms}
+                          <Bath size={13} className="text-brand-400" aria-hidden="true" /> {p.bathrooms}
                         </span>
                       </div>
                       <div className="flex justify-between items-baseline pt-4 border-t border-brand-100">
@@ -133,7 +133,7 @@ export default async function HomePage() {
                           )}
                         </div>
                         <span className="inline-flex items-center gap-1 text-brand-500 text-sm font-medium">
-                          Ver <ArrowRight size={14} />
+                          Ver <ArrowRight size={14} aria-hidden="true" />
                         </span>
                       </div>
                     </div>
@@ -174,7 +174,7 @@ export default async function HomePage() {
             ].map((v) => (
               <div key={v.t}>
                 <div className="w-14 h-14 rounded-xl bg-brand-50 flex items-center justify-center mx-auto mb-4">
-                  <v.icon size={26} className="text-brand-500" strokeWidth={1.5} />
+                  <v.icon size={26} className="text-brand-500" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <h3 className="font-heading text-xl font-medium text-gray-900 mb-2">{v.t}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{v.d}</p>
@@ -187,7 +187,7 @@ export default async function HomePage() {
       {/* CTA */}
       <section className="py-16 md:py-24 px-4 md:px-8 bg-brand-50/40">
         <div className="max-w-3xl mx-auto text-center">
-          <Star size={20} className="mx-auto text-brand-500 fill-brand-500 mb-4" />
+          <Star size={20} className="mx-auto text-brand-500 fill-brand-500 mb-4" aria-hidden="true" />
           <h2 className="font-heading text-3xl md:text-4xl font-normal text-gray-900 mb-3">
             Pronto para uma estadia inesquecível?
           </h2>
@@ -198,9 +198,9 @@ export default async function HomePage() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-brand-500 hover:bg-brand-600 text-brand-100 font-semibold text-sm shadow-lg transition"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-brand-500 hover:bg-brand-600 text-brand-100 font-semibold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <MessageCircle size={16} /> Conversar pelo WhatsApp
+            <MessageCircle size={16} aria-hidden="true" /> Conversar pelo WhatsApp
           </a>
         </div>
       </section>

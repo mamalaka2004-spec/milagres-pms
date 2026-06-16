@@ -100,7 +100,7 @@ export function SalesShell() {
   if (error) {
     return (
       <div className="h-[calc(100vh-180px)] flex items-center justify-center text-red-500 gap-2 text-sm">
-        <AlertCircle size={16} /> {error}
+        <AlertCircle size={16} aria-hidden="true" /> {error}
       </div>
     );
   }
@@ -109,7 +109,7 @@ export function SalesShell() {
       <div className="h-[calc(100vh-180px)] flex items-center justify-center">
         <div className="text-center max-w-sm">
           <div className="w-12 h-12 rounded-full bg-amber-50 mx-auto flex items-center justify-center mb-3">
-            <Target className="text-amber-600" size={20} />
+            <Target className="text-amber-600" size={20} aria-hidden="true" />
           </div>
           <h3 className="font-semibold text-gray-900 mb-1">Nenhuma linha de Vendas conectada</h3>
           <p className="text-sm text-gray-500">
@@ -136,13 +136,13 @@ export function SalesShell() {
               key={l.id}
               onClick={() => setActiveLineId(l.id)}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5",
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
                 activeLine.id === l.id
                   ? "bg-white shadow-sm text-amber-700"
                   : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Phone size={11} />
+              <Phone size={11} aria-hidden="true" />
               {l.label}
               <span className="text-[10px] text-gray-400 font-normal">{l.phone}</span>
             </button>
@@ -231,15 +231,16 @@ function SalesPipeline({ lineId }: { lineId: string }) {
   return (
     <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-3 overflow-hidden">
       {/* LEFT — Pipeline list grouped by stage */}
-      <aside className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden min-h-0">
+      <aside className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         <div className="p-3 border-b border-gray-100">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar lead, telefone, objetivo"
               placeholder="Buscar lead, telefone, objetivo"
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500"
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             />
           </div>
         </div>
@@ -290,7 +291,7 @@ function SalesPipeline({ lineId }: { lineId: string }) {
       </aside>
 
       {/* CENTER — Chat thread */}
-      <section className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden min-h-0">
+      <section className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         {selected ? (
           <SalesThread conversation={selected} onChange={loadConversations} />
         ) : (
@@ -301,7 +302,7 @@ function SalesPipeline({ lineId }: { lineId: string }) {
       </section>
 
       {/* RIGHT — Lead data panel */}
-      <aside className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden min-h-0">
+      <aside className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         {selected ? <LeadPanel conversation={selected} onChange={loadConversations} /> : null}
       </aside>
     </div>
@@ -315,7 +316,7 @@ function LeadCard({ conv, active, onSelect }: { conv: SalesConvRow; active: bool
       <button
         onClick={onSelect}
         className={cn(
-          "w-full text-left p-2 rounded-lg flex flex-col gap-0.5 transition",
+          "w-full text-left p-2 rounded-lg flex flex-col gap-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
           active ? "bg-amber-500/10 border border-amber-200" : "hover:bg-gray-50 border border-transparent"
         )}
       >
@@ -457,10 +458,10 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
       </div>
 
       <div className="p-3 border-t border-gray-100 bg-white">
-        {err && <div className="text-xs text-red-500 mb-2 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
+        {err && <div className="text-xs text-red-500 mb-2 flex items-center gap-1"><AlertCircle size={12} aria-hidden="true" /> {err}</div>}
         {conversation.ai_active && (
           <div className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1.5 mb-2 flex items-center gap-2">
-            <Sparkles size={12} /> IA da Sarah está ativa. Pause antes de enviar uma resposta manual pra evitar duas respostas.
+            <Sparkles size={12} aria-hidden="true" /> IA da Sarah está ativa. Pause antes de enviar uma resposta manual pra evitar duas respostas.
           </div>
         )}
         <div className="flex gap-2 items-end">
@@ -468,16 +469,18 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            aria-label="Resposta manual"
             placeholder="Resposta manual (Enter envia)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-500 max-h-32"
+            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32"
           />
           <button
             onClick={send}
+            aria-label="Enviar resposta"
             disabled={!text.trim() || sending}
-            className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 text-white p-2.5 rounded-lg transition"
+            className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 text-white p-2.5 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {sending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+            {sending ? <Loader2 className="animate-spin" size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -557,13 +560,13 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
           onClick={toggleAi}
           disabled={busyAi}
           className={cn(
-            "w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2 border",
+            "w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center justify-center gap-2 border",
             conversation.ai_active
               ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
               : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
           )}
         >
-          {busyAi ? <Loader2 className="animate-spin" size={14} /> : conversation.ai_active ? <BotOff size={14} /> : <Bot size={14} />}
+          {busyAi ? <Loader2 className="animate-spin" size={14} aria-hidden="true" /> : conversation.ai_active ? <BotOff size={14} aria-hidden="true" /> : <Bot size={14} aria-hidden="true" />}
           {conversation.ai_active ? "Pausar IA da Sarah" : "Reativar IA da Sarah"}
         </button>
 
@@ -595,7 +598,7 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
           <select
             value={stage}
             onChange={(e) => setStage(e.target.value as LeadStage | "")}
-            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500 bg-white"
+            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 bg-white"
           >
             <option value="">— sem stage —</option>
             {LEAD_STAGE_ORDER.map((s) => (
@@ -610,7 +613,7 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
             value={objetivo}
             onChange={(e) => setObjetivo(e.target.value)}
             rows={2}
-            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500"
+            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             placeholder="Ex: Investimento em imóvel litorâneo"
           />
         </div>
@@ -620,7 +623,7 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
           <input
             value={orcamento}
             onChange={(e) => setOrcamento(e.target.value)}
-            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500"
+            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             placeholder="Ex: R$ 800k a 1M"
           />
         </div>
@@ -630,7 +633,7 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
           <input
             value={propertyOfInterest}
             onChange={(e) => setPropertyOfInterest(e.target.value)}
-            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500"
+            className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             placeholder="Ex: Casa Coral"
           />
         </div>
@@ -642,7 +645,7 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
               value={closedReason}
               onChange={(e) => setClosedReason(e.target.value)}
               rows={2}
-              className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-amber-500"
+              className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             />
           </div>
         )}
@@ -656,14 +659,14 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
       </div>
 
       <div className="p-3 border-t border-gray-100 bg-white">
-        {err && <div className="text-xs text-red-500 mb-1.5 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
+        {err && <div className="text-xs text-red-500 mb-1.5 flex items-center gap-1"><AlertCircle size={12} aria-hidden="true" /> {err}</div>}
         {hint && <div className="text-xs text-emerald-600 mb-1.5">{hint}</div>}
         <button
           onClick={save}
           disabled={busy}
-          className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2"
+          className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center justify-center gap-2"
         >
-          {busy ? <Loader2 className="animate-spin" size={14} /> : null}
+          {busy ? <Loader2 className="animate-spin" size={14} aria-hidden="true" /> : null}
           Salvar dados do lead
         </button>
       </div>

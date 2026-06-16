@@ -35,7 +35,7 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
       <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 md:h-[72px] flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 md:gap-3">
           <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
-            <Leaf size={16} className="text-brand-100" strokeWidth={2.5} />
+            <Leaf size={16} className="text-brand-100" strokeWidth={2.5} aria-hidden="true" />
           </div>
           <div className="hidden md:block">
             <div
@@ -61,7 +61,7 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
           <Link
             href="/"
             className={cn(
-              "text-sm font-light tracking-wide transition",
+              "text-sm font-light tracking-wide transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               overlay ? "text-brand-100/90 hover:text-brand-100" : "text-gray-600 hover:text-gray-900"
             )}
           >
@@ -70,7 +70,7 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
           <a
             href="/#properties"
             className={cn(
-              "text-sm font-light tracking-wide transition",
+              "text-sm font-light tracking-wide transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               overlay ? "text-brand-100/90 hover:text-brand-100" : "text-gray-600 hover:text-gray-900"
             )}
           >
@@ -79,7 +79,7 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
           <Link
             href="/contact"
             className={cn(
-              "text-sm font-light tracking-wide transition",
+              "text-sm font-light tracking-wide transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               overlay ? "text-brand-100/90 hover:text-brand-100" : "text-gray-600 hover:text-gray-900"
             )}
           >
@@ -90,13 +90,13 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition",
+              "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               overlay
                 ? "bg-white/15 hover:bg-white/25 text-brand-100 border border-white/20 backdrop-blur-sm"
                 : "bg-brand-500 hover:bg-brand-600 text-brand-100"
             )}
           >
-            <MessageCircle size={14} /> WhatsApp
+            <MessageCircle size={14} aria-hidden="true" /> WhatsApp
           </a>
         </nav>
 
@@ -105,19 +105,25 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Falar pelo WhatsApp"
             className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center transition",
+              "w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               overlay ? "bg-white/15 text-brand-100 border border-white/20" : "bg-brand-500 text-brand-100"
             )}
           >
-            <MessageCircle size={16} />
+            <MessageCircle size={16} aria-hidden="true" />
           </a>
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className={cn("p-2", overlay ? "text-brand-100" : "text-gray-700")}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            className={cn(
+              "p-2 rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
+              overlay ? "text-brand-100" : "text-gray-700"
+            )}
           >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -125,17 +131,17 @@ export function SiteHeader({ transparent = false, whatsappUrl = "https://wa.me/5
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white shadow-lg">
           <div className="flex flex-col px-6 py-4 gap-3">
-            <Link href="/" onClick={() => setMenuOpen(false)} className="py-2 text-gray-700">
+            <Link href="/" onClick={() => setMenuOpen(false)} className="py-2 text-gray-700 hover:text-gray-900 transition-colors duration-200">
               Início
             </Link>
             <a
               href="/#properties"
               onClick={() => setMenuOpen(false)}
-              className="py-2 text-gray-700"
+              className="py-2 text-gray-700 hover:text-gray-900 transition-colors duration-200"
             >
               Propriedades
             </a>
-            <Link href="/contact" onClick={() => setMenuOpen(false)} className="py-2 text-gray-700">
+            <Link href="/contact" onClick={() => setMenuOpen(false)} className="py-2 text-gray-700 hover:text-gray-900 transition-colors duration-200">
               Contato
             </Link>
           </div>
@@ -152,7 +158,7 @@ export function SiteFooter({ whatsappUrl = "https://wa.me/5582999999999" }: { wh
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center">
-              <Leaf size={14} className="text-brand-100" />
+              <Leaf size={14} className="text-brand-100" aria-hidden="true" />
             </div>
             <span className="font-heading text-base tracking-[0.15em]">MILAGRES</span>
           </div>
@@ -165,10 +171,10 @@ export function SiteFooter({ whatsappUrl = "https://wa.me/5582999999999" }: { wh
             Contato
           </div>
           <div className="space-y-2 text-sm text-brand-100/85">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-brand-100">
-              <MessageCircle size={13} className="text-brand-400" /> WhatsApp
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-brand-100 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+              <MessageCircle size={13} className="text-brand-400" aria-hidden="true" /> WhatsApp
             </a>
-            <a href="mailto:contato@milagreshospedagens.com" className="block hover:text-brand-100">
+            <a href="mailto:contato@milagreshospedagens.com" className="block hover:text-brand-100 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
               contato@milagreshospedagens.com
             </a>
             <span className="block text-brand-100/60">São Miguel dos Milagres, AL</span>
@@ -179,9 +185,9 @@ export function SiteFooter({ whatsappUrl = "https://wa.me/5582999999999" }: { wh
             Links
           </div>
           <div className="space-y-2 text-sm text-brand-100/85">
-            <Link href="/" className="block hover:text-brand-100">Início</Link>
-            <Link href="/#properties" className="block hover:text-brand-100">Propriedades</Link>
-            <Link href="/contact" className="block hover:text-brand-100">Contato</Link>
+            <Link href="/" className="block hover:text-brand-100 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">Início</Link>
+            <Link href="/#properties" className="block hover:text-brand-100 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">Propriedades</Link>
+            <Link href="/contact" className="block hover:text-brand-100 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">Contato</Link>
           </div>
         </div>
       </div>

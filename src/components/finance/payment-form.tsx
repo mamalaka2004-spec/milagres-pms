@@ -80,9 +80,9 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={14} /> Record payment
+        <Plus size={14} aria-hidden="true" /> Record payment
       </button>
     );
   }
@@ -96,13 +96,14 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
         <h3 className="font-semibold text-sm text-gray-900">New payment</h3>
         <button
           type="button"
+          aria-label="Close payment form"
           onClick={() => {
             setOpen(false);
             reset();
           }}
-          className="p-1 hover:bg-gray-100 rounded text-gray-400"
+          className="p-1 hover:bg-gray-100 rounded text-gray-400 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <X size={14} />
+          <X size={14} aria-hidden="true" />
         </button>
       </div>
 
@@ -167,18 +168,18 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
             setOpen(false);
             reset();
           }}
-          className="px-3 py-1.5 rounded border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-100"
+          className="px-3 py-1.5 rounded border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting || !amount}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           {submitting ? (
             <>
-              <Loader2 size={12} className="animate-spin" /> Saving...
+              <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Saving...
             </>
           ) : (
             "Record"

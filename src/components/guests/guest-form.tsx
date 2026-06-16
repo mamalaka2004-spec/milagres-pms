@@ -14,7 +14,7 @@ interface GuestFormProps {
 }
 
 const inputClass =
-  "w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15";
+  "w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15";
 const labelClass =
   "block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5";
 
@@ -71,8 +71,8 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={redirectAfter} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-          <ArrowLeft size={18} />
+        <Link href={redirectAfter} aria-label="Go back" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+          <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           {isEditing ? "Edit Guest" : "New Guest"}
@@ -81,7 +81,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white rounded-xl border border-gray-200 p-6 space-y-4"
+        className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4"
       >
         <div>
           <label className={labelClass}>Full Name *</label>
@@ -109,7 +109,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
           </div>
           <div>
             <label className={labelClass}>Document Type</label>
-            <select {...register("document_type")} className={`${inputClass} bg-white`}>
+            <select {...register("document_type")} className={`${inputClass} bg-white cursor-pointer`}>
               <option value="">Select</option>
               <option value="cpf">CPF</option>
               <option value="rg">RG</option>
@@ -153,7 +153,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
           </div>
           <div>
             <label className={labelClass}>Language</label>
-            <select {...register("language")} className={`${inputClass} bg-white`}>
+            <select {...register("language")} className={`${inputClass} bg-white cursor-pointer`}>
               <option value="pt-BR">Português</option>
               <option value="en">English</option>
               <option value="es">Español</option>
@@ -189,16 +189,16 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
         <div className="flex justify-end gap-3 pt-2">
           <Link
             href={redirectAfter}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50"
+            className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
-            <Save size={16} /> {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Guest"}
+            <Save size={16} aria-hidden="true" /> {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Guest"}
           </button>
         </div>
       </form>

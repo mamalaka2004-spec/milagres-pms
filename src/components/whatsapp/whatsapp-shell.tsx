@@ -97,7 +97,7 @@ export function WhatsappShell() {
   if (error) {
     return (
       <div className="h-[calc(100vh-180px)] flex items-center justify-center text-red-500 gap-2 text-sm">
-        <AlertCircle size={16} /> {error}
+        <AlertCircle size={16} aria-hidden="true" /> {error}
       </div>
     );
   }
@@ -128,7 +128,7 @@ function EmptyLines() {
   return (
     <div className="text-center max-w-sm">
       <div className="w-12 h-12 rounded-full bg-brand-500/10 mx-auto flex items-center justify-center mb-3">
-        <MessageSquare className="text-brand-600" size={20} />
+        <MessageSquare className="text-brand-600" size={20} aria-hidden="true" />
       </div>
       <h3 className="font-semibold text-gray-900 mb-1">Nenhuma linha conectada</h3>
       <p className="text-sm text-gray-500">
@@ -155,13 +155,13 @@ function LinePicker({
           key={l.id}
           onClick={() => onSelect(l.id)}
           className={cn(
-            "px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5",
+            "px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
             activeId === l.id
               ? "bg-white shadow-sm text-brand-600"
               : "text-gray-500 hover:text-gray-700"
           )}
         >
-          <Phone size={11} />
+          <Phone size={11} aria-hidden="true" />
           {l.label}
           <span className="text-[10px] text-gray-400 font-normal">{l.phone}</span>
         </button>
@@ -227,15 +227,16 @@ function ConversationListPane({ lineId }: { lineId: string }) {
 
   return (
     <>
-      <aside className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden min-h-0">
+      <aside className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         <div className="p-3 border-b border-gray-100 space-y-2">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar por nome ou número"
               placeholder="Buscar por nome ou número"
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:border-brand-500"
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 transition-colors duration-200 focus:outline-none focus:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-400/40"
             />
           </div>
           <div className="flex gap-1">
@@ -251,7 +252,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
                 key={id}
                 onClick={() => setFilter(id)}
                 className={cn(
-                  "px-2.5 py-1 text-[11px] rounded-md font-medium transition",
+                  "px-2.5 py-1 text-[11px] rounded-md font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
                   filter === id ? "bg-brand-500/10 text-brand-600" : "text-gray-500 hover:bg-gray-100"
                 )}
               >
@@ -276,7 +277,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
                   <button
                     onClick={() => setSelectedId(c.id)}
                     className={cn(
-                      "w-full text-left px-3 py-3 flex gap-3 hover:bg-gray-50 transition",
+                      "w-full text-left px-3 py-3 flex gap-3 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
                       selectedId === c.id && "bg-brand-500/5"
                     )}
                   >
@@ -294,7 +295,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
                         <span className="text-xs text-gray-500 truncate flex-1">
                           {c.last_message_text || "—"}
                         </span>
-                        {c.pinned && <Pin size={10} className="text-brand-500 shrink-0" />}
+                        {c.pinned && <Pin size={10} className="text-brand-500 shrink-0" aria-hidden="true" />}
                         {c.unread_count > 0 && (
                           <span className="bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
                             {c.unread_count}
@@ -309,7 +310,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
           )}
         </div>
       </aside>
-      <section className="bg-white border border-gray-200 rounded-xl flex flex-col overflow-hidden min-h-0">
+      <section className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         {selectedId ? (
           <ConversationView
             conversationId={selectedId}
@@ -497,19 +498,21 @@ function ConversationView({
         <button
           onClick={toggleAi}
           title={conversation.ai_active ? "IA ativa (clique para pausar)" : "IA pausada"}
+          aria-label={conversation.ai_active ? "IA ativa (clique para pausar)" : "IA pausada"}
           className={cn(
-            "p-2 rounded-lg transition",
+            "p-2 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
             conversation.ai_active ? "bg-brand-500/10 text-brand-600" : "text-gray-400 hover:bg-gray-50"
           )}
         >
-          <Bot size={16} />
+          <Bot size={16} aria-hidden="true" />
         </button>
         <button
           onClick={togglePin}
           title={conversation.pinned ? "Desafixar" : "Fixar"}
-          className="p-2 rounded-lg text-gray-400 hover:bg-gray-50"
+          aria-label={conversation.pinned ? "Desafixar conversa" : "Fixar conversa"}
+          className="p-2 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          {conversation.pinned ? <PinOff size={16} /> : <Pin size={16} />}
+          {conversation.pinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
         </button>
       </div>
 
@@ -538,7 +541,7 @@ function ConversationView({
       <div className="p-3 border-t border-gray-100 bg-white">
         {err && (
           <div className="text-xs text-red-500 mb-2 flex items-center gap-1">
-            <AlertCircle size={12} /> {err}
+            <AlertCircle size={12} aria-hidden="true" /> {err}
           </div>
         )}
         <div className="flex gap-2 items-end">
@@ -551,16 +554,18 @@ function ConversationView({
                 send();
               }
             }}
+            aria-label="Digite uma mensagem"
             placeholder="Digite uma mensagem (Enter envia, Shift+Enter quebra linha)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-500 max-h-32"
+            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32"
           />
           <button
             onClick={send}
+            aria-label="Enviar mensagem"
             disabled={!text.trim() || sending}
-            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-200 disabled:text-gray-400 text-white p-2.5 rounded-lg transition"
+            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-200 disabled:text-gray-400 text-white p-2.5 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {sending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+            {sending ? <Loader2 className="animate-spin" size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
           </button>
         </div>
       </div>

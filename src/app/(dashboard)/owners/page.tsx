@@ -16,9 +16,9 @@ export default async function OwnersPage() {
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Owners & Partners</h1>
         <Link
           href="/owners/new"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={16} /> Add Owner
+          <Plus size={16} aria-hidden="true" /> Add Owner
         </Link>
       </div>
 
@@ -30,7 +30,7 @@ export default async function OwnersPage() {
           action={{ label: "+ Add Owner", href: "/owners/new" }}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -42,9 +42,9 @@ export default async function OwnersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {owners.map((owner) => (
-                <tr key={owner.id} className="hover:bg-gray-50 transition">
+                <tr key={owner.id} className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3">
-                    <Link href={`/owners/${owner.id}`} className="font-semibold text-gray-900 hover:text-brand-600">
+                    <Link href={`/owners/${owner.id}`} className="font-semibold text-gray-900 hover:text-brand-600 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
                       {owner.full_name}
                     </Link>
                   </td>

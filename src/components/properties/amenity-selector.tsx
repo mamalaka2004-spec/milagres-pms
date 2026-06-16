@@ -85,8 +85,9 @@ export function AmenitySelector({ propertyId, initialSelectedIds = [] }: Amenity
                   key={amenity.id}
                   type="button"
                   onClick={() => toggle(amenity.id)}
+                  aria-pressed={isSelected}
                   className={cn(
-                    "flex items-center gap-2 p-2.5 rounded-lg border text-left text-sm transition",
+                    "flex items-center gap-2 p-2.5 rounded-lg border text-left text-sm transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
                     isSelected
                       ? "bg-brand-50 border-brand-400 text-brand-700"
                       : "bg-white border-gray-200 text-gray-600 hover:border-brand-300"
@@ -98,7 +99,7 @@ export function AmenitySelector({ propertyId, initialSelectedIds = [] }: Amenity
                       isSelected ? "bg-brand-500 border-brand-500" : "border-gray-300"
                     )}
                   >
-                    {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
+                    {isSelected && <Check size={10} aria-hidden="true" className="text-white" strokeWidth={3} />}
                   </div>
                   <span className="truncate">{amenity.name_pt || amenity.name}</span>
                 </button>
@@ -113,7 +114,7 @@ export function AmenitySelector({ propertyId, initialSelectedIds = [] }: Amenity
           type="button"
           onClick={save}
           disabled={saving}
-          className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition disabled:opacity-50"
+          className="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Amenities"}
         </button>

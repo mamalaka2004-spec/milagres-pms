@@ -146,13 +146,13 @@ export function ChatWindow() {
                 reset();
               }}
               className={cn(
-                "text-left px-3 py-2.5 rounded-lg border transition flex items-start gap-2",
+                "text-left px-3 py-2.5 rounded-lg border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-start gap-2",
                 active
                   ? "border-brand-400 bg-brand-50 text-brand-700"
                   : "border-transparent hover:bg-gray-50 text-gray-700"
               )}
             >
-              <Icon size={15} className={active ? "text-brand-600 mt-0.5" : "text-gray-400 mt-0.5"} />
+              <Icon size={15} className={active ? "text-brand-600 mt-0.5" : "text-gray-400 mt-0.5"} aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-sm font-semibold">{m.label}</div>
                 <div className="text-[11px] text-gray-500 leading-snug">{m.tagline}</div>
@@ -164,9 +164,9 @@ export function ChatWindow() {
         <button
           type="button"
           onClick={reset}
-          className="mt-auto text-xs text-gray-500 hover:text-brand-600 inline-flex items-center gap-1.5 px-2 py-1.5"
+          className="mt-auto text-xs text-gray-500 hover:text-brand-600 inline-flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <RefreshCw size={12} /> Nova conversa
+          <RefreshCw size={12} aria-hidden="true" /> Nova conversa
         </button>
       </aside>
 
@@ -176,7 +176,7 @@ export function ChatWindow() {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 max-w-md mx-auto">
               <div className="w-12 h-12 rounded-full bg-brand-50 flex items-center justify-center mb-3">
-                <Sparkles size={20} className="text-brand-500" />
+                <Sparkles size={20} className="text-brand-500" aria-hidden="true" />
               </div>
               <h2 className="font-heading text-xl text-gray-900 mb-1">
                 Como posso ajudar?
@@ -190,7 +190,7 @@ export function ChatWindow() {
                     key={p}
                     type="button"
                     onClick={() => send(p)}
-                    className="text-left px-4 py-2.5 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/40 text-sm text-gray-700 transition"
+                    className="text-left px-4 py-2.5 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/40 text-sm text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                   >
                     {p}
                   </button>
@@ -226,10 +226,11 @@ export function ChatWindow() {
           />
           <button
             type="submit"
+            aria-label="Enviar mensagem"
             disabled={sending || !input.trim()}
-            className="w-10 h-10 rounded-full bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="w-10 h-10 rounded-full bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            {sending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
           </button>
         </form>
       </main>
@@ -243,12 +244,12 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
-          <Bot size={15} />
+          <Bot size={15} aria-hidden="true" />
         </div>
       )}
       <div
         className={cn(
-          "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap max-w-[85%] md:max-w-[75%]",
+          "rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap max-w-[85%] md:max-w-[75%] transition-colors duration-200",
           isUser
             ? "bg-brand-500 text-white rounded-br-sm"
             : "bg-gray-100 text-gray-800 rounded-bl-sm"
@@ -258,7 +259,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       </div>
       {isUser && (
         <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center shrink-0">
-          <UserIcon size={15} />
+          <UserIcon size={15} aria-hidden="true" />
         </div>
       )}
     </div>
@@ -269,7 +270,7 @@ function ThinkingBubble() {
   return (
     <div className="flex gap-3 justify-start">
       <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
-        <Bot size={15} />
+        <Bot size={15} aria-hidden="true" />
       </div>
       <div className="rounded-2xl rounded-bl-sm px-4 py-2.5 bg-gray-100">
         <div className="flex gap-1">

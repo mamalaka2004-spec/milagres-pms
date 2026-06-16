@@ -167,15 +167,15 @@ export function BookingForm(props: BookingFormProps) {
         <button
           type="submit"
           disabled={submitting || !name || !email || !phone}
-          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 hover:to-brand-700 text-brand-100 font-semibold text-sm transition disabled:opacity-50"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 hover:to-brand-700 text-brand-100 font-semibold text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
           {submitting ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Enviando reserva...
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" /> Enviando reserva...
             </>
           ) : (
             <>
-              {props.instantBooking ? "Confirmar reserva" : "Solicitar reserva"} <ChevronRight size={16} />
+              {props.instantBooking ? "Confirmar reserva" : "Solicitar reserva"} <ChevronRight size={16} aria-hidden="true" />
             </>
           )}
         </button>
@@ -184,9 +184,9 @@ export function BookingForm(props: BookingFormProps) {
           href={props.whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block text-center text-sm text-gray-500 hover:text-brand-600"
+          className="block text-center text-sm text-gray-500 hover:text-brand-600 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <MessageCircle size={13} className="inline -mt-0.5 mr-1" /> Prefiro conversar pelo WhatsApp
+          <MessageCircle size={13} className="inline -mt-0.5 mr-1" aria-hidden="true" /> Prefiro conversar pelo WhatsApp
         </a>
 
         <style jsx>{`
@@ -211,7 +211,7 @@ export function BookingForm(props: BookingFormProps) {
 
       {/* Summary */}
       <aside className="lg:col-span-1">
-        <div className="lg:sticky lg:top-24 bg-white rounded-2xl border border-brand-100 overflow-hidden">
+        <div className="lg:sticky lg:top-24 bg-white rounded-2xl border border-brand-100 shadow-sm overflow-hidden">
           <div className="aspect-[4/3] bg-brand-100">
             {props.propertyImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -269,7 +269,7 @@ export function BookingForm(props: BookingFormProps) {
             </div>
 
             <div className="flex items-start gap-2 pt-3 text-xs text-gray-500">
-              <Shield size={12} className="text-brand-500 mt-0.5 shrink-0" />
+              <Shield size={12} className="text-brand-500 mt-0.5 shrink-0" aria-hidden="true" />
               <span>
                 {props.instantBooking
                   ? "Confirmação imediata após verificação de pagamento."

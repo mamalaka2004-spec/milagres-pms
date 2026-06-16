@@ -87,15 +87,15 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-dashed border-brand-300 hover:border-brand-500 hover:bg-brand-50/50 text-brand-600 font-semibold text-sm transition w-full justify-center disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-3 rounded-lg border-2 border-dashed border-brand-300 hover:border-brand-500 hover:bg-brand-50/50 text-brand-600 font-semibold text-sm transition-colors duration-200 w-full justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
           {uploading ? (
             <>
-              <Loader2 size={18} className="animate-spin" /> Uploading...
+              <Loader2 size={18} aria-hidden="true" className="animate-spin" /> Uploading...
             </>
           ) : (
             <>
-              <Upload size={18} /> Upload Photos
+              <Upload size={18} aria-hidden="true" /> Upload Photos
             </>
           )}
         </button>
@@ -118,28 +118,30 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
 
               {image.is_cover && (
                 <div className="absolute top-2 left-2 bg-brand-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                  <Star size={10} fill="currentColor" /> Cover
+                  <Star size={10} aria-hidden="true" fill="currentColor" /> Cover
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                 {!image.is_cover && (
                   <button
                     type="button"
                     onClick={() => setCover(image.id)}
-                    className="p-2 rounded-full bg-white/90 hover:bg-white text-gray-700"
+                    className="p-2 rounded-full bg-white/90 hover:bg-white text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                     title="Set as cover"
+                    aria-label="Set as cover"
                   >
-                    <Star size={14} />
+                    <Star size={14} aria-hidden="true" />
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => deleteImage(image.id)}
-                  className="p-2 rounded-full bg-white/90 hover:bg-red-500 hover:text-white text-red-500 transition"
+                  className="p-2 rounded-full bg-white/90 hover:bg-red-500 hover:text-white text-red-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                   title="Delete"
+                  aria-label="Delete image"
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             </div>

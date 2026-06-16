@@ -12,10 +12,10 @@ interface StatsCardProps {
 
 export function StatsCard({ label, value, subtitle, icon: Icon, trend, trendUp }: StatsCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-5">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-5">
       <div className="flex justify-between items-center mb-1.5">
         <span className="text-xs lg:text-[13px] text-gray-500 font-medium">{label}</span>
-        <Icon size={16} className="text-brand-400 shrink-0" />
+        <Icon size={16} className="text-brand-400 shrink-0" aria-hidden="true" />
       </div>
       <div className="text-xl lg:text-[28px] font-bold text-gray-900 tracking-tight leading-tight">
         {value}
@@ -29,7 +29,7 @@ export function StatsCard({ label, value, subtitle, icon: Icon, trend, trendUp }
               trendUp ? "text-green-600" : "text-red-500"
             )}
           >
-            {trendUp ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
+            {trendUp ? <ArrowUpRight size={11} aria-hidden="true" /> : <ArrowDownRight size={11} aria-hidden="true" />}
             {trend}
           </span>
         )}

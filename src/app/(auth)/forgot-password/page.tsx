@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
     <div>
       <div className="lg:hidden text-center mb-8">
         <div className="w-12 h-12 rounded-full bg-brand-500 flex items-center justify-center mx-auto mb-4">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0EBE0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F0EBE0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.1 17 3.1s.4 2 .4 4.9A12 12 0 0 1 11 20z" />
           </svg>
         </div>
@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
         {sent ? (
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
             </p>
             <Link
               href="/login"
-              className="font-body text-sm text-brand-500 hover:text-brand-600 transition"
+              className="font-body text-sm text-brand-500 hover:text-brand-600 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
               ← Back to sign in
             </Link>
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 font-body text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-400 transition"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 font-body text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-400 transition-colors duration-200"
                 />
               </div>
 
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-body font-semibold text-sm transition disabled:opacity-50"
+                className="w-full py-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-body font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
               >
                 {loading ? "Sending..." : "Send reset link"}
               </button>
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
               <div className="text-center">
                 <Link
                   href="/login"
-                  className="font-body text-sm text-gray-500 hover:text-brand-500 transition"
+                  className="font-body text-sm text-gray-500 hover:text-brand-500 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   ← Back to sign in
                 </Link>

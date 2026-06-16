@@ -61,19 +61,21 @@ export default async function FinancePage({ searchParams }: PageProps) {
           <input
             type="date"
             name="from"
+            aria-label="From date"
             defaultValue={range.from}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
-          <span className="text-gray-400 text-sm">→</span>
+          <span className="text-gray-400 text-sm" aria-hidden="true">→</span>
           <input
             type="date"
             name="to"
+            aria-label="To date"
             defaultValue={range.to}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
           <button
             type="submit"
-            className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700"
+            className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             Apply
           </button>
@@ -109,7 +111,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
       </div>
 
       {/* Revenue chart */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
           Revenue by month
         </h2>
@@ -118,7 +120,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
 
       {/* By channel + by property */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
             By channel
           </h2>
@@ -143,7 +145,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded overflow-hidden">
                       <div
-                        className="h-full rounded transition-all"
+                        className="h-full rounded transition-all duration-200"
                         style={{
                           width: `${pct}%`,
                           backgroundColor: cfg?.color || "#94a3b8",
@@ -157,7 +159,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
             By property
           </h2>
@@ -174,7 +176,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
                     <div className="flex justify-between text-sm">
                       <Link
                         href={`/properties/${p.property_id}`}
-                        className="font-semibold text-gray-700 hover:text-brand-600 truncate"
+                        className="font-semibold text-gray-700 hover:text-brand-600 truncate transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
                       >
                         {p.name}
                       </Link>
@@ -184,7 +186,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded overflow-hidden">
                       <div
-                        className="h-full bg-brand-500 rounded transition-all"
+                        className="h-full bg-brand-500 rounded transition-all duration-200"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -197,7 +199,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
       </div>
 
       {/* Recent payments */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
             Payments ({payments.length})
@@ -230,7 +232,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {payments.slice(0, 30).map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
+                <tr key={p.id} className="hover:bg-gray-50 transition-colors duration-200">
                   <td className="px-4 py-2 text-xs text-gray-600 font-mono">
                     {p.paid_at ? formatDate(p.paid_at, "dd/MM HH:mm") : "—"}
                   </td>
@@ -238,7 +240,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
                     {p.reservation ? (
                       <Link
                         href={`/reservations/${p.reservation.id}`}
-                        className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800"
+                        className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
                       >
                         {p.reservation.booking_code}
                       </Link>
@@ -301,9 +303,9 @@ function Stat({
   tone?: "positive";
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <div className="flex items-center gap-2 text-gray-400 mb-1">
-        <Icon size={14} />
+        <Icon size={14} aria-hidden="true" />
         <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
       <div

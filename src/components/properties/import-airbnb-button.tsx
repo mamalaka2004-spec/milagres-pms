@@ -67,9 +67,9 @@ export function ImportAirbnbButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition"
+        className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Download size={15} /> Import from Airbnb
+        <Download size={15} aria-hidden="true" /> Import from Airbnb
       </button>
 
       {open && (
@@ -86,9 +86,10 @@ export function ImportAirbnbButton() {
                   setOpen(false);
                   reset();
                 }}
-                className="p-1.5 hover:bg-gray-100 rounded text-gray-500"
+                aria-label="Close"
+                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 
@@ -103,7 +104,7 @@ export function ImportAirbnbButton() {
                   required
                 />
                 <p className="text-[10px] text-gray-400 mt-1 inline-flex items-center gap-1">
-                  <ExternalLink size={10} /> Pegue na tela pública (não a do editor de host).
+                  <ExternalLink size={10} aria-hidden="true" /> Pegue na tela pública (não a do editor de host).
                 </p>
               </Field>
 
@@ -150,22 +151,22 @@ export function ImportAirbnbButton() {
                     setOpen(false);
                     reset();
                   }}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" /> Importing...
+                      <Loader2 size={14} aria-hidden="true" className="animate-spin" /> Importing...
                     </>
                   ) : (
                     <>
-                      <Download size={14} /> Import
+                      <Download size={14} aria-hidden="true" /> Import
                     </>
                   )}
                 </button>

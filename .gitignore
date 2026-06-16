@@ -44,3 +44,7 @@ next-env.d.ts
 # scripts cache
 /scripts/gecko-*.json
 /tmp/
+
+# personal reference doc (contains plaintext credentials — never commit)
+PROJECT_INFO.md
+PROJECT_INFO.local.md

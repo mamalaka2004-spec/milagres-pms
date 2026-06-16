@@ -42,7 +42,7 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
         <img
           src={main.url}
           alt={main.alt_text || alt}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transform-none motion-reduce:transition-none"
         />
         {ordered.length > 1 && (
           <>
@@ -50,26 +50,26 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
               type="button"
               aria-label="Previous image"
               onClick={() => setActiveIndex((i) => (i - 1 + ordered.length) % ordered.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={18} aria-hidden="true" />
             </button>
             <button
               type="button"
               aria-label="Next image"
               onClick={() => setActiveIndex((i) => (i + 1) % ordered.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={18} aria-hidden="true" />
             </button>
           </>
         )}
         <button
           type="button"
           onClick={() => setLightbox(activeIndex)}
-          className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-semibold text-gray-700 shadow"
+          className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-semibold text-gray-700 shadow transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Expand size={12} /> Ver todas ({ordered.length})
+          <Expand size={12} aria-hidden="true" /> Ver todas ({ordered.length})
         </button>
       </div>
 
@@ -80,7 +80,9 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
               key={img.id}
               type="button"
               onClick={() => setActiveIndex(i)}
-              className={`relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition ${
+              aria-label={`Ver imagem ${i + 1}`}
+              aria-current={i === activeIndex}
+              className={`relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 ${
                 i === activeIndex ? "border-brand-500" : "border-transparent hover:border-brand-300"
               }`}
             >
@@ -106,9 +108,10 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
               e.stopPropagation();
               setLightbox(null);
             }}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            aria-label="Fechar galeria"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
           {ordered.length > 1 && (
             <>
@@ -118,9 +121,10 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
                   e.stopPropagation();
                   setLightbox((idx) => (idx === null ? 0 : (idx - 1 + ordered.length) % ordered.length));
                 }}
-                className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                aria-label="Imagem anterior"
+                className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={22} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -128,9 +132,10 @@ export function PropertyGallery({ images, fallback, alt }: PropertyGalleryProps)
                   e.stopPropagation();
                   setLightbox((idx) => (idx === null ? 0 : (idx + 1) % ordered.length));
                 }}
-                className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                aria-label="Próxima imagem"
+                className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
-                <ChevronRight size={22} />
+                <ChevronRight size={22} aria-hidden="true" />
               </button>
             </>
           )}

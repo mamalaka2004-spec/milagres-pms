@@ -77,15 +77,15 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
             type="button"
             onClick={sync}
             disabled={syncing}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
             {syncing ? (
               <>
-                <Loader2 size={14} className="animate-spin" /> Syncing...
+                <Loader2 size={14} aria-hidden="true" className="animate-spin" /> Syncing...
               </>
             ) : (
               <>
-                <RefreshCw size={14} /> Sync now
+                <RefreshCw size={14} aria-hidden="true" /> Sync now
               </>
             )}
           </button>
@@ -98,7 +98,7 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
 
       {error && (
         <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
-          <AlertTriangle size={14} /> {error}
+          <AlertTriangle size={14} aria-hidden="true" /> {error}
         </div>
       )}
 
@@ -115,9 +115,9 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
             >
               <div className="font-semibold flex items-center gap-1">
                 {r.error ? (
-                  <AlertTriangle size={12} />
+                  <AlertTriangle size={12} aria-hidden="true" />
                 ) : (
-                  <CheckCircle2 size={12} />
+                  <CheckCircle2 size={12} aria-hidden="true" />
                 )}
                 {r.source === "airbnb" ? "Airbnb" : "Booking.com"}
               </div>
@@ -173,9 +173,9 @@ function ChannelRow({
             href={listingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 mt-0.5"
+            className="inline-flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 mt-0.5 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <ExternalLink size={10} /> Listing
+            <ExternalLink size={10} aria-hidden="true" /> Listing
           </a>
         )}
       </div>

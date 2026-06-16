@@ -25,22 +25,23 @@ export default async function GuestsPage({ searchParams }: PageProps) {
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Guests</h1>
         <Link
           href="/guests/new"
-          className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+          className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={16} /> Add Guest
+          <Plus size={16} aria-hidden="true" /> Add Guest
         </Link>
       </div>
 
       <form className="flex gap-2" action="/guests" method="GET">
         <input
           name="search"
+          aria-label="Search guests"
           defaultValue={params.search || ""}
           placeholder="Search by name, email or phone..."
-          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
+          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200"
+          className="px-4 py-2.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           Search
         </button>
@@ -58,7 +59,7 @@ export default async function GuestsPage({ searchParams }: PageProps) {
           action={!params.search ? { label: "+ Add Guest", href: "/guests/new" } : undefined}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -78,15 +79,15 @@ export default async function GuestsPage({ searchParams }: PageProps) {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {guests.map((g) => (
-                <tr key={g.id} className="hover:bg-gray-50 transition">
+                <tr key={g.id} className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-4 py-3">
                     <Link
                       href={`/guests/${g.id}`}
-                      className="font-semibold text-gray-900 hover:text-brand-600 inline-flex items-center gap-2"
+                      className="font-semibold text-gray-900 hover:text-brand-600 inline-flex items-center gap-2 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
                     >
                       {g.full_name}
                       {g.is_vip && (
-                        <Star size={12} className="text-amber-500" fill="currentColor" />
+                        <Star size={12} aria-label="VIP" className="text-amber-500" fill="currentColor" />
                       )}
                     </Link>
                   </td>
@@ -115,9 +116,10 @@ export default async function GuestsPage({ searchParams }: PageProps) {
 
       <Link
         href="/guests/new"
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30"
+        aria-label="Add Guest"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={24} />
+        <Plus size={24} aria-hidden="true" />
       </Link>
     </div>
   );

@@ -35,15 +35,15 @@ export default async function GuestDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/guests" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-          <ArrowLeft size={18} />
+        <Link href="/guests" aria-label="Back to guests" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+          <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className="flex-1">
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 inline-flex items-center gap-2">
             {guest.full_name}
             {guest.is_vip && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                <Star size={10} fill="currentColor" /> VIP
+                <Star size={10} aria-hidden="true" fill="currentColor" /> VIP
               </span>
             )}
           </h1>
@@ -70,7 +70,7 @@ export default async function GuestDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3 lg:col-span-1">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3 lg:col-span-1">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
             Contact
           </h2>
@@ -109,14 +109,14 @@ export default async function GuestDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5 lg:col-span-2">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:col-span-2">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
               Stay history ({sorted.length})
             </h2>
             <Link
               href={`/reservations/new?guest_id=${guest.id}`}
-              className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
               + New reservation
             </Link>
@@ -131,7 +131,7 @@ export default async function GuestDetailPage({ params }: PageProps) {
                 <Link
                   key={r.id}
                   href={`/reservations/${r.id}`}
-                  className="block py-3 hover:bg-gray-50 -mx-2 px-2 rounded transition"
+                  className="block py-3 hover:bg-gray-50 -mx-2 px-2 rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   <div className="flex justify-between items-start gap-2 flex-wrap">
                     <div className="min-w-0">
@@ -164,7 +164,7 @@ export default async function GuestDetailPage({ params }: PageProps) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
         {label}
       </div>
@@ -194,7 +194,7 @@ function Field({
           mono ? "font-mono" : ""
         }`}
       >
-        {Icon && <Icon size={14} className="text-gray-400" />}
+        {Icon && <Icon size={14} aria-hidden="true" className="text-gray-400" />}
         {value}
       </div>
     </div>

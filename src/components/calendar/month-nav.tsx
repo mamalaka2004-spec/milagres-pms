@@ -51,10 +51,10 @@ export function MonthNav({ year, month }: MonthNavProps) {
       <div className="flex items-center gap-2">
         <Link
           href={buildHref(prev.year, prev.month)}
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
+          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           aria-label="Previous month"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={16} aria-hidden="true" />
         </Link>
         <div className="px-4 py-2 rounded-lg bg-white border border-gray-200">
           <div className="font-heading text-lg text-gray-900">
@@ -63,18 +63,18 @@ export function MonthNav({ year, month }: MonthNavProps) {
         </div>
         <Link
           href={buildHref(next.year, next.month)}
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
+          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           aria-label="Next month"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={16} aria-hidden="true" />
         </Link>
       </div>
       {!isToday && (
         <Link
           href={todayHref}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 text-gray-700"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <CalendarDays size={14} /> Today
+          <CalendarDays size={14} aria-hidden="true" /> Today
         </Link>
       )}
     </div>

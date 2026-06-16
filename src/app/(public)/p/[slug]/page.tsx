@@ -46,21 +46,21 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             <div className="flex flex-wrap gap-3 text-sm text-gray-500">
               {property.city && (
                 <span className="inline-flex items-center gap-1">
-                  <MapPin size={14} className="text-brand-500" />
+                  <MapPin size={14} className="text-brand-500" aria-hidden="true" />
                   {[property.city, property.state].filter(Boolean).join(", ")}
                 </span>
               )}
               <span className="inline-flex items-center gap-1">
-                <Users size={14} className="text-brand-400" />
+                <Users size={14} className="text-brand-400" aria-hidden="true" />
                 {property.max_guests} hóspedes
               </span>
               <span className="inline-flex items-center gap-1">
-                <BedDouble size={14} className="text-brand-400" />
+                <BedDouble size={14} className="text-brand-400" aria-hidden="true" />
                 {property.bedrooms} {property.bedrooms === 1 ? "quarto" : "quartos"} · {property.beds}{" "}
                 {property.beds === 1 ? "cama" : "camas"}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Bath size={14} className="text-brand-400" />
+                <Bath size={14} className="text-brand-400" aria-hidden="true" />
                 {property.bathrooms} {property.bathrooms === 1 ? "banheiro" : "banheiros"}
               </span>
             </div>
@@ -109,7 +109,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
 
               {/* Rules */}
               {property.house_rules && (
-                <section className="bg-white rounded-2xl border border-brand-100 p-5 md:p-6">
+                <section className="bg-white rounded-2xl border border-brand-100 shadow-sm p-5 md:p-6">
                   <h2 className="font-heading text-xl font-medium text-gray-900 mb-3">
                     Regras da casa
                   </h2>
@@ -118,10 +118,10 @@ export default async function PublicPropertyPage({ params }: PageProps) {
                   </p>
                   <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-brand-100 text-xs text-gray-500">
                     <span className="inline-flex items-center gap-1.5">
-                      <Clock size={12} className="text-brand-500" /> Check-in: {property.check_in_time?.slice(0, 5)}
+                      <Clock size={12} className="text-brand-500" aria-hidden="true" /> Check-in: {property.check_in_time?.slice(0, 5)}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <Clock size={12} className="text-brand-500" /> Check-out: {property.check_out_time?.slice(0, 5)}
+                      <Clock size={12} className="text-brand-500" aria-hidden="true" /> Check-out: {property.check_out_time?.slice(0, 5)}
                     </span>
                   </div>
                 </section>
@@ -129,9 +129,9 @@ export default async function PublicPropertyPage({ params }: PageProps) {
 
               {/* Cancellation */}
               {property.cancellation_policy && (
-                <section className="bg-white rounded-2xl border border-brand-100 p-5 md:p-6">
+                <section className="bg-white rounded-2xl border border-brand-100 shadow-sm p-5 md:p-6">
                   <h2 className="font-heading text-xl font-medium text-gray-900 mb-3 inline-flex items-center gap-2">
-                    <Shield size={18} className="text-brand-500" /> Política de cancelamento
+                    <Shield size={18} className="text-brand-500" aria-hidden="true" /> Política de cancelamento
                   </h2>
                   <p className="text-sm text-gray-600 leading-relaxed">{property.cancellation_policy}</p>
                 </section>

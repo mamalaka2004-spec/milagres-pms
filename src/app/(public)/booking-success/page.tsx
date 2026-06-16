@@ -18,9 +18,9 @@ export default async function BookingSuccessPage({ searchParams }: PageProps) {
       <SiteHeader whatsappUrl={WHATSAPP_URL} />
 
       <main className="flex-1 pt-24 md:pt-32 pb-16 px-4 md:px-8">
-        <div className="max-w-xl mx-auto bg-white rounded-3xl border border-brand-100 p-8 md:p-12 text-center">
+        <div className="max-w-xl mx-auto bg-white rounded-3xl border border-brand-100 shadow-sm p-8 md:p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-green-100 mx-auto flex items-center justify-center mb-5">
-            <CheckCircle2 size={32} className="text-green-600" />
+            <CheckCircle2 size={32} className="text-green-600" aria-hidden="true" />
           </div>
           <h1 className="font-heading text-3xl md:text-4xl text-gray-900 mb-3 leading-tight">
             Sua solicitação de reserva foi recebida{guest ? `, ${guest.split(" ")[0]}` : ""}!
@@ -40,17 +40,17 @@ export default async function BookingSuccessPage({ searchParams }: PageProps) {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-brand-100 font-semibold text-sm shadow"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-500 hover:bg-brand-600 text-brand-100 font-semibold text-sm shadow hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <MessageCircle size={15} /> Falar pelo WhatsApp agora
+            <MessageCircle size={15} aria-hidden="true" /> Falar pelo WhatsApp agora
           </a>
 
           <div className="mt-8">
             <Link
               href={sp.slug ? `/p/${sp.slug}` : "/"}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <ArrowLeft size={13} /> {sp.slug ? "Voltar para a propriedade" : "Voltar para o início"}
+              <ArrowLeft size={13} aria-hidden="true" /> {sp.slug ? "Voltar para a propriedade" : "Voltar para o início"}
             </Link>
           </div>
         </div>

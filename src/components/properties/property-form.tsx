@@ -100,9 +100,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       <div className="flex items-center gap-3">
         <Link
           href="/properties"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
+          aria-label="Back to properties"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           {isEditing ? "Edit Property" : "New Property"}
@@ -110,7 +111,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </div>
 
       {/* Basic Info */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Basic Information
         </h2>
@@ -125,7 +126,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
             <input {...register("slug")} placeholder="casa-coral" className="form-input" />
           </Field>
           <Field label="Type">
-            <select {...register("type")} className="form-input">
+            <select {...register("type")} className="form-input cursor-pointer">
               <option value="">Select type</option>
               <option value="house">House</option>
               <option value="apartment">Apartment</option>
@@ -137,7 +138,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
             </select>
           </Field>
           <Field label="Status">
-            <select {...register("status")} className="form-input">
+            <select {...register("status")} className="form-input cursor-pointer">
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="maintenance">Maintenance</option>
@@ -147,7 +148,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Display */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Display
         </h2>
@@ -165,7 +166,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Location */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Location
         </h2>
@@ -186,7 +187,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Capacity */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Capacity
         </h2>
@@ -207,7 +208,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Pricing */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Pricing (BRL)
         </h2>
@@ -228,7 +229,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Rules */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Rules & Policies
         </h2>
@@ -257,7 +258,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Channel Sync */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-1 uppercase tracking-wider">
           Channel Sync
         </h2>
@@ -303,7 +304,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       </section>
 
       {/* Booking Settings */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
           Booking Settings
         </h2>
@@ -336,16 +337,16 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       <div className="flex justify-end gap-3 pb-20 lg:pb-6">
         <Link
           href="/properties"
-          className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition"
+          className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           Cancel
         </Link>
         <button
           type="submit"
           disabled={submitting}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
-          <Save size={16} />
+          <Save size={16} aria-hidden="true" />
           {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Property"}
         </button>
       </div>

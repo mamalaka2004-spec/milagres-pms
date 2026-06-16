@@ -52,7 +52,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         )}
       >
         <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
-          <Leaf size={18} className="text-brand-100" strokeWidth={2.5} />
+          <Leaf size={18} className="text-brand-100" strokeWidth={2.5} aria-hidden="true" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
@@ -65,9 +65,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         {/* Mobile close */}
         <button
           onClick={onMobileClose}
-          className="ml-auto lg:hidden p-1 text-gray-400 hover:text-gray-600"
+          aria-label="Close menu"
+          className="ml-auto lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <X size={18} />
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
 
@@ -81,7 +82,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               href={item.href}
               onClick={onMobileClose}
               className={cn(
-                "flex items-center gap-3 rounded-lg text-sm font-body transition-colors",
+                "flex items-center gap-3 rounded-lg text-sm font-body transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
                 collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5",
                 active
                   ? "bg-brand-500/10 text-brand-600 font-semibold border-l-[3px] border-brand-500"
@@ -89,7 +90,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               )}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon size={18} className="shrink-0" />
+              <item.icon size={18} className="shrink-0" aria-hidden="true" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -106,7 +107,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               href={item.href}
               onClick={onMobileClose}
               className={cn(
-                "flex items-center gap-3 rounded-lg text-sm font-body transition-colors",
+                "flex items-center gap-3 rounded-lg text-sm font-body transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
                 collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5",
                 item.highlight && !active
                   ? "bg-brand-500/5 text-brand-600 font-semibold"
@@ -116,7 +117,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               )}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon size={18} className="shrink-0" />
+              <item.icon size={18} className="shrink-0" aria-hidden="true" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -126,9 +127,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       {/* Collapse toggle — desktop only */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="hidden lg:flex items-center justify-center py-3 border-t border-gray-100 text-gray-400 hover:text-gray-600 transition shrink-0"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="hidden lg:flex items-center justify-center py-3 border-t border-gray-100 text-gray-400 hover:text-gray-600 transition-colors duration-200 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
       </button>
     </>
   );
@@ -185,12 +187,12 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center gap-0.5 px-3 py-1.5",
+              "flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40",
               active ? "text-brand-600" : "text-gray-400",
               item.href === "/ai-assistant" && !active && "text-brand-500"
             )}
           >
-            <item.icon size={20} strokeWidth={active ? 2.5 : 1.5} />
+            <item.icon size={20} strokeWidth={active ? 2.5 : 1.5} aria-hidden="true" />
             <span className={cn("text-[10px]", active ? "font-bold" : "font-normal")}>
               {item.label}
             </span>

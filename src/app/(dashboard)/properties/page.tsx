@@ -27,8 +27,9 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       <div className="flex justify-between items-center gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           <select
+            aria-label="Filter by status"
             defaultValue={params.status || ""}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-body bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400"
+            className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-body bg-white text-gray-700 cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400"
           >
             <option value="">All Statuses</option>
             <option value="active">Active</option>
@@ -40,9 +41,9 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
           <ImportAirbnbButton />
           <Link
             href="/properties/new"
-            className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+            className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <Plus size={16} /> Add Property
+            <Plus size={16} aria-hidden="true" /> Add Property
           </Link>
         </div>
       </div>
@@ -66,9 +67,10 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       {/* Mobile FAB */}
       <Link
         href="/properties/new"
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30"
+        aria-label="Add Property"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={24} />
+        <Plus size={24} aria-hidden="true" />
       </Link>
     </div>
   );

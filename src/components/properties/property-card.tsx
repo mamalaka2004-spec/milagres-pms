@@ -26,7 +26,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+      className="group bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
     >
       {/* Cover image */}
       <div className="relative h-32 md:h-36 lg:h-40 bg-gradient-to-br from-brand-100 to-brand-50 overflow-hidden">
@@ -78,15 +78,15 @@ export function PropertyCard({ property }: PropertyCardProps) {
         {/* Capacity */}
         <div className="flex gap-3 text-xs text-gray-500 mb-4">
           <span className="flex items-center gap-1">
-            <Users size={12} className="text-brand-400" />
+            <Users size={12} aria-hidden="true" className="text-brand-400" />
             {property.max_guests}
           </span>
           <span className="flex items-center gap-1">
-            <BedDouble size={12} className="text-brand-400" />
+            <BedDouble size={12} aria-hidden="true" className="text-brand-400" />
             {property.beds}
           </span>
           <span className="flex items-center gap-1">
-            <Bath size={12} className="text-brand-400" />
+            <Bath size={12} aria-hidden="true" className="text-brand-400" />
             {property.bathrooms}
           </span>
         </div>

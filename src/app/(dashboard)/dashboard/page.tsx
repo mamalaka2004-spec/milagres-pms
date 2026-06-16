@@ -70,9 +70,9 @@ export default async function DashboardPage() {
 
       {/* Today's Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-            <span className="text-brand-500">✈️</span>
+            <span className="text-brand-500" aria-hidden="true">✈️</span>
             <span className="font-semibold text-sm text-gray-900">Check-ins Today</span>
             <span className="ml-auto bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full text-[11px] font-bold">
               {data.today_checkins.length}
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
               <Link
                 key={ci.id}
                 href={`/reservations/${ci.id}`}
-                className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 hover:bg-gray-50 transition"
+                className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 hover:bg-gray-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
                 <div className="w-9 h-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xs shrink-0">
                   {getInitials(ci.guest_name)}
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-gray-900 truncate inline-flex items-center gap-1">
                     {ci.guest_name}
-                    {ci.is_vip && <Star size={11} className="text-amber-500" fill="currentColor" />}
+                    {ci.is_vip && <Star size={11} className="text-amber-500" fill="currentColor" aria-hidden="true" />}
                   </div>
                   <div className="text-xs text-gray-400">
                     {ci.property_name} · {ci.nights}n · {ci.booking_code}
@@ -110,9 +110,9 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-            <span className="text-amber-500">🛫</span>
+            <span className="text-amber-500" aria-hidden="true">🛫</span>
             <span className="font-semibold text-sm text-gray-900">Check-outs Today</span>
             <span className="ml-auto bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full text-[11px] font-bold">
               {data.today_checkouts.length}
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
               <Link
                 key={co.id}
                 href={`/reservations/${co.id}`}
-                className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 hover:bg-gray-50 transition"
+                className="px-4 py-3 border-b border-gray-50 flex items-center gap-3 hover:bg-gray-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
                 <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center text-amber-700 font-bold text-xs shrink-0">
                   {getInitials(co.guest_name)}
@@ -150,10 +150,10 @@ export default async function DashboardPage() {
 
       {/* Recent reservations */}
       {data.recent_reservations.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <span className="font-semibold text-sm text-gray-900">Recent reservations</span>
-            <Link href="/reservations" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+            <Link href="/reservations" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded">
               See all →
             </Link>
           </div>
@@ -162,7 +162,7 @@ export default async function DashboardPage() {
               <Link
                 key={r.id}
                 href={`/reservations/${r.id}`}
-                className="px-4 py-3 flex justify-between items-center gap-3 hover:bg-gray-50 transition"
+                className="px-4 py-3 flex justify-between items-center gap-3 hover:bg-gray-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
                 <div className="min-w-0">
                   <div className="font-mono text-xs text-gray-500">{r.booking_code}</div>
@@ -188,19 +188,19 @@ export default async function DashboardPage() {
       <div className="hidden lg:flex gap-3">
         <Link
           href="/reservations/new"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-brand-400 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-brand-400 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           + New Reservation
         </Link>
         <Link
           href="/calendar"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           View Calendar
         </Link>
         <Link
           href="/finance"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           Finance
         </Link>

@@ -160,9 +160,9 @@ function Stat({
       : "text-gray-900";
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <div className="flex items-center gap-2 text-gray-400 mb-1">
-        <Icon size={14} />
+        <Icon size={14} aria-hidden="true" />
         <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
       <div className={`text-xl lg:text-2xl font-bold ${toneClass}`}>{value}</div>
@@ -195,7 +195,7 @@ function Section({
 
 function Empty({ message }: { message: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 px-4 py-6 text-center text-sm text-gray-400">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-6 text-center text-sm text-gray-400">
       {message}
     </div>
   );

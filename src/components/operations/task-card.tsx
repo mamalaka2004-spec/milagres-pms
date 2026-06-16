@@ -52,7 +52,7 @@ export function TaskCard({ task }: TaskCardProps) {
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border p-4 space-y-2 transition-colors",
+        "bg-white rounded-xl border shadow-sm p-4 space-y-2 transition-colors duration-200",
         isOverdue ? "border-red-200" : "border-gray-200",
         task.status === "completed" && "opacity-60"
       )}
@@ -71,7 +71,7 @@ export function TaskCard({ task }: TaskCardProps) {
             </span>
             {isOverdue && (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600">
-                <Clock size={10} /> Overdue
+                <Clock size={10} aria-hidden="true" /> Overdue
               </span>
             )}
           </div>
@@ -79,7 +79,7 @@ export function TaskCard({ task }: TaskCardProps) {
             {task.property ? (
               <Link
                 href={`/properties/${task.property.id}`}
-                className="hover:text-brand-600"
+                className="hover:text-brand-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
               >
                 {task.property.name}
               </Link>
@@ -90,7 +90,7 @@ export function TaskCard({ task }: TaskCardProps) {
           {task.reservation && (
             <Link
               href={`/reservations/${task.reservation.id}`}
-              className="text-xs text-gray-500 hover:text-brand-600 inline-flex items-center gap-1"
+              className="text-xs text-gray-500 hover:text-brand-600 inline-flex items-center gap-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
             >
               <span className="font-mono">{task.reservation.booking_code}</span>
               {task.reservation.guest && <span>· {task.reservation.guest.full_name}</span>}
@@ -107,7 +107,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
       <div className="flex items-center justify-between gap-3 text-xs text-gray-600 pt-1 border-t border-gray-50">
         <div className="flex items-center gap-2">
-          <Clock size={12} className="text-gray-400" />
+          <Clock size={12} className="text-gray-400" aria-hidden="true" />
           <span>
             {task.due_date ? formatDate(task.due_date) : "No due date"}
             {task.due_time && ` · ${formatTime(task.due_time)}`}
@@ -141,9 +141,9 @@ export function TaskCard({ task }: TaskCardProps) {
               type="button"
               onClick={() => transition("in_progress")}
               disabled={pending !== null}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              {pending === "in_progress" ? <Loader2 size={11} className="animate-spin" /> : <Play size={11} />}
+              {pending === "in_progress" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <Play size={11} aria-hidden="true" />}
               Start
             </button>
           )}
@@ -151,18 +151,18 @@ export function TaskCard({ task }: TaskCardProps) {
             type="button"
             onClick={() => transition("completed")}
             disabled={pending !== null}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {pending === "completed" ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
+            {pending === "completed" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={11} aria-hidden="true" />}
             Complete
           </button>
           <button
             type="button"
             onClick={() => transition("skipped")}
             disabled={pending !== null}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {pending === "skipped" ? <Loader2 size={11} className="animate-spin" /> : <SkipForward size={11} />}
+            {pending === "skipped" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <SkipForward size={11} aria-hidden="true" />}
             Skip
           </button>
         </div>

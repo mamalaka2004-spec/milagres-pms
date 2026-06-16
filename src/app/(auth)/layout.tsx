@@ -10,7 +10,7 @@ export default function AuthLayout({
         <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 opacity-90" />
         <div className="relative z-10 text-center">
           <div className="w-16 h-16 rounded-full bg-brand-100/15 flex items-center justify-center mx-auto mb-8 backdrop-blur-sm border border-brand-100/20">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F0EBE0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F0EBE0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.1 17 3.1s.4 2 .4 4.9A12 12 0 0 1 11 20z" />
             </svg>
           </div>

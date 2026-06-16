@@ -43,9 +43,9 @@ export default async function BookPage({ params, searchParams }: PageProps) {
         <div className="max-w-6xl mx-auto">
           <Link
             href={`/p/${slug}`}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600 mb-5"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600 mb-5 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <ArrowLeft size={14} /> Voltar para a propriedade
+            <ArrowLeft size={14} aria-hidden="true" /> Voltar para a propriedade
           </Link>
 
           <BookingForm

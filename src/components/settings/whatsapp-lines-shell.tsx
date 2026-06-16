@@ -78,16 +78,16 @@ export function WhatsappLinesShell() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"
+          className="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={14} /> Nova linha
+          <Plus size={14} aria-hidden="true" /> Nova linha
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 flex justify-center text-gray-400">
-            <Loader2 className="animate-spin" size={18} />
+            <Loader2 className="animate-spin" size={18} aria-hidden="true" />
           </div>
         ) : error ? (
           <div className="p-4 text-red-500 text-sm flex items-center gap-2">
@@ -95,7 +95,7 @@ export function WhatsappLinesShell() {
           </div>
         ) : lines.length === 0 ? (
           <div className="p-12 text-center text-sm text-gray-400">
-            <MessageSquare size={28} className="mx-auto mb-2 text-gray-300" />
+            <MessageSquare size={28} className="mx-auto mb-2 text-gray-300" aria-hidden="true" />
             Conecte seu primeiro número WhatsApp para começar.
           </div>
         ) : (
@@ -112,11 +112,11 @@ export function WhatsappLinesShell() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {lines.map((l) => (
-                <tr key={l.id} className="hover:bg-gray-50">
+                <tr key={l.id} className="hover:bg-gray-50 transition-colors duration-200">
                   <td className="px-3 py-3">
                     <div className="font-semibold text-gray-900">{l.label}</div>
                     <div className="text-[11px] text-gray-500 flex items-center gap-1">
-                      <Phone size={10} /> {l.phone}
+                      <Phone size={10} aria-hidden="true" /> {l.phone}
                       {!l.is_active && <span className="ml-1 text-rose-600">(inativa)</span>}
                     </div>
                   </td>
@@ -138,14 +138,14 @@ export function WhatsappLinesShell() {
                   </td>
                   <td className="px-3 py-3">
                     {l.ai_enabled ? (
-                      <span className="text-emerald-600 inline-flex items-center gap-1 text-xs"><Bot size={12} /> Ativa</span>
+                      <span className="text-emerald-600 inline-flex items-center gap-1 text-xs"><Bot size={12} aria-hidden="true" /> Ativa</span>
                     ) : (
-                      <span className="text-gray-400 inline-flex items-center gap-1 text-xs"><BotOff size={12} /> Desativa</span>
+                      <span className="text-gray-400 inline-flex items-center gap-1 text-xs"><BotOff size={12} aria-hidden="true" /> Desativa</span>
                     )}
                   </td>
                   <td className="px-3 py-3 text-xs text-gray-500">
                     {l.business_hours ? (
-                      <span className="inline-flex items-center gap-1"><Clock size={11} /> definido</span>
+                      <span className="inline-flex items-center gap-1"><Clock size={11} aria-hidden="true" /> definido</span>
                     ) : (
                       <span className="text-gray-300">—</span>
                     )}
@@ -154,23 +154,26 @@ export function WhatsappLinesShell() {
                     <button
                       onClick={() => setBackfillFor(l)}
                       title="Importar histórico do Evolution"
-                      className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100"
+                      aria-label="Importar histórico do Evolution"
+                      className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                     >
-                      <Download size={14} />
+                      <Download size={14} aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => setGrantsFor(l)}
                       title="Gerenciar usuários"
-                      className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100"
+                      aria-label="Gerenciar usuários"
+                      className="text-gray-500 hover:text-brand-600 p-1.5 rounded hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                     >
-                      <Users size={14} />
+                      <Users size={14} aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => remove(l)}
                       title="Excluir"
-                      className="text-gray-500 hover:text-rose-600 p-1.5 rounded hover:bg-gray-100"
+                      aria-label="Excluir linha"
+                      className="text-gray-500 hover:text-rose-600 p-1.5 rounded hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={14} aria-hidden="true" />
                     </button>
                   </td>
                 </tr>
@@ -304,21 +307,21 @@ function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
             {result ? "Fechar" : "Cancelar"}
           </button>
           <button
             onClick={run}
             disabled={busy}
-            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5"
+            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {busy && <Loader2 className="animate-spin" size={14} />}
+            {busy && <Loader2 className="animate-spin" size={14} aria-hidden="true" />}
             {result ? "Rodar de novo" : "Importar"}
           </button>
         </div>
       </div>
-      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); }
-       .input:focus { outline: none; border-color: rgb(107,127,94); }`}</style>
+      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); transition: border-color 0.2s, box-shadow 0.2s; }
+       .input:focus { outline: none; border-color: rgb(107,127,94); box-shadow: 0 0 0 3px rgba(107,127,94,0.15); }`}</style>
     </Modal>
   );
 }
@@ -389,14 +392,14 @@ function CreateLineModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </label>
         {err && <div className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50">Cancelar</button>
-          <button type="submit" disabled={busy} className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5">
-            {busy && <Loader2 className="animate-spin" size={14} />} Criar
+          <button type="button" onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">Cancelar</button>
+          <button type="submit" disabled={busy} className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+            {busy && <Loader2 className="animate-spin" size={14} aria-hidden="true" />} Criar
           </button>
         </div>
       </form>
-      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); }
-       .input:focus { outline: none; border-color: rgb(107,127,94); }`}</style>
+      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); transition: border-color 0.2s, box-shadow 0.2s; }
+       .input:focus { outline: none; border-color: rgb(107,127,94); box-shadow: 0 0 0 3px rgba(107,127,94,0.15); }`}</style>
     </Modal>
   );
 }
@@ -518,13 +521,13 @@ function GrantsModal({ line, onClose }: { line: LineRow; onClose: () => void }) 
         {hint && <div className="text-xs text-emerald-600">{hint}</div>}
 
         <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50">Fechar</button>
+          <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">Fechar</button>
           <button
             onClick={save}
             disabled={busy || loading}
-            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5"
+            className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            {busy && <Loader2 className="animate-spin" size={14} />} Salvar acesso
+            {busy && <Loader2 className="animate-spin" size={14} aria-hidden="true" />} Salvar acesso
           </button>
         </div>
       </div>
@@ -538,8 +541,8 @@ function Modal({ onClose, title, children }: { onClose: () => void; title: strin
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-sm text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100">
-            <X size={16} />
+          <button onClick={onClose} aria-label="Fechar" className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
         <div className="p-4 overflow-y-auto">{children}</div>

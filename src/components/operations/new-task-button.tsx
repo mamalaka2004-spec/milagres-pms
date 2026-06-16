@@ -68,9 +68,9 @@ export function NewTaskButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={15} /> New task
+        <Plus size={15} aria-hidden="true" /> New task
       </button>
 
       {open && (
@@ -80,10 +80,11 @@ export function NewTaskButton({
               <h2 className="font-bold text-base text-gray-900">New task</h2>
               <button
                 type="button"
+                aria-label="Close dialog"
                 onClick={() => setOpen(false)}
-                className="p-1.5 hover:bg-gray-100 rounded text-gray-500"
+                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 
@@ -169,18 +170,18 @@ export function NewTaskButton({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || !propertyId}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" /> Saving...
+                      <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Saving...
                     </>
                   ) : (
                     "Create"

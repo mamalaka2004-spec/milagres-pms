@@ -113,7 +113,8 @@ export function BookingWidget({
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="block w-full mt-1 text-sm text-gray-900 bg-transparent border-0 focus:outline-none"
+              aria-label="Data de check-in"
+              className="block w-full mt-1 text-sm text-gray-900 bg-transparent border-0 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             />
           </label>
           <label className="block px-4 py-2.5">
@@ -124,7 +125,8 @@ export function BookingWidget({
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="block w-full mt-1 text-sm text-gray-900 bg-transparent border-0 focus:outline-none"
+              aria-label="Data de check-out"
+              className="block w-full mt-1 text-sm text-gray-900 bg-transparent border-0 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             />
           </label>
         </div>
@@ -141,17 +143,19 @@ export function BookingWidget({
             <button
               type="button"
               onClick={() => setGuests((g) => Math.max(1, g - 1))}
-              className="w-8 h-8 rounded-full border border-brand-200 hover:bg-gray-50 flex items-center justify-center"
+              aria-label="Remover hóspede"
+              className="w-8 h-8 rounded-full border border-brand-200 hover:bg-gray-50 flex items-center justify-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <Minus size={14} />
+              <Minus size={14} aria-hidden="true" />
             </button>
             <span className="font-semibold w-5 text-center">{guests}</span>
             <button
               type="button"
               onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
-              className="w-8 h-8 rounded-full border border-brand-200 hover:bg-gray-50 flex items-center justify-center"
+              aria-label="Adicionar hóspede"
+              className="w-8 h-8 rounded-full border border-brand-200 hover:bg-gray-50 flex items-center justify-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              <Plus size={14} />
+              <Plus size={14} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -159,24 +163,24 @@ export function BookingWidget({
 
       {checkIn && checkOut && nights > 0 && nights < minNights && (
         <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 flex items-start gap-2">
-          <AlertTriangle size={13} className="mt-0.5" />
+          <AlertTriangle size={13} className="mt-0.5" aria-hidden="true" />
           <span>Estadia mínima de {minNights} noites para esta propriedade.</span>
         </div>
       )}
 
       {availability.state === "loading" && (
         <div className="text-xs text-gray-500 inline-flex items-center gap-2 mb-3">
-          <Loader2 size={12} className="animate-spin" /> Verificando disponibilidade...
+          <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Verificando disponibilidade...
         </div>
       )}
       {availability.state === "available" && (
         <div className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3 inline-flex items-center gap-2">
-          <CheckCircle2 size={13} /> Datas disponíveis!
+          <CheckCircle2 size={13} aria-hidden="true" /> Datas disponíveis!
         </div>
       )}
       {availability.state === "unavailable" && (
         <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3 flex items-start gap-2">
-          <AlertTriangle size={13} className="mt-0.5" />
+          <AlertTriangle size={13} className="mt-0.5" aria-hidden="true" />
           <span>{availability.message}</span>
         </div>
       )}
@@ -211,7 +215,7 @@ export function BookingWidget({
         type="button"
         onClick={goToBooking}
         disabled={!datesValid || availability.state !== "available"}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 hover:to-brand-700 text-brand-100 font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-200 disabled:text-gray-400 mb-2"
+        className="w-full py-3.5 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 hover:to-brand-700 text-brand-100 font-semibold text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-200 disabled:text-gray-400 mb-2"
       >
         {instantBooking ? "Reservar agora" : "Solicitar reserva"}
       </button>
@@ -220,9 +224,9 @@ export function BookingWidget({
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-brand-200 text-gray-600 hover:bg-gray-50 text-sm font-medium"
+        className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-brand-200 text-gray-600 hover:bg-gray-50 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <MessageCircle size={14} /> Falar pelo WhatsApp
+        <MessageCircle size={14} aria-hidden="true" /> Falar pelo WhatsApp
       </a>
     </div>
   );

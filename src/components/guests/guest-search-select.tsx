@@ -69,7 +69,7 @@ export function GuestSearchSelect({
             </span>
             {value.is_vip && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                <Star size={10} fill="currentColor" /> VIP
+                <Star size={10} aria-hidden="true" fill="currentColor" /> VIP
               </span>
             )}
           </div>
@@ -80,9 +80,10 @@ export function GuestSearchSelect({
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+          aria-label="Clear selected guest"
+          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <X size={16} />
+          <X size={16} aria-hidden="true" />
         </button>
       </div>
     );
@@ -91,13 +92,14 @@ export function GuestSearchSelect({
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={16} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
+          aria-label="Search guest"
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
         />
       </div>
 
@@ -119,7 +121,7 @@ export function GuestSearchSelect({
                 setOpen(false);
               }}
               className={cn(
-                "w-full px-4 py-2.5 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-start gap-2"
+                "w-full px-4 py-2.5 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-start gap-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400/40"
               )}
             >
               <div className="flex-1 min-w-0">
@@ -128,7 +130,7 @@ export function GuestSearchSelect({
                     {g.full_name}
                   </span>
                   {g.is_vip && (
-                    <Star size={11} className="text-amber-500" fill="currentColor" />
+                    <Star size={11} aria-label="VIP" className="text-amber-500" fill="currentColor" />
                   )}
                 </div>
                 <div className="text-xs text-gray-500 truncate">
@@ -144,9 +146,9 @@ export function GuestSearchSelect({
                 setOpen(false);
                 onCreateNew();
               }}
-              className="w-full px-4 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 font-semibold flex items-center gap-2 border-t border-gray-100"
+              className="w-full px-4 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 font-semibold flex items-center gap-2 border-t border-gray-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400/40"
             >
-              <Plus size={14} /> Create new guest
+              <Plus size={14} aria-hidden="true" /> Create new guest
             </button>
           )}
         </div>

@@ -96,7 +96,7 @@ export function CalendarGrid({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div
         className="overflow-x-auto"
         style={{ scrollbarWidth: "thin" }}
@@ -151,7 +151,7 @@ export function CalendarGrid({
                 {/* Property label */}
                 <Link
                   href={`/properties/${property.id}`}
-                  className="px-3 py-2 flex flex-col justify-center border-r border-gray-200 hover:bg-gray-100"
+                  className="px-3 py-2 flex flex-col justify-center border-r border-gray-200 hover:bg-gray-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
                   <div className="font-semibold text-sm text-gray-900 truncate">
                     {property.name}
@@ -231,7 +231,7 @@ export function CalendarGrid({
                     <Link
                       key={r.id}
                       href={`/reservations/${r.id}`}
-                      className="absolute top-2 bottom-2 rounded-md flex items-center px-2 text-[11px] font-semibold shadow-sm hover:shadow-md hover:scale-y-105 transition overflow-hidden gap-1"
+                      className="absolute top-2 bottom-2 rounded-md flex items-center px-2 text-[11px] font-semibold shadow-sm hover:shadow-md hover:scale-y-105 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 overflow-hidden gap-1"
                       style={{
                         left: `calc(200px + ${pos.colStart * DAY_WIDTH_PX}px + ${DAY_WIDTH_PX / 2}px)`,
                         width: `${pos.span * DAY_WIDTH_PX - DAY_WIDTH_PX}px`,
@@ -241,7 +241,7 @@ export function CalendarGrid({
                       }}
                       title={`${r.booking_code} · ${r.guest_name} · ${cfg.label}`}
                     >
-                      {r.is_vip && <Star size={10} fill="currentColor" />}
+                      {r.is_vip && <Star size={10} fill="currentColor" aria-hidden="true" />}
                       <span className="truncate">{r.guest_name}</span>
                     </Link>
                   );

@@ -50,8 +50,8 @@ export default async function ReservationDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/reservations" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-          <ArrowLeft size={18} />
+        <Link href="/reservations" aria-label="Back to reservations" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+          <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className="flex-1">
           <div className="font-mono text-xs text-gray-400">{r.booking_code}</div>
@@ -191,11 +191,11 @@ export default async function ReservationDetailPage({ params }: PageProps) {
               <div className="space-y-2">
                 <Link
                   href={`/guests/${guest.id}`}
-                  className="font-semibold text-base text-gray-900 hover:text-brand-600 inline-flex items-center gap-2"
+                  className="font-semibold text-base text-gray-900 hover:text-brand-600 inline-flex items-center gap-2 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
                 >
                   {guest.full_name}
                   {guest.is_vip && (
-                    <Star size={12} className="text-amber-500" fill="currentColor" />
+                    <Star size={12} className="text-amber-500" fill="currentColor" aria-hidden="true" />
                   )}
                 </Link>
                 {guest.email && <div className="text-xs text-gray-600">{guest.email}</div>}
@@ -237,7 +237,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
             <Section title="Property">
               <Link
                 href={`/properties/${property.id}`}
-                className="block hover:opacity-90 transition"
+                className="block hover:opacity-90 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
               >
                 <div className="font-semibold text-sm text-gray-900">{property.name}</div>
                 <div className="font-mono text-[11px] text-gray-400">{property.code}</div>
@@ -266,7 +266,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
       <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">{title}</h2>
       {children}
     </div>
@@ -289,7 +289,7 @@ function KV({
   return (
     <div>
       <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5 inline-flex items-center gap-1">
-        {Icon && <Icon size={10} />}
+        {Icon && <Icon size={10} aria-hidden="true" />}
         {label}
       </div>
       <div

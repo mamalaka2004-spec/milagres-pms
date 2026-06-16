@@ -42,9 +42,9 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Reservations</h1>
         <Link
           href="/reservations/new"
-          className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition"
+          className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={16} /> New Reservation
+          <Plus size={16} aria-hidden="true" /> New Reservation
         </Link>
       </div>
 
@@ -53,12 +53,14 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
           name="search"
           defaultValue={params.search || ""}
           placeholder="Booking code..."
-          className="flex-1 min-w-[180px] px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-brand-400"
+          aria-label="Search by booking code"
+          className="flex-1 min-w-[180px] px-4 py-2 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-400/40"
         />
         <select
           name="status"
           defaultValue={params.status || ""}
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+          aria-label="Filter by status"
+          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           <option value="">All statuses</option>
           {Object.entries(RESERVATION_STATUSES).map(([k, v]) => (
@@ -70,7 +72,8 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         <select
           name="channel"
           defaultValue={params.channel || ""}
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
+          aria-label="Filter by channel"
+          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           <option value="">All channels</option>
           {Object.entries(CHANNELS).map(([k, v]) => (
@@ -81,7 +84,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         </select>
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200"
+          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           Filter
         </button>
@@ -99,7 +102,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
           action={!params.search && !params.status ? { label: "+ New Reservation", href: "/reservations/new" } : undefined}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -115,9 +118,9 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
               {reservations.map((r) => {
                 const { guest, property } = r;
                 return (
-                  <tr key={r.id} className="hover:bg-gray-50 transition">
+                  <tr key={r.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3">
-                      <Link href={`/reservations/${r.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800">
+                      <Link href={`/reservations/${r.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded">
                         {r.booking_code}
                       </Link>
                       <div className="mt-0.5">
@@ -128,7 +131,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                       <div className="font-semibold text-sm text-gray-900 inline-flex items-center gap-1">
                         {guest?.full_name || "—"}
                         {guest?.is_vip && (
-                          <Star size={11} className="text-amber-500" fill="currentColor" />
+                          <Star size={11} className="text-amber-500" fill="currentColor" aria-hidden="true" />
                         )}
                       </div>
                       <div className="md:hidden text-xs text-gray-500">{property?.name}</div>
@@ -164,9 +167,10 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
 
       <Link
         href="/reservations/new"
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30"
+        aria-label="New reservation"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={24} />
+        <Plus size={24} aria-hidden="true" />
       </Link>
     </div>
   );
