@@ -12,9 +12,12 @@ import {
   CheckCheck,
   Phone,
   Sparkles,
+  LayoutGrid,
+  MessageSquare,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { SalesKanban } from "./sales-kanban";
 import {
   Database,
   LeadStage,
@@ -127,34 +130,81 @@ export function SalesShell() {
 
   const activeLine = lines.find((l) => l.id === activeLineId) || lines[0];
 
+  return <SalesWorkspace lines={lines} activeLine={activeLine} onSwitchLine={setActiveLineId} />;
+}
+
+function SalesWorkspace({
+  lines,
+  activeLine,
+  onSwitchLine,
+}: {
+  lines: LineRow[];
+  activeLine: LineRow;
+  onSwitchLine: (id: string) => void;
+}) {
+  const [view, setView] = useState<"conversas" | "funil">("conversas");
+  const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
+
   return (
     <div className="h-[calc(100vh-180px)] min-h-[560px] flex flex-col">
-      {lines.length > 1 && (
-        <div className="flex gap-1 p-1 bg-gray-50 rounded-lg mb-3 self-start">
-          {lines.map((l) => (
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* View toggle */}
+        <div className="flex gap-1 p-1 bg-gray-50 rounded-lg">
+          {([
+            { id: "conversas", label: "Conversas", icon: MessageSquare },
+            { id: "funil", label: "Funil", icon: LayoutGrid },
+          ] as const).map((v) => (
             <button
-              key={l.id}
-              onClick={() => setActiveLineId(l.id)}
+              key={v.id}
+              onClick={() => setView(v.id)}
+              aria-pressed={view === v.id}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
-                activeLine.id === l.id
-                  ? "bg-white shadow-sm text-amber-700"
-                  : "text-gray-500 hover:text-gray-700"
+                "px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
+                view === v.id ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Phone size={11} aria-hidden="true" />
-              {l.label}
-              <span className="text-[10px] text-gray-400 font-normal">{l.phone}</span>
+              <v.icon size={13} aria-hidden="true" />
+              {v.label}
             </button>
           ))}
         </div>
+
+        {lines.length > 1 && (
+          <div className="flex gap-1 p-1 bg-gray-50 rounded-lg">
+            {lines.map((l) => (
+              <button
+                key={l.id}
+                onClick={() => onSwitchLine(l.id)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
+                  activeLine.id === l.id ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700"
+                )}
+              >
+                <Phone size={11} aria-hidden="true" />
+                {l.label}
+                <span className="text-[10px] text-gray-400 font-normal">{l.phone}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {view === "funil" ? (
+        <SalesKanban
+          lineId={activeLine.id}
+          onOpenLead={(id) => {
+            setFocusLeadId(id);
+            setView("conversas");
+          }}
+        />
+      ) : (
+        <SalesPipeline lineId={activeLine.id} focusLeadId={focusLeadId} />
       )}
-      <SalesPipeline lineId={activeLine.id} />
     </div>
   );
 }
 
-function SalesPipeline({ lineId }: { lineId: string }) {
+function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: string | null }) {
   const [conversations, setConversations] = useState<SalesConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +229,11 @@ function SalesPipeline({ lineId }: { lineId: string }) {
     setSelectedId(null);
     loadConversations();
   }, [lineId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When a lead is opened from the Funil (Kanban) view, focus it here.
+  useEffect(() => {
+    if (focusLeadId) setSelectedId(focusLeadId);
+  }, [focusLeadId]);
 
   // Realtime — bump when conversations or lead data change
   useEffect(() => {
