@@ -16,6 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { AiAssistBar } from "@/components/chat/ai-assist-bar";
+import { ComposerTools } from "@/components/chat/composer-tools";
 import type {
   Database,
   WaConversationStatus,
@@ -357,7 +358,16 @@ function ConversationView({
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
   const supabase = useMemo(() => createClient(), []);
+
+  // Auto-grow the composer up to max-h-32 (128px); reset when cleared.
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 128) + "px";
+  }, [text]);
 
   const refresh = useCallback(async () => {
     try {
@@ -552,7 +562,17 @@ function ConversationView({
           onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))}
         />
         <div className="flex gap-2 items-end">
+          <ComposerTools
+            accent="brand"
+            onInsert={(t) => setText((prev) => prev + t)}
+            variables={{
+              nome: conversation?.contact_name,
+              empresa: "Milagres Hospedagens",
+              telefone: conversation?.contact_phone,
+            }}
+          />
           <textarea
+            ref={taRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -564,7 +584,7 @@ function ConversationView({
             aria-label="Digite uma mensagem"
             placeholder="Digite uma mensagem (Enter envia, Shift+Enter quebra linha)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32"
+            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32 overflow-y-auto"
           />
           <button
             onClick={send}

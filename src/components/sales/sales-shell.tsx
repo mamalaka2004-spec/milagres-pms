@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { SalesKanban } from "./sales-kanban";
 import { AiAssistBar } from "@/components/chat/ai-assist-bar";
+import { ComposerTools } from "@/components/chat/composer-tools";
 import {
   Database,
   LeadStage,
@@ -412,7 +413,16 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
   const supabase = useMemo(() => createClient(), []);
+
+  // Auto-grow the composer up to max-h-32 (128px); reset when cleared.
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 128) + "px";
+  }, [text]);
 
   const refresh = useCallback(async () => {
     try {
@@ -527,14 +537,24 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
           onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))}
         />
         <div className="flex gap-2 items-end">
+          <ComposerTools
+            accent="amber"
+            onInsert={(t) => setText((prev) => prev + t)}
+            variables={{
+              nome: conversation.contact_name,
+              empresa: "Milagres Hospedagens",
+              telefone: conversation.contact_phone,
+            }}
+          />
           <textarea
+            ref={taRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             aria-label="Resposta manual"
             placeholder="Resposta manual (Enter envia)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32"
+            className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-32 overflow-y-auto"
           />
           <button
             onClick={send}
