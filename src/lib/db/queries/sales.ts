@@ -15,7 +15,8 @@ export async function listSalesConversations(lineId: string): Promise<SalesConve
     .select("*, lead_data:whatsapp_lead_data(*)")
     .eq("line_id", lineId)
     .order("pinned", { ascending: false })
-    .order("last_message_at", { ascending: false, nullsFirst: false });
+    .order("last_message_at", { ascending: false, nullsFirst: false })
+    .limit(50);
   if (error) throw error;
   // PostgREST returns the joined row as an object (since it's a 1:1 via PK FK).
   return ((data as unknown as SalesConversationRow[]) || []).map((c) => ({

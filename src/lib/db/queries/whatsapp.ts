@@ -70,6 +70,7 @@ export interface ConversationFilters {
   status?: WaConversationStatus;
   unread_only?: boolean;
   search?: string;
+  limit?: number;
 }
 
 export async function listConversations(
@@ -92,6 +93,10 @@ export async function listConversations(
       query = query.or(`contact_name.ilike.%${term}%,contact_phone.ilike.%${term}%,last_message_text.ilike.%${term}%`);
     }
   }
+
+  // Cap the payload — the list shows the most recent/pinned first. Avoids
+  // fetching 1000+ rows on every load/refetch.
+  query = query.limit(filters.limit ?? 50);
 
   const { data, error } = await query;
   if (error) throw error;

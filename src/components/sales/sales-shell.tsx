@@ -213,6 +213,7 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const supabase = useMemo(() => createClient(), []);
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -239,20 +240,28 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
 
   // Realtime — bump when conversations or lead data change
   useEffect(() => {
+    // Debounced refetch: coalesce bursts (message + lead-data updates) into one.
+    const bump = () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      refetchTimer.current = setTimeout(() => loadConversations(), 600);
+    };
     const ch1 = supabase
       .channel(`sales-conv-${lineId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_conversations", filter: `line_id=eq.${lineId}` },
-        () => loadConversations()
+        bump
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_lead_data" },
-        () => loadConversations()
+        bump
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch1); };
+    return () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
+      supabase.removeChannel(ch1);
+    };
   }, [supabase, lineId, loadConversations]);
 
   const filtered = useMemo(() => {

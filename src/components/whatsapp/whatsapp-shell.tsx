@@ -184,6 +184,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -214,17 +215,23 @@ function ConversationListPane({ lineId }: { lineId: string }) {
     return () => clearTimeout(t);
   }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // realtime — bump conversation when a new message lands
+  // realtime — bump conversation when a new message lands.
+  // Debounced: a burst of changes (AI reply + status updates) triggers at most
+  // one refetch, not one per event — avoids the refetch storm.
   useEffect(() => {
     const channel = supabase
       .channel(`wa-conv-${lineId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_conversations", filter: `line_id=eq.${lineId}` },
-        () => loadConversations()
+        () => {
+          if (refetchTimer.current) clearTimeout(refetchTimer.current);
+          refetchTimer.current = setTimeout(() => loadConversations(), 600);
+        }
       )
       .subscribe();
     return () => {
+      if (refetchTimer.current) clearTimeout(refetchTimer.current);
       supabase.removeChannel(channel);
     };
   }, [supabase, lineId, loadConversations]);
