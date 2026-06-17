@@ -8,6 +8,7 @@ import {
   Search,
   Pin,
   PinOff,
+  Star,
   Bot,
   Phone,
   CheckCheck,
@@ -17,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { AiAssistBar } from "@/components/chat/ai-assist-bar";
 import { ComposerTools } from "@/components/chat/composer-tools";
+import { ContactPanel } from "@/components/whatsapp/contact-panel";
 import type {
   Database,
   WaConversationStatus,
@@ -119,7 +121,7 @@ export function WhatsappShell() {
       {lines.length > 1 && (
         <LinePicker lines={lines} activeId={activeLine.id} onSelect={setActiveLineId} />
       )}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-3 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-3 overflow-hidden">
         <ConversationListPane lineId={activeLine.id} />
       </div>
     </div>
@@ -227,6 +229,8 @@ function ConversationListPane({ lineId }: { lineId: string }) {
     };
   }, [supabase, lineId, loadConversations]);
 
+  const selectedConv = conversations.find((c) => c.id === selectedId) || null;
+
   return (
     <>
       <aside className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
@@ -297,6 +301,7 @@ function ConversationListPane({ lineId }: { lineId: string }) {
                         <span className="text-xs text-gray-500 truncate flex-1">
                           {c.last_message_text || "—"}
                         </span>
+                        {(c as { important?: boolean }).important && <Star size={10} className="text-brand-500 fill-brand-500 shrink-0" aria-hidden="true" />}
                         {c.pinned && <Pin size={10} className="text-brand-500 shrink-0" aria-hidden="true" />}
                         {c.unread_count > 0 && (
                           <span className="bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
@@ -324,6 +329,15 @@ function ConversationListPane({ lineId }: { lineId: string }) {
           </div>
         )}
       </section>
+      <aside className="hidden lg:flex bg-white border border-gray-200 shadow-sm rounded-xl flex-col overflow-hidden min-h-0">
+        {selectedConv ? (
+          <ContactPanel conversation={selectedConv} onChange={loadConversations} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-300 text-sm p-4 text-center">
+            Selecione uma conversa para ver o contato
+          </div>
+        )}
+      </aside>
     </>
   );
 }

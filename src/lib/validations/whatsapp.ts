@@ -25,6 +25,8 @@ export const lineCreateSchema = z.object({
 export const conversationPatchSchema = z.object({
   status: z.enum(["open", "snoozed", "closed"]).optional(),
   pinned: z.boolean().optional(),
+  important: z.boolean().optional(),
+  marked_unread: z.boolean().optional(),
   ai_active: z.boolean().optional(),
   guest_id: z.string().uuid().nullable().optional(),
   reservation_id: z.string().uuid().nullable().optional(),

@@ -163,6 +163,8 @@ export async function updateConversation(
   patch: Partial<{
     status: WaConversationStatus;
     pinned: boolean;
+    important: boolean;
+    marked_unread: boolean;
     ai_active: boolean;
     guest_id: string | null;
     reservation_id: string | null;
