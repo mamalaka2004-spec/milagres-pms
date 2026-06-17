@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { AiAssistBar } from "@/components/chat/ai-assist-bar";
 import type {
   Database,
   WaConversationStatus,
@@ -544,6 +545,12 @@ function ConversationView({
             <AlertCircle size={12} aria-hidden="true" /> {err}
           </div>
         )}
+        <AiAssistBar
+          conversationId={conversationId}
+          purpose="booking"
+          accent="brand"
+          onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))}
+        />
         <div className="flex gap-2 items-end">
           <textarea
             value={text}

@@ -18,6 +18,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { SalesKanban } from "./sales-kanban";
+import { AiAssistBar } from "@/components/chat/ai-assist-bar";
 import {
   Database,
   LeadStage,
@@ -519,6 +520,12 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
             <Sparkles size={12} aria-hidden="true" /> IA da Sarah está ativa. Pause antes de enviar uma resposta manual pra evitar duas respostas.
           </div>
         )}
+        <AiAssistBar
+          conversationId={conversation.id}
+          purpose="sales"
+          accent="amber"
+          onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))}
+        />
         <div className="flex gap-2 items-end">
           <textarea
             value={text}
