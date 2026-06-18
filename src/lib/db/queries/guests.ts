@@ -143,12 +143,21 @@ export async function updateGuest(id: string, data: GuestUpdate) {
   return guest as GuestRow;
 }
 
+// Hard delete — the guests table has no deleted_at column (no soft-delete support).
+export async function deleteGuest(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("guests").delete().eq("id", id);
+  if (error) throw error;
+  return { success: true };
+}
+
 export async function recomputeGuestStats(guestId: string) {
   const supabase = createAdminClient();
   const { data: stats, error: statsError } = await supabase
     .from("reservations")
     .select("total_cents, status")
     .eq("guest_id", guestId)
+    .is("deleted_at", null)
     .in("status", ["confirmed", "checked_in", "checked_out"]);
   if (statsError) throw statsError;
 

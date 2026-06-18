@@ -6,6 +6,7 @@ import { listPaymentsForCompany } from "@/lib/db/queries/payments";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { CHANNELS } from "@/lib/utils/constants";
 import { RevenueChart } from "@/components/finance/revenue-chart";
+import { PaymentDeleteButton } from "@/components/finance/payment-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -228,6 +229,9 @@ export default async function FinancePage({ searchParams }: PageProps) {
                 <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase">
                   Status
                 </th>
+                <th className="px-4 py-2 text-right text-[11px] font-semibold text-gray-500 uppercase">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -278,6 +282,9 @@ export default async function FinancePage({ searchParams }: PageProps) {
                     >
                       {p.status}
                     </span>
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <PaymentDeleteButton paymentId={p.id} />
                   </td>
                 </tr>
               ))}

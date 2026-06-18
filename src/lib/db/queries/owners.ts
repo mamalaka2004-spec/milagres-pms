@@ -84,6 +84,17 @@ export async function updateOwner(id: string, data: Partial<OwnerInsert>) {
   return owner;
 }
 
+// ─── Hard delete (owners table has no deleted_at column) ───
+export async function deleteOwner(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("owners")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+  return { success: true };
+}
+
 export async function assignOwnerToProperty(params: {
   property_id: string;
   owner_id: string;

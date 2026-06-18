@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { paymentUpdateSchema } from "@/lib/validations/payment";
 import {
   updatePayment,
+  deletePayment,
   syncReservationPaymentStatus,
 } from "@/lib/db/queries/payments";
 import { createServerClient } from "@/lib/supabase/server";
@@ -78,6 +79,42 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     await syncReservationPaymentStatus(existing.reservation_id);
     return apiSuccess(updated);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
+// ─── DELETE /api/payments/[id] ───
+// Hard delete: the payments table has no deleted_at column.
+// Auto-created finance/refund entries in `financial_entries` are intentionally
+// left intact to avoid corrupting historical finance totals (see deletePayment).
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await requireRole(["admin", "manager"]);
+    const { id } = await params;
+    const supabase = await createServerClient();
+
+    const { data: existingRow, error: fetchErr } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (fetchErr || !existingRow) return apiNotFound("Payment");
+    const existing = existingRow as {
+      id: string;
+      company_id: string;
+      reservation_id: string;
+    };
+    if (existing.company_id !== user.company_id) return apiForbidden();
+
+    await deletePayment(id);
+
+    // Recompute the reservation's payment_status now that this payment is gone.
+    await syncReservationPaymentStatus(existing.reservation_id);
+
+    return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

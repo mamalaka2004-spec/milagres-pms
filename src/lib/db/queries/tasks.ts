@@ -124,6 +124,14 @@ export async function updateTask(
   return data as TaskRow;
 }
 
+// Hard delete — the housekeeping_tasks table has no deleted_at column.
+export async function deleteTask(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("housekeeping_tasks").delete().eq("id", id);
+  if (error) throw error;
+  return { success: true };
+}
+
 export async function getTaskById(id: string): Promise<TaskWithJoins | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

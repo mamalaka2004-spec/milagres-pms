@@ -99,6 +99,17 @@ export async function updatePayment(
   return data as PaymentRow;
 }
 
+// Hard delete — the payments table has no deleted_at column.
+// NOTE: any finance/refund entries auto-created from this payment (e.g. on refund)
+// live in `financial_entries` and are NOT touched here, to avoid corrupting
+// historical finance totals. TODO: revisit if reversal of those entries is required.
+export async function deletePayment(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("payments").delete().eq("id", id);
+  if (error) throw error;
+  return { success: true };
+}
+
 /**
  * Recalculate a reservation's payment_status based on completed payments.
  * Returns the new status without updating; caller decides if/when to persist.

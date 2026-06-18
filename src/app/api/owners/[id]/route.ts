@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { ownerSchema } from "@/lib/validations/owner";
-import { getOwnerById, updateOwner } from "@/lib/db/queries/owners";
+import { getOwnerById, updateOwner, deleteOwner } from "@/lib/db/queries/owners";
 import { requireAuth, requireRole } from "@/lib/auth";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 
@@ -35,6 +35,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       email: validation.data.email === "" ? null : validation.data.email,
     });
     return apiSuccess(owner);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
+export async function DELETE(_: NextRequest, { params }: Params) {
+  try {
+    const user = await requireRole(["admin"]);
+    const { id } = await params;
+    const existing = await getOwnerById(id);
+    if (!existing) return apiNotFound("Owner");
+    if (existing.company_id !== user.company_id) return apiForbidden();
+    await deleteOwner(id);
+    return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

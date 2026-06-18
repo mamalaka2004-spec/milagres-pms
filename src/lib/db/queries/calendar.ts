@@ -69,6 +69,7 @@ export async function getCalendarData(
       guest:guests (full_name, is_vip)
     `)
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .lte("check_in_date", to)
     .gte("check_out_date", from)
     .not("status", "in", "(canceled,no_show)");

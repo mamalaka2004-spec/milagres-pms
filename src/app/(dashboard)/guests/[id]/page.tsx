@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, Star } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, Star, Pencil } from "lucide-react";
 import { getGuestById } from "@/lib/db/queries/guests";
 import { requireAuth } from "@/lib/auth";
 import { formatCurrency, formatPhone, formatDate } from "@/lib/utils/format";
@@ -8,6 +8,7 @@ import {
   ReservationStatusBadge,
   PaymentStatusBadge,
 } from "@/components/shared/status-badges";
+import { GuestDeleteButton } from "@/components/guests/guest-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,15 @@ export default async function GuestDetailPage({ params }: PageProps) {
               ))}
             </div>
           )}
+        </div>
+        <div className="flex items-start gap-2 flex-shrink-0">
+          <Link
+            href={`/guests/${guest.id}/edit`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+          >
+            <Pencil size={16} aria-hidden="true" /> Editar
+          </Link>
+          <GuestDeleteButton guestId={guest.id} guestName={guest.full_name} />
         </div>
       </div>
 

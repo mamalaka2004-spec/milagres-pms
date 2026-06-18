@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { guestUpdateSchema } from "@/lib/validations/guest";
-import { getGuestById, updateGuest } from "@/lib/db/queries/guests";
+import { getGuestById, updateGuest, deleteGuest } from "@/lib/db/queries/guests";
 import { requireAuth, requireRole } from "@/lib/auth";
 import {
   apiSuccess,
@@ -53,6 +53,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const guest = await updateGuest(id, update);
     return apiSuccess(guest);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
+// ─── DELETE /api/guests/[id] ───
+// Hard delete: the guests table has no deleted_at column.
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await requireRole(["admin", "manager"]);
+    const { id } = await params;
+
+    const existing = await getGuestById(id);
+    if (!existing) return apiNotFound("Guest");
+    if (existing.company_id !== user.company_id) return apiForbidden();
+
+    await deleteGuest(id);
+    return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

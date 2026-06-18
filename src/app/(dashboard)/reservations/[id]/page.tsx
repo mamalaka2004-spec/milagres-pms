@@ -5,6 +5,7 @@ import {
   Calendar as CalendarIcon,
   Users as UsersIcon,
   Star,
+  Pencil,
 } from "lucide-react";
 import { getReservationById } from "@/lib/db/queries/reservations";
 import { requireAuth } from "@/lib/auth";
@@ -20,6 +21,7 @@ import {
 } from "@/components/shared/status-badges";
 import { FinancialBreakdown } from "@/components/reservations/financial-breakdown";
 import { StatusActions } from "@/components/reservations/status-actions";
+import { DeleteReservationButton } from "@/components/reservations/delete-reservation-button";
 import { PaymentForm } from "@/components/finance/payment-form";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +64,13 @@ export default async function ReservationDetailPage({ params }: PageProps) {
             <ChannelBadge channel={r.channel} />
           </h1>
         </div>
+        <Link
+          href={`/reservations/${r.id}/edit`}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+        >
+          <Pencil size={14} aria-hidden="true" />
+          Editar
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -230,6 +239,9 @@ export default async function ReservationDetailPage({ params }: PageProps) {
           {/* Status actions */}
           <Section title="Actions">
             <StatusActions reservationId={r.id} currentStatus={r.status} />
+            <div className="pt-3 mt-3 border-t border-gray-100">
+              <DeleteReservationButton reservationId={r.id} />
+            </div>
           </Section>
 
           {/* Property panel */}

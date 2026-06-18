@@ -7,6 +7,7 @@ import {
   getReservationById,
   updateReservation,
   checkAvailability,
+  deleteReservation,
 } from "@/lib/db/queries/reservations";
 import { requireAuth, requireRole } from "@/lib/auth";
 import {
@@ -130,6 +131,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const reservation = await updateReservation(id, update);
     return apiSuccess(reservation);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
+// ─── DELETE /api/reservations/[id] ───
+// Soft delete — reservations affect availability/calendar and are never
+// physically removed. Status-transition logic is untouched.
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await requireRole(["admin"]);
+    const { id } = await params;
+
+    const existing = await getReservationById(id);
+    if (!existing) return apiNotFound("Reservation");
+    if (existing.company_id !== user.company_id) return apiForbidden();
+
+    await deleteReservation(id);
+    return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

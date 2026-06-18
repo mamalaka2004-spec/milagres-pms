@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { taskUpdateSchema } from "@/lib/validations/task";
-import { getTaskById, updateTask } from "@/lib/db/queries/tasks";
+import { getTaskById, updateTask, deleteTask } from "@/lib/db/queries/tasks";
 import { requireRole } from "@/lib/auth";
 import {
   apiSuccess,
@@ -55,6 +55,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const task = await updateTask(id, patch);
     return apiSuccess(task);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
+// ─── DELETE /api/tasks/[id] ───
+// Hard delete: the housekeeping_tasks table has no deleted_at column.
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await requireRole(["admin", "manager", "staff"]);
+    const { id } = await params;
+
+    const existing = await getTaskById(id);
+    if (!existing) return apiNotFound("Task");
+    if (existing.company_id !== user.company_id) return apiForbidden();
+
+    await deleteTask(id);
+    return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

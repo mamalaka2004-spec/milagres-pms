@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, CheckCircle2, Play, SkipForward, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, Play, SkipForward, Clock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { TASK_TYPE_LABELS } from "@/lib/validations/task";
 import { TASK_STATUSES, PRIORITIES } from "@/lib/utils/constants";
@@ -17,6 +17,7 @@ interface TaskCardProps {
 export function TaskCard({ task }: TaskCardProps) {
   const router = useRouter();
   const [pending, setPending] = useState<TaskStatus | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   const today = new Date();
@@ -46,6 +47,21 @@ export function TaskCard({ task }: TaskCardProps) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
       setPending(null);
+    }
+  };
+
+  const remove = async () => {
+    if (!window.confirm("Delete this task? This cannot be undone.")) return;
+    setDeleting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Delete failed");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+      setDeleting(false);
     }
   };
 
@@ -97,12 +113,28 @@ export function TaskCard({ task }: TaskCardProps) {
             </Link>
           )}
         </div>
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
-          style={{ background: statusCfg.bgColor, color: statusCfg.color }}
-        >
-          {statusCfg.label}
-        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: statusCfg.bgColor, color: statusCfg.color }}
+          >
+            {statusCfg.label}
+          </span>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={deleting || pending !== null}
+            aria-label="Delete task"
+            title="Delete task"
+            className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+          >
+            {deleting ? (
+              <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Trash2 size={13} aria-hidden="true" />
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 text-xs text-gray-600 pt-1 border-t border-gray-50">

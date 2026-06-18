@@ -217,6 +217,7 @@ export interface Database {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          deleted_at: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["reservations"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["reservations"]["Insert"]>;

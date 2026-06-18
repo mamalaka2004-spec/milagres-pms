@@ -101,6 +101,7 @@ export async function getReservations(
     .from("reservations")
     .select(RESERVATION_LIST_SELECT)
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .order("check_in_date", { ascending: false });
 
   if (filters.status) query = query.eq("status", filters.status);
@@ -176,6 +177,7 @@ export async function getReservationById(id: string): Promise<ReservationWithDet
       payments (id, amount_cents, method, status, reference, paid_at, notes, created_at)
     `)
     .eq("id", id)
+    .is("deleted_at", null)
     .single();
   if (error) throw error;
   return data as unknown as ReservationWithDetails;
@@ -194,6 +196,7 @@ export async function checkAvailability(params: {
     .from("reservations")
     .select("id, booking_code, check_in_date, check_out_date, status")
     .eq("property_id", params.property_id)
+    .is("deleted_at", null)
     .not("status", "in", "(canceled,no_show)")
     .lt("check_in_date", params.check_out_date)
     .gt("check_out_date", params.check_in_date);
@@ -267,6 +270,18 @@ export async function updateReservation(
     .single();
   if (error) throw error;
   return row as ReservationRow;
+}
+
+// ─── Soft delete ───
+// Reservations affect availability/calendar, so they are never physically
+// removed — we only stamp deleted_at and exclude them everywhere else.
+export async function deleteReservation(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await (supabase.from("reservations") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+  return { success: true };
 }
 
 import { VALID_STATUS_TRANSITIONS } from "@/lib/utils/constants";
