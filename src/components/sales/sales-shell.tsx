@@ -9,7 +9,6 @@ import {
   Bot,
   BotOff,
   AlertCircle,
-  CheckCheck,
   Phone,
   Sparkles,
   LayoutGrid,
@@ -20,12 +19,14 @@ import { cn } from "@/lib/utils/cn";
 import { SalesKanban } from "./sales-kanban";
 import { AiAssistBar } from "@/components/chat/ai-assist-bar";
 import { ComposerTools } from "@/components/chat/composer-tools";
+import { api, formatTime, formatTimeFull } from "@/lib/chat/utils";
+import { Avatar } from "@/components/chat/avatar";
+import { StatusIcon } from "@/components/chat/status-icon";
 import {
   Database,
   LeadStage,
   LEAD_STAGE_ORDER,
   LEAD_STAGE_LABELS,
-  WaMessageStatus,
 } from "@/types/database";
 
 type LineRow = Database["public"]["Tables"]["whatsapp_lines"]["Row"];
@@ -33,34 +34,6 @@ type ConvRow = Database["public"]["Tables"]["whatsapp_conversations"]["Row"];
 type MsgRow = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
 type LeadDataRow = Database["public"]["Tables"]["whatsapp_lead_data"]["Row"];
 type SalesConvRow = ConvRow & { lead_data: LeadDataRow | null };
-
-interface ApiResp<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init);
-  const json = (await res.json()) as ApiResp<T>;
-  if (!json.success) throw new Error(json.error || `HTTP ${res.status}`);
-  return json.data as T;
-}
-
-function formatTime(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function formatTimeFull(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
 
 const STAGE_COLOR: Record<LeadStage, string> = {
   apresentacao: "bg-gray-100 text-gray-700 border-gray-200",
@@ -497,7 +470,7 @@ function SalesThread({ conversation, onChange }: { conversation: SalesConvRow; o
   return (
     <>
       <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-        <Avatar name={conversation.contact_name || conversation.contact_phone} />
+        <Avatar name={conversation.contact_name || conversation.contact_phone} accent="amber" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm text-gray-900 truncate">
             {conversation.contact_name || conversation.contact_phone}
@@ -796,18 +769,3 @@ function SalesMessageBubble({ message, showSenderHint }: { message: MsgRow; show
   );
 }
 
-function StatusIcon({ status }: { status: WaMessageStatus }) {
-  if (status === "pending") return <Loader2 size={11} className="animate-spin" />;
-  if (status === "failed") return <AlertCircle size={11} />;
-  if (status === "sent" || status === "delivered" || status === "read") return <CheckCheck size={11} />;
-  return null;
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = (name || "?").split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
-  return (
-    <div className="w-9 h-9 rounded-full bg-amber-500/15 text-amber-700 flex items-center justify-center text-xs font-semibold shrink-0">
-      {initials.slice(0, 2)}
-    </div>
-  );
-}

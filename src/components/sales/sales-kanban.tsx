@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, AlertCircle, GripVertical, TrendingUp, Users, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { api, formatTime } from "@/lib/chat/utils";
 import {
   Database,
   LeadStage,
@@ -15,18 +16,6 @@ type ConvRow = Database["public"]["Tables"]["whatsapp_conversations"]["Row"];
 type LeadDataRow = Database["public"]["Tables"]["whatsapp_lead_data"]["Row"];
 type SalesConvRow = ConvRow & { lead_data: LeadDataRow | null };
 
-interface ApiResp<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init);
-  const json = (await res.json()) as ApiResp<T>;
-  if (!json.success) throw new Error(json.error || `HTTP ${res.status}`);
-  return json.data as T;
-}
-
 // Existing palette only — same stage colors used across the Sales module.
 const STAGE_COLUMN: Record<LeadStage, { head: string; ring: string }> = {
   apresentacao: { head: "bg-gray-100 text-gray-700 border-gray-200", ring: "ring-gray-300" },
@@ -36,16 +25,6 @@ const STAGE_COLUMN: Record<LeadStage, { head: string; ring: string }> = {
   handoff: { head: "bg-amber-50 text-amber-800 border-amber-300", ring: "ring-amber-300" },
   encerramento: { head: "bg-gray-50 text-gray-500 border-gray-200", ring: "ring-gray-300" },
 };
-
-function formatTime(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
 
 export function SalesKanban({
   lineId,

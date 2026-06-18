@@ -11,7 +11,6 @@ import {
   Star,
   Bot,
   Phone,
-  CheckCheck,
   AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -19,50 +18,19 @@ import { cn } from "@/lib/utils/cn";
 import { AiAssistBar } from "@/components/chat/ai-assist-bar";
 import { ComposerTools } from "@/components/chat/composer-tools";
 import { ContactPanel } from "@/components/whatsapp/contact-panel";
+import { api, formatTime, formatTimeFull } from "@/lib/chat/utils";
+import { Avatar } from "@/components/chat/avatar";
+import { StatusIcon } from "@/components/chat/status-icon";
 import type {
   Database,
   WaConversationStatus,
   WaMessageDirection,
   WaMessageSender,
-  WaMessageStatus,
 } from "@/types/database";
 
 type LineRow = Database["public"]["Tables"]["whatsapp_lines"]["Row"];
 type ConvRow = Database["public"]["Tables"]["whatsapp_conversations"]["Row"];
 type MsgRow = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
-
-interface ApiResp<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init);
-  const json = (await res.json()) as ApiResp<T>;
-  if (!json.success) throw new Error(json.error || `HTTP ${res.status}`);
-  return json.data as T;
-}
-
-function formatTime(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  }
-  const yesterday = new Date(today.getTime() - 86_400_000);
-  if (d.toDateString() === yesterday.toDateString()) return "Ontem";
-  if (today.getTime() - d.getTime() < 7 * 86_400_000) {
-    return d.toLocaleDateString("pt-BR", { weekday: "short" });
-  }
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function formatTimeFull(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
 
 export function WhatsappShell() {
   const [lines, setLines] = useState<LineRow[]>([]);
@@ -346,20 +314,6 @@ function ConversationListPane({ lineId }: { lineId: string }) {
         )}
       </aside>
     </>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = (name || "?")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
-  return (
-    <div className="w-9 h-9 rounded-full bg-brand-500/15 text-brand-700 flex items-center justify-center text-xs font-semibold shrink-0">
-      {initials.slice(0, 2)}
-    </div>
   );
 }
 
@@ -669,11 +623,3 @@ function senderLabel(sender: WaMessageSender, direction: WaMessageDirection): st
   return "";
 }
 
-function StatusIcon({ status }: { status: WaMessageStatus }) {
-  if (status === "pending") return <Loader2 size={11} className="animate-spin" />;
-  if (status === "failed") return <AlertCircle size={11} />;
-  if (status === "sent") return <CheckCheck size={11} />;
-  if (status === "delivered") return <CheckCheck size={11} />;
-  if (status === "read") return <CheckCheck size={11} className="text-blue-300" />;
-  return null;
-}
