@@ -295,7 +295,7 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
   const selected = conversations.find((c) => c.id === selectedId) || null;
 
   return (
-    <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-3 overflow-hidden">
+    <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(300px,360px)] 2xl:grid-cols-[360px_minmax(0,1fr)_400px] gap-3 overflow-hidden">
       {/* LEFT — Pipeline list grouped by stage */}
       <aside className="bg-white border border-gray-200 shadow-sm rounded-xl flex flex-col overflow-hidden min-h-0">
         <div className="p-3 border-b border-gray-100">

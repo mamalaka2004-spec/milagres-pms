@@ -121,7 +121,7 @@ export function WhatsappShell() {
       {lines.length > 1 && (
         <LinePicker lines={lines} activeId={activeLine.id} onSelect={setActiveLineId} />
       )}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-3 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)_minmax(300px,360px)] 2xl:grid-cols-[360px_minmax(0,1fr)_400px] gap-3 overflow-hidden">
         <ConversationListPane lineId={activeLine.id} />
       </div>
     </div>

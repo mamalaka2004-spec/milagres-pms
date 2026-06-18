@@ -53,8 +53,8 @@ export default function DashboardLayout({
           userRole="admin"
         />
 
-        <main className="flex-1 overflow-auto p-3 md:p-4 lg:p-6 pb-20 lg:pb-6">
-          <div className="max-w-[1400px] mx-auto">{children}</div>
+        <main className="flex-1 overflow-auto p-3 md:p-4 lg:p-6 2xl:p-8 pb-20 lg:pb-6">
+          <div className="max-w-[1920px] mx-auto">{children}</div>
         </main>
       </div>
 
