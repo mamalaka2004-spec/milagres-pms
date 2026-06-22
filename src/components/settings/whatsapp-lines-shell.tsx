@@ -198,6 +198,8 @@ export function WhatsappLinesShell() {
 
 interface BackfillResult {
   chats_found: number;
+  offset: number;
+  next_offset: number | null;
   chats_processed: number;
   messages_imported: number;
   messages_skipped_or_dup: number;
@@ -206,14 +208,16 @@ interface BackfillResult {
 
 function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }) {
   const [limitPerChat, setLimitPerChat] = useState(200);
-  const [maxChats, setMaxChats] = useState(100);
+  const [maxChats, setMaxChats] = useState(50);
+  const [offset, setOffset] = useState(0);
   const [sinceDays, setSinceDays] = useState<number | "">("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<BackfillResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const run = async () => {
-    if (!confirm(`Vou puxar o histórico do Evolution para a linha "${line.label}". Pode demorar até 60s. Continuar?`)) return;
+  const run = async (overrideOffset?: number) => {
+    const off = overrideOffset ?? offset;
+    if (overrideOffset === undefined && !confirm(`Vou puxar o histórico do Evolution para a linha "${line.label}" (a partir do chat ${off}). Pode demorar até 60s. Continuar?`)) return;
     setBusy(true);
     setErr(null);
     setResult(null);
@@ -224,10 +228,13 @@ function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }
         body: JSON.stringify({
           limit_per_chat: limitPerChat,
           max_chats: maxChats,
+          offset: off,
           since_days: typeof sinceDays === "number" ? sinceDays : undefined,
         }),
       });
       setResult(data);
+      // Advance the offset field to where the next batch should start.
+      setOffset(data.next_offset ?? off);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Falha");
     } finally {
@@ -266,7 +273,16 @@ function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }
             min={1}
             max={500}
             value={maxChats}
-            onChange={(e) => setMaxChats(parseInt(e.target.value || "100", 10))}
+            onChange={(e) => setMaxChats(parseInt(e.target.value || "50", 10))}
+            className="input"
+          />
+        </Field>
+        <Field label="Começar a partir do chat (offset)" hint="0 = do início. Aumente pra puxar o próximo lote.">
+          <input
+            type="number"
+            min={0}
+            value={offset}
+            onChange={(e) => setOffset(parseInt(e.target.value || "0", 10))}
             className="input"
           />
         </Field>
@@ -293,6 +309,11 @@ function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }
               <div>Mensagens importadas</div><div className="font-mono text-right">{result.messages_imported}</div>
               <div>Duplicadas / puladas</div><div className="font-mono text-right">{result.messages_skipped_or_dup}</div>
             </div>
+            <div className="text-[11px] text-gray-500 pt-1 border-t border-emerald-100 mt-1">
+              {result.next_offset != null
+                ? `Lote ${result.offset}–${result.next_offset - 1} de ${result.chats_found}. Faltam mais — use "Próximo lote".`
+                : `Todos os ${result.chats_found} chats cobertos. ✅`}
+            </div>
             {result.chat_errors.length > 0 && (
               <details className="text-amber-700 mt-2">
                 <summary className="cursor-pointer">{result.chat_errors.length} erro(s) por chat</summary>
@@ -310,8 +331,18 @@ function BackfillModal({ line, onClose }: { line: LineRow; onClose: () => void }
           <button onClick={onClose} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
             {result ? "Fechar" : "Cancelar"}
           </button>
+          {result && result.next_offset != null && (
+            <button
+              onClick={() => run(result.next_offset!)}
+              disabled={busy}
+              className="bg-white border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+            >
+              {busy && <Loader2 className="animate-spin" size={14} aria-hidden="true" />}
+              Próximo lote ({result.next_offset})
+            </button>
+          )}
           <button
-            onClick={run}
+            onClick={() => run()}
             disabled={busy}
             className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
