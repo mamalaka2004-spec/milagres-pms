@@ -20,6 +20,9 @@ export interface ToolDef {
 interface ToolCtx {
   companyId: string;
   mode: AiMode;
+  /** Phone of the person in the conversation (E.164). Used by guest tools to
+   * scope "my reservation" lookups to the caller only — never trust a phone arg. */
+  contactPhone?: string | null;
 }
 
 /**
@@ -251,12 +254,128 @@ const financeSummary: ToolHandler = async (args, ctx) => {
   };
 };
 
+const propertyDetails: ToolHandler = async (args, ctx) => {
+  const supabase = await createServerClient();
+  let q = supabase
+    .from("properties")
+    .select(
+      "name, code, slug, type, address, neighborhood, city, max_guests, bedrooms, beds, bathrooms, description, short_description, house_rules, cancellation_policy, check_in_time, check_out_time, base_price_cents, cleaning_fee_cents"
+    )
+    .eq("company_id", ctx.companyId)
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .limit(1);
+
+  if (typeof args.property_code === "string") q = q.eq("code", args.property_code);
+  else if (typeof args.slug === "string") q = q.eq("slug", args.slug);
+  else if (typeof args.name === "string") q = q.ilike("name", `%${args.name}%`);
+  else return { error: "Forneça property_code, slug ou name" };
+
+  const { data } = await q.maybeSingle();
+  if (!data) return { error: "Imóvel não encontrado" };
+  const p = data as Record<string, unknown>;
+  const cents = (v: unknown) => (typeof v === "number" && v > 0 ? (v / 100).toFixed(2) : null);
+  return {
+    name: p.name,
+    code: p.code,
+    slug: p.slug,
+    type: p.type,
+    location: { address: p.address, neighborhood: p.neighborhood, city: p.city },
+    capacity: {
+      max_guests: p.max_guests,
+      bedrooms: p.bedrooms,
+      beds: p.beds,
+      bathrooms: p.bathrooms,
+    },
+    description: p.short_description || p.description || null,
+    house_rules: p.house_rules || null,
+    cancellation_policy: p.cancellation_policy || null,
+    check_in_time: p.check_in_time,
+    check_out_time: p.check_out_time,
+    base_price_brl: cents(p.base_price_cents),
+    cleaning_fee_brl: cents(p.cleaning_fee_cents),
+    public_url: `/p/${p.slug}`,
+  };
+};
+
+const findMyReservation: ToolHandler = async (_args, ctx) => {
+  const phone = (ctx.contactPhone || "").replace(/\D/g, "");
+  if (!phone) return { error: "Telefone do contato não disponível." };
+  const last8 = phone.slice(-8);
+  const supabase = await createServerClient();
+
+  const { data: guests } = await supabase
+    .from("guests")
+    .select("id, full_name")
+    .eq("company_id", ctx.companyId)
+    .ilike("phone", `%${last8}%`)
+    .limit(1);
+  const guest = (guests as Array<{ id: string; full_name: string }> | null)?.[0];
+  if (!guest) {
+    return { found: false, message: "Nenhuma reserva localizada para este número." };
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: resv } = await supabase
+    .from("reservations")
+    .select(
+      "booking_code, check_in_date, check_out_date, nights, status, property:properties(name, address, neighborhood, city, check_in_time, check_out_time, house_rules)"
+    )
+    .eq("company_id", ctx.companyId)
+    .eq("guest_id", guest.id)
+    .is("deleted_at", null)
+    .gte("check_out_date", today)
+    .order("check_in_date", { ascending: true })
+    .limit(5);
+
+  type R = {
+    booking_code: string;
+    check_in_date: string;
+    check_out_date: string;
+    nights: number;
+    status: string;
+    property: {
+      name: string;
+      address: string | null;
+      neighborhood: string | null;
+      city: string | null;
+      check_in_time: string | null;
+      check_out_time: string | null;
+      house_rules: string | null;
+    } | null;
+  };
+  const rows = (resv as unknown as R[]) || [];
+  if (rows.length === 0) {
+    return { found: false, guest: guest.full_name, message: "Sem reservas atuais ou futuras." };
+  }
+  return {
+    found: true,
+    guest: guest.full_name,
+    reservations: rows.map((r) => ({
+      booking_code: r.booking_code,
+      check_in: r.check_in_date,
+      check_out: r.check_out_date,
+      nights: r.nights,
+      status: r.status,
+      property: r.property?.name,
+      address: r.property?.address,
+      neighborhood: r.property?.neighborhood,
+      city: r.property?.city,
+      check_in_time: r.property?.check_in_time,
+      check_out_time: r.property?.check_out_time,
+      house_rules: r.property?.house_rules,
+    })),
+  };
+};
+
 /* ─────────────────────── registries (mode-scoped) ─────────────────────── */
 
 const HANDLERS: Record<string, ToolHandler> = {
   today_summary: todaySummary,
   list_properties: listProperties,
   check_availability: checkAvail,
+  property_details: propertyDetails,
+  find_my_reservation: findMyReservation,
   search_reservations: searchReservations,
   calendar_range: calendarRange,
   tasks_today: tasksToday,
@@ -302,6 +421,31 @@ const TOOL_DEFS: Record<string, ToolDef> = {
         },
         required: ["check_in_date", "check_out_date"],
       },
+    },
+  },
+  property_details: {
+    type: "function",
+    function: {
+      name: "property_details",
+      description:
+        "Detalhes completos de UM imóvel para tirar dúvidas do hóspede: localização, capacidade (quartos/camas/banheiros), descrição, regras da casa, política de cancelamento, horários de check-in/out e preço. Forneça property_code, slug OU name.",
+      parameters: {
+        type: "object",
+        properties: {
+          property_code: { type: "string" },
+          slug: { type: "string" },
+          name: { type: "string", description: "nome (busca aproximada)" },
+        },
+      },
+    },
+  },
+  find_my_reservation: {
+    type: "function",
+    function: {
+      name: "find_my_reservation",
+      description:
+        "Busca a reserva atual ou futura DO HÓSPEDE que está conversando (pelo telefone dele). Use quando perguntarem 'minha reserva', check-in/out, endereço do imóvel onde vão ficar, ou durante a estadia. Não recebe telefone como parâmetro — usa o do contato automaticamente.",
+      parameters: { type: "object", properties: {}, required: [] },
     },
   },
   search_reservations: {
@@ -371,11 +515,12 @@ const TOOL_DEFS: Record<string, ToolDef> = {
 };
 
 const MODE_TOOLS: Record<AiMode, string[]> = {
-  guest: ["list_properties", "check_availability"],
+  guest: ["list_properties", "check_availability", "property_details", "find_my_reservation"],
   operations: [
     "today_summary",
     "list_properties",
     "check_availability",
+    "property_details",
     "search_reservations",
     "calendar_range",
     "tasks_today",

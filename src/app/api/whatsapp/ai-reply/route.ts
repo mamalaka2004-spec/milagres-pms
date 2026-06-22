@@ -131,6 +131,7 @@ export async function POST(request: NextRequest) {
           const result = await dispatchTool(tc.function.name, tc.function.arguments, {
             companyId: line.company_id,
             mode: "guest",
+            contactPhone: conv.contact_phone,
           });
           let resultStr = JSON.stringify(result);
           if (resultStr.length > 8000) resultStr = resultStr.slice(0, 8000) + "…[truncated]";
