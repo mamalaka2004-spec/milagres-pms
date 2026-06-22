@@ -8,10 +8,7 @@ import {
   decodeMessage,
   jidToPhoneE164,
 } from "@/lib/whatsapp/evolution";
-import {
-  appendMessage,
-  findOrCreateConversation,
-} from "@/lib/db/queries/whatsapp";
+import { findOrCreateConversation } from "@/lib/db/queries/whatsapp";
 import {
   apiSuccess,
   apiError,
@@ -114,34 +111,63 @@ export async function POST(req: NextRequest, { params }: Params) {
         for (const r of (dup as { external_id: string }[]) || []) existing.add(r.external_id);
       }
 
+      // Build rows for NEW messages, then BULK insert (1 query per chat instead of
+      // one per message) — keeps the import well under the 60s function limit.
+      const rows: Record<string, unknown>[] = [];
+      const batchSeen = new Set<string>();
+      let newestTs = 0;
       for (const m of sorted) {
         const tsMs = Number(m.messageTimestamp || 0) * 1000;
         if (sinceMs && tsMs && tsMs < sinceMs) continue;
         if (!m.key?.id) continue;
-        if (existing.has(m.key.id)) {
+        if (existing.has(m.key.id) || batchSeen.has(m.key.id)) {
           messagesSkipped++;
           continue;
         }
+        batchSeen.add(m.key.id);
 
         const decoded = decodeMessage(m);
         const fromMe = !!m.key.fromMe;
+        rows.push({
+          conversation_id: conv.id,
+          direction: fromMe ? "outbound" : "inbound",
+          sender: fromMe ? "ai" : "guest",
+          text: decoded.text,
+          message_type: decoded.messageType,
+          media_mime_type: decoded.mediaMimeType,
+          file_name: decoded.fileName,
+          external_id: m.key.id,
+          status: "sent",
+          metadata: { backfill: true, source: "evolution_history", ts: tsMs || null },
+          // Preserve the real historical timestamp so messages show/sort correctly.
+          created_at: tsMs ? new Date(tsMs).toISOString() : new Date().toISOString(),
+        });
+        if (tsMs > newestTs) newestTs = tsMs;
+      }
 
-        try {
-          await appendMessage({
-            conversationId: conv.id,
-            direction: fromMe ? "outbound" : "inbound",
-            sender: fromMe ? "ai" : "guest",
-            text: decoded.text,
-            messageType: decoded.messageType,
-            mediaMimeType: decoded.mediaMimeType,
-            fileName: decoded.fileName,
-            externalId: m.key.id,
-            status: "sent",
-            metadata: { backfill: true, source: "evolution_history", ts: tsMs || null } as never,
-          });
-          messagesImported++;
-        } catch {
-          messagesSkipped++;
+      if (rows.length > 0) {
+        const { error: insErr } = await (supabase.from("whatsapp_messages") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .insert(rows);
+        if (insErr) {
+          chatErrors.push({ jid: chat.remoteJid, error: insErr.message });
+          continue;
+        }
+        messagesImported += rows.length;
+
+        // Bump the conversation's last_message only if this batch is newer than stored.
+        const curLast = conv.last_message_at ? Date.parse(conv.last_message_at) : 0;
+        if (newestTs && newestTs >= curLast) {
+          const newest = rows.reduce((a, b) =>
+            String(a.created_at) >= String(b.created_at) ? a : b
+          );
+          const preview = String(newest.text ?? `[${newest.message_type}]`).slice(0, 280);
+          await (supabase.from("whatsapp_conversations") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .update({
+              last_message_text: preview,
+              last_message_at: new Date(newestTs).toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", conv.id);
         }
       }
     }
