@@ -12,11 +12,17 @@ import {
   searchKb,
   publicGuide,
   privateGuide,
+  resolveGuestByPhone,
   confirmedReservationsForPhone,
   resolveGuideForReservation,
   signGuidePdf,
 } from "@/lib/db/queries/guides";
 import type { AiMode } from "@/types/database";
+
+/** Clamp an LLM-provided limit to a sane range (tolerates float/negative/NaN). */
+function clampLimit(v: unknown, def = 20, max = 50): number {
+  return Math.min(Math.max(Math.trunc(Number(v)) || def, 1), max);
+}
 
 /** OpenAI tool schema (function calling). Re-using ChatCompletionTool shape. */
 export interface ToolDef {
@@ -76,7 +82,7 @@ const todaySummary: ToolHandler = async (_args, ctx) => {
 const listProperties: ToolHandler = async (args, ctx) => {
   // Public mode: only public-active fields. Operations/management can use richer view if needed.
   const props = await listActivePublicProperties();
-  const limit = typeof args.limit === "number" ? args.limit : 20;
+  const limit = clampLimit(args.limit);
   return props.slice(0, limit).map((p) => ({
     name: p.name,
     code: p.code,
@@ -157,7 +163,7 @@ const searchReservations: ToolHandler = async (args, ctx) => {
   if (typeof args.search === "string") filters.search = args.search;
 
   const list = await getReservations(ctx.companyId, filters);
-  const limit = typeof args.limit === "number" ? args.limit : 20;
+  const limit = clampLimit(args.limit);
   return list.slice(0, limit).map((r) => ({
     booking_code: r.booking_code,
     guest: r.guest?.full_name,
@@ -310,23 +316,23 @@ const propertyDetails: ToolHandler = async (args, ctx) => {
 };
 
 const findMyReservation: ToolHandler = async (_args, ctx) => {
-  const phone = (ctx.contactPhone || "").replace(/\D/g, "");
-  if (!phone) return { error: "Telefone do contato não disponível." };
-  const last8 = phone.slice(-8);
-  // Admin client: the WhatsApp AI path has no auth session, and guests/reservations
-  // are not publicly readable under RLS. We scope strictly by company + phone here.
-  const supabase = createAdminClient();
-
-  const { data: guests } = await supabase
-    .from("guests")
-    .select("id, full_name")
-    .eq("company_id", ctx.companyId)
-    .ilike("phone", `%${last8}%`)
-    .limit(1);
-  const guest = (guests as Array<{ id: string; full_name: string }> | null)?.[0];
-  if (!guest) {
+  if (!ctx.contactPhone) return { error: "Telefone do contato não disponível." };
+  // Strict, fail-closed identity (see resolveGuestByPhone): never match by loose substring.
+  const resolved = await resolveGuestByPhone(ctx.companyId, ctx.contactPhone);
+  if (resolved === "ambiguous") {
+    return {
+      found: false,
+      message:
+        "Encontrei mais de um cadastro com este número. Para sua segurança, nossa equipe vai confirmar sua reserva.",
+    };
+  }
+  if (!resolved) {
     return { found: false, message: "Nenhuma reserva localizada para este número." };
   }
+  const guest = resolved;
+  // Admin client: the WhatsApp AI path has no auth session, and guests/reservations
+  // are not publicly readable under RLS. We scope strictly by company + guest here.
+  const supabase = createAdminClient();
 
   const today = new Date().toISOString().slice(0, 10);
   const { data: resv } = await supabase
@@ -393,7 +399,7 @@ const searchKnowledge: ToolHandler = async (args, ctx) => {
     query: typeof args.query === "string" ? args.query : undefined,
     category: typeof args.category === "string" ? args.category : undefined,
     includeConfirmed,
-    limit: typeof args.limit === "number" ? args.limit : 12,
+    limit: clampLimit(args.limit, 12, 50),
   });
   return rows.map((a) => ({
     category: a.category,
@@ -441,7 +447,25 @@ const propertyPrivateInfo: ToolHandler = async (_args, ctx) => {
         "Não localizei uma reserva confirmada neste número. Informações como Wi-Fi, código de acesso e endereço exato são liberadas apenas para hóspedes com reserva confirmada. Posso te ajudar a reservar ou tirar outras dúvidas.",
     };
   }
-  // Use the soonest reservation.
+  // If the same guest has multiple confirmed reservations for DIFFERENT units, don't guess
+  // which one they mean — ask the AI to disambiguate before releasing access data.
+  const distinctUnits = Array.from(new Set(confirmed.map((c) => c.property_id)));
+  if (distinctUnits.length > 1) {
+    return {
+      allowed: true,
+      needs_selection: true,
+      message:
+        "Você tem mais de uma reserva confirmada. Me diga o código da reserva (ou as datas) para eu liberar o acesso da unidade certa.",
+      options: confirmed.map((c) => ({
+        booking_code: c.booking_code,
+        check_in: c.check_in_date,
+        check_out: c.check_out_date,
+        unit: c.property_name,
+      })),
+    };
+  }
+
+  // Single unit (one reservation, or multiple for the same unit) → use the soonest.
   const r = confirmed[0];
   const { guide, matched } = await resolveGuideForReservation(ctx.companyId, {
     property_id: r.property_id,

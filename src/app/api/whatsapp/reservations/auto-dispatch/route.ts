@@ -6,10 +6,28 @@ import { sendText } from "@/lib/whatsapp/evolution";
 import { findOrCreateConversation, appendMessage } from "@/lib/db/queries/whatsapp";
 import { resolveGuideForReservation, signGuidePdf } from "@/lib/db/queries/guides";
 import { buildWelcomeMessage } from "@/lib/whatsapp/welcome";
+import { samePhone, last8 as last8Of } from "@/lib/whatsapp/phone";
 import { apiSuccess, apiError, apiServerError } from "@/lib/api/response";
 import type { Database } from "@/types/database";
 
 type LineRow = Database["public"]["Tables"]["whatsapp_lines"]["Row"];
+
+/** Today's date (YYYY-MM-DD) in the business timezone, not UTC. */
+function todayInTz(tz: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+function addDaysISO(iso: string, days: number): string {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+const BUSINESS_TZ = "America/Maceio";
 
 /**
  * Auto-dispatch of the welcome/onboarding message to CONFIRMED guests.
@@ -75,11 +93,10 @@ export async function POST(req: NextRequest) {
     const lines = (lineData as LineRow[]) || [];
     if (lines.length === 0) return apiSuccess({ message: "No active booking line", sent: 0 });
 
-    const today = new Date();
-    const todayISO = today.toISOString().slice(0, 10);
-    const windowEnd = new Date(today.getTime() + opts.days_before * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
+    // check_in_date is a local DATE; compute the window in the business timezone (not UTC)
+    // so "1 day before check-in" doesn't drift across the midnight boundary.
+    const todayISO = todayInTz(BUSINESS_TZ);
+    const windowEnd = addDaysISO(todayISO, opts.days_before);
     const nowISO = new Date().toISOString();
 
     const summary = {
@@ -130,19 +147,38 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          const conv = await findOrCreateConversation({
-            companyId: line.company_id,
-            lineId: line.id,
-            contactPhone: phone.startsWith("+") ? phone : `+${phone}`,
-            contactName: r.guest?.full_name ?? null,
-          });
+          // Find an existing conversation on this line by NORMALIZED phone (handles 9th-digit /
+          // country-code format differences) so we don't create a duplicate and then check the
+          // wrong conversation in the human-guard. Only create when none matches.
+          const { data: convCands } = await supabase
+            .from("whatsapp_conversations")
+            .select("id, contact_phone")
+            .eq("line_id", line.id)
+            .ilike("contact_phone", `%${last8Of(phone)}%`)
+            .limit(25);
+          const existing = ((convCands as { id: string; contact_phone: string }[]) || []).find(
+            (c) => samePhone(c.contact_phone, phone)
+          );
+          let convId: string;
+          if (existing) {
+            convId = existing.id;
+          } else {
+            const conv = await findOrCreateConversation({
+              companyId: line.company_id,
+              lineId: line.id,
+              contactPhone: `+${phone}`,
+              contactName: r.guest?.full_name ?? null,
+            });
+            convId = conv.id;
+          }
 
-          // Guard: skip if a HUMAN agent has already messaged this conversation.
+          // Guard: skip if a HUMAN has already messaged this conversation — any outbound message
+          // authored by a PMS user (sender_user_id) or tagged sender='agent'.
           const { data: humanMsg } = await supabase
             .from("whatsapp_messages")
             .select("id")
-            .eq("conversation_id", conv.id)
-            .eq("sender", "agent")
+            .eq("conversation_id", convId)
+            .or("sender.eq.agent,sender_user_id.not.is.null")
             .limit(1);
           if (((humanMsg as { id: string }[]) || []).length > 0) {
             summary.skipped_human++;
@@ -195,6 +231,20 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
+          // Atomically CLAIM the reservation BEFORE sending so a concurrent run can't double-send.
+          // Conditional on welcome_sent_at IS NULL; if nothing comes back it was already claimed.
+          // (Trade-off: we don't auto-retry on send failure to avoid spam — a 'failed' message
+          // row stays visible in the PMS chat for a human to resend.)
+          const { data: claimed } = await (supabase.from("reservations") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            .update({ welcome_sent_at: nowISO, welcome_sent_by: "auto" })
+            .eq("id", r.id)
+            .is("welcome_sent_at", null)
+            .select("id");
+          if (!((claimed as { id: string }[]) || []).length) {
+            summary.details.push({ booking_code: r.booking_code, action: "already_claimed" });
+            continue;
+          }
+
           // Send via Evolution (instance of the Reservas line).
           let externalId: string | undefined;
           let status: "sent" | "failed" = "sent";
@@ -210,7 +260,7 @@ export async function POST(req: NextRequest) {
           }
 
           await appendMessage({
-            conversationId: conv.id,
+            conversationId: convId,
             direction: "outbound",
             sender: "ai",
             text,
@@ -225,15 +275,12 @@ export async function POST(req: NextRequest) {
             } as never,
           });
 
-          // Mark reservation so it isn't welcomed again (even if the send failed,
-          // to avoid spamming on retries — a failed row is visible in the PMS chat).
-          await (supabase.from("reservations") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-            .update({
-              welcome_sent_at: nowISO,
-              welcome_sent_by: "auto",
-              access_info_sent_at: includeAccess ? nowISO : null,
-            })
-            .eq("id", r.id);
+          // Record access release time on success (welcome_sent_at was set by the claim).
+          if (status === "sent" && includeAccess) {
+            await (supabase.from("reservations") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+              .update({ access_info_sent_at: nowISO })
+              .eq("id", r.id);
+          }
 
           if (status === "sent") {
             summary.sent++;

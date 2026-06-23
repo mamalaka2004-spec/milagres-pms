@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canonicalBR, last8 as last8Of, samePhone } from "@/lib/whatsapp/phone";
 import type { Database } from "@/types/database";
 
 export type GuideRow = Database["public"]["Tables"]["property_guides"]["Row"];
@@ -90,11 +91,17 @@ export async function searchKb(
   if (!opts.includeConfirmed) q = q.eq("visibility", "public");
   if (opts.category) q = q.eq("category", opts.category);
   if (opts.query && opts.query.trim()) {
-    const term = `%${opts.query.trim()}%`;
-    // match title OR content OR any tag
-    q = q.or(`title.ilike.${term},content.ilike.${term},tags.cs.{${opts.query.trim()}}`);
+    // Sanitize: this string is interpolated into a PostgREST .or() filter, so strip the
+    // characters that have meaning there (commas, parens, %, *, _, :, braces) to avoid
+    // breaking the filter or injecting extra conditions.
+    const clean = opts.query.replace(/[%,()*_:{}]/g, " ").trim().slice(0, 80);
+    if (clean) {
+      const term = `%${clean}%`;
+      q = q.or(`title.ilike.${term},content.ilike.${term},tags.cs.{${clean}}`);
+    }
   }
-  q = q.order("sort_order").limit(opts.limit ?? 12);
+  const limit = Math.min(Math.max(Math.trunc(Number(opts.limit)) || 12, 1), 50);
+  q = q.order("sort_order").limit(limit);
   const { data } = await q;
   return (data as KbRow[]) || [];
 }
@@ -112,27 +119,51 @@ export interface ConfirmedReservation {
 }
 
 /**
+ * Resolve a caller's phone to a SINGLE guest, failing closed.
+ *
+ * Identity is security-critical here (it gates Wi-Fi / lock codes), so we do NOT match
+ * on a loose "last 8 digits" substring. We use last-8 only as a broad SQL candidate net,
+ * then require a strict canonical match (DDD + last 8, country-code/9th-digit agnostic).
+ * If more than one DISTINCT guest matches the same number, we refuse (return "ambiguous")
+ * rather than risk leaking another person's data.
+ */
+export async function resolveGuestByPhone(
+  companyId: string,
+  rawPhone: string | null | undefined
+): Promise<{ id: string; full_name: string | null } | null | "ambiguous"> {
+  const key = canonicalBR(rawPhone);
+  if (!key) return null; // too short to identify safely
+  const supabase = createAdminClient();
+
+  const { data: guests } = await supabase
+    .from("guests")
+    .select("id, full_name, phone")
+    .eq("company_id", companyId)
+    .ilike("phone", `%${last8Of(rawPhone)}%`)
+    .limit(25);
+  const candidates =
+    (guests as Array<{ id: string; full_name: string | null; phone: string | null }>) || [];
+
+  const strict = candidates.filter((g) => samePhone(g.phone, rawPhone));
+  const distinctIds = Array.from(new Set(strict.map((g) => g.id)));
+  if (distinctIds.length === 0) return null;
+  if (distinctIds.length > 1) return "ambiguous"; // different people share this number → fail closed
+  const g = strict.find((x) => x.id === distinctIds[0])!;
+  return { id: g.id, full_name: g.full_name };
+}
+
+/**
  * Resolve the caller (by phone) to their CONFIRMED / CHECKED_IN reservations that
- * are current or upcoming. Returns [] for leads / unknown numbers.
+ * are current or upcoming. Returns [] for leads / unknown / ambiguous numbers.
  * Uses the admin client (the WhatsApp AI path has no auth session → RLS would hide rows).
  */
 export async function confirmedReservationsForPhone(
   companyId: string,
   rawPhone: string | null | undefined
 ): Promise<ConfirmedReservation[]> {
-  const phone = (rawPhone || "").replace(/\D/g, "");
-  if (phone.length < 8) return [];
-  const last8 = phone.slice(-8);
+  const guest = await resolveGuestByPhone(companyId, rawPhone);
+  if (!guest || guest === "ambiguous") return [];
   const supabase = createAdminClient();
-
-  const { data: guests } = await supabase
-    .from("guests")
-    .select("id, full_name")
-    .eq("company_id", companyId)
-    .ilike("phone", `%${last8}%`)
-    .limit(5);
-  const guestRows = (guests as Array<{ id: string; full_name: string | null }>) || [];
-  if (guestRows.length === 0) return [];
 
   const today = new Date().toISOString().slice(0, 10);
   const { data: resv } = await supabase
@@ -141,7 +172,7 @@ export async function confirmedReservationsForPhone(
       "id, booking_code, property_id, check_in_date, check_out_date, status, guest_id, property:properties(name)"
     )
     .eq("company_id", companyId)
-    .in("guest_id", guestRows.map((g) => g.id))
+    .eq("guest_id", guest.id)
     .in("status", ["confirmed", "checked_in"])
     .is("deleted_at", null)
     .gte("check_out_date", today)
@@ -158,7 +189,6 @@ export async function confirmedReservationsForPhone(
     property: { name: string } | null;
   };
   const rows = (resv as unknown as R[]) || [];
-  const nameById = new Map(guestRows.map((g) => [g.id, g.full_name] as const));
   return rows.map((r) => ({
     id: r.id,
     booking_code: r.booking_code,
@@ -167,38 +197,28 @@ export async function confirmedReservationsForPhone(
     check_out_date: r.check_out_date,
     status: r.status,
     guest_id: r.guest_id,
-    guest_name: nameById.get(r.guest_id) ?? null,
+    guest_name: guest.full_name,
     property_name: r.property?.name ?? null,
   }));
 }
 
 /**
- * Map a reservation to its property guide. Prefers the explicit property_id link;
- * falls back to a best-effort name match (until guides are linked in the PMS).
- * Returns { guide, matched }. `matched=false` means we could not safely identify
- * the unit and must NOT leak any private credentials.
+ * Map a reservation to its property guide — DETERMINISTICALLY.
+ *
+ * Private credentials (Wi-Fi, lock code, exact address) are released based on this, so
+ * we ONLY trust the explicit reservation.property_id → property_guides.property_id link.
+ * Fuzzy name matching is intentionally NOT used: with repeated condos (Kanui/Tamoná) and
+ * listing names that differ from unit names, a single substring hit could be the WRONG
+ * unit and leak its door code. When there's no explicit link we return matched=false and
+ * the caller falls back to "the team will send your access details".
  */
 export async function resolveGuideForReservation(
   companyId: string,
   reservation: { property_id: string; property_name: string | null }
 ): Promise<{ guide: GuideRow | null; matched: boolean }> {
-  // 1. explicit link
+  if (!reservation.property_id) return { guide: null, matched: false };
   const linked = await getGuide(companyId, { property_id: reservation.property_id });
-  if (linked) return { guide: linked, matched: true };
-
-  // 2. best-effort name token match (single unambiguous hit only)
-  const all = await listGuides(companyId);
-  const pname = (reservation.property_name || "").toLowerCase();
-  if (pname) {
-    const hits = all.filter((g) => {
-      const tokens = [g.name, g.condo, g.unit_code]
-        .filter(Boolean)
-        .map((t) => String(t).toLowerCase());
-      return tokens.some((t) => t && (pname.includes(t) || t.includes(pname)));
-    });
-    if (hits.length === 1) return { guide: hits[0], matched: true };
-  }
-  return { guide: null, matched: false };
+  return { guide: linked, matched: !!linked };
 }
 
 /** Generate a time-limited signed URL for a guide PDF in the private bucket. */
