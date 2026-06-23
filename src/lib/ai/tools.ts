@@ -1,10 +1,21 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCalendarData } from "@/lib/db/queries/calendar";
 import { listTasks } from "@/lib/db/queries/tasks";
 import { getFinanceSummary } from "@/lib/db/queries/finance";
 import { getReservations, checkAvailability } from "@/lib/db/queries/reservations";
 import { listActivePublicProperties } from "@/lib/db/queries/properties";
 import { getDashboardData } from "@/lib/db/queries/dashboard";
+import {
+  listGuides,
+  getGuide,
+  searchKb,
+  publicGuide,
+  privateGuide,
+  confirmedReservationsForPhone,
+  resolveGuideForReservation,
+  signGuidePdf,
+} from "@/lib/db/queries/guides";
 import type { AiMode } from "@/types/database";
 
 /** OpenAI tool schema (function calling). Re-using ChatCompletionTool shape. */
@@ -302,7 +313,9 @@ const findMyReservation: ToolHandler = async (_args, ctx) => {
   const phone = (ctx.contactPhone || "").replace(/\D/g, "");
   if (!phone) return { error: "Telefone do contato não disponível." };
   const last8 = phone.slice(-8);
-  const supabase = await createServerClient();
+  // Admin client: the WhatsApp AI path has no auth session, and guests/reservations
+  // are not publicly readable under RLS. We scope strictly by company + phone here.
+  const supabase = createAdminClient();
 
   const { data: guests } = await supabase
     .from("guests")
@@ -319,7 +332,7 @@ const findMyReservation: ToolHandler = async (_args, ctx) => {
   const { data: resv } = await supabase
     .from("reservations")
     .select(
-      "booking_code, check_in_date, check_out_date, nights, status, property:properties(name, address, neighborhood, city, check_in_time, check_out_time, house_rules)"
+      "booking_code, check_in_date, check_out_date, nights, status, property:properties(name, neighborhood, city, check_in_time, check_out_time)"
     )
     .eq("company_id", ctx.companyId)
     .eq("guest_id", guest.id)
@@ -336,12 +349,10 @@ const findMyReservation: ToolHandler = async (_args, ctx) => {
     status: string;
     property: {
       name: string;
-      address: string | null;
       neighborhood: string | null;
       city: string | null;
       check_in_time: string | null;
       check_out_time: string | null;
-      house_rules: string | null;
     } | null;
   };
   const rows = (resv as unknown as R[]) || [];
@@ -351,20 +362,110 @@ const findMyReservation: ToolHandler = async (_args, ctx) => {
   return {
     found: true,
     guest: guest.full_name,
+    // Exact address + Wi-Fi + lock code are NOT here — use property_private_info (gated).
     reservations: rows.map((r) => ({
       booking_code: r.booking_code,
       check_in: r.check_in_date,
       check_out: r.check_out_date,
       nights: r.nights,
       status: r.status,
+      confirmed: r.status === "confirmed" || r.status === "checked_in",
       property: r.property?.name,
-      address: r.property?.address,
       neighborhood: r.property?.neighborhood,
       city: r.property?.city,
       check_in_time: r.property?.check_in_time,
       check_out_time: r.property?.check_out_time,
-      house_rules: r.property?.house_rules,
     })),
+  };
+};
+
+/* ── Knowledge base / guides (public for leads, gated private for confirmed guests) ── */
+
+const searchKnowledge: ToolHandler = async (args, ctx) => {
+  // Staff (operations/management) see everything; guests see public unless they have a
+  // confirmed reservation on their phone.
+  let includeConfirmed = ctx.mode !== "guest";
+  if (ctx.mode === "guest") {
+    const confirmed = await confirmedReservationsForPhone(ctx.companyId, ctx.contactPhone);
+    includeConfirmed = confirmed.length > 0;
+  }
+  const rows = await searchKb(ctx.companyId, {
+    query: typeof args.query === "string" ? args.query : undefined,
+    category: typeof args.category === "string" ? args.category : undefined,
+    includeConfirmed,
+    limit: typeof args.limit === "number" ? args.limit : 12,
+  });
+  return rows.map((a) => ({
+    category: a.category,
+    title: a.title,
+    content: a.content,
+    items: a.data ?? undefined,
+    visibility: a.visibility,
+  }));
+};
+
+const propertyGuideInfo: ToolHandler = async (args, ctx) => {
+  const staff = ctx.mode !== "guest";
+
+  // No selector → list units (public summary)
+  if (!args.unit_code && !args.name) {
+    const all = await listGuides(ctx.companyId);
+    return all.map((g) => ({
+      unit_code: g.unit_code,
+      name: g.name,
+      type: g.property_type,
+      max_guests: g.max_guests,
+      suites: g.suites,
+      summary: g.short_description,
+    }));
+  }
+
+  const g = await getGuide(ctx.companyId, {
+    unit_code: typeof args.unit_code === "string" ? args.unit_code : undefined,
+    name: typeof args.name === "string" ? args.name : undefined,
+  });
+  if (!g) return { error: "Unidade não encontrada" };
+
+  const base = publicGuide(g);
+  // Staff are trusted: include private operational fields directly.
+  return staff ? { ...base, private: privateGuide(g) } : base;
+};
+
+const propertyPrivateInfo: ToolHandler = async (_args, ctx) => {
+  // Hard gate: only a confirmed/checked-in reservation on the caller's phone unlocks this.
+  const confirmed = await confirmedReservationsForPhone(ctx.companyId, ctx.contactPhone);
+  if (confirmed.length === 0) {
+    return {
+      allowed: false,
+      message:
+        "Não localizei uma reserva confirmada neste número. Informações como Wi-Fi, código de acesso e endereço exato são liberadas apenas para hóspedes com reserva confirmada. Posso te ajudar a reservar ou tirar outras dúvidas.",
+    };
+  }
+  // Use the soonest reservation.
+  const r = confirmed[0];
+  const { guide, matched } = await resolveGuideForReservation(ctx.companyId, {
+    property_id: r.property_id,
+    property_name: r.property_name,
+  });
+  if (!matched || !guide) {
+    return {
+      allowed: true,
+      unit_resolved: false,
+      booking_code: r.booking_code,
+      message:
+        "Sua reserva está confirmada, mas ainda preciso confirmar internamente qual unidade você reservou para liberar Wi-Fi/acesso com segurança. Nossa equipe vai te enviar esses dados.",
+    };
+  }
+  const pdf_url = await signGuidePdf(guide.pdf_path);
+  return {
+    allowed: true,
+    unit_resolved: true,
+    booking_code: r.booking_code,
+    check_in: r.check_in_date,
+    check_out: r.check_out_date,
+    unit: guide.name,
+    ...privateGuide(guide),
+    guide_pdf_url: pdf_url,
   };
 };
 
@@ -376,6 +477,9 @@ const HANDLERS: Record<string, ToolHandler> = {
   check_availability: checkAvail,
   property_details: propertyDetails,
   find_my_reservation: findMyReservation,
+  search_knowledge: searchKnowledge,
+  property_guide_info: propertyGuideInfo,
+  property_private_info: propertyPrivateInfo,
   search_reservations: searchReservations,
   calendar_range: calendarRange,
   tasks_today: tasksToday,
@@ -444,7 +548,55 @@ const TOOL_DEFS: Record<string, ToolDef> = {
     function: {
       name: "find_my_reservation",
       description:
-        "Busca a reserva atual ou futura DO HÓSPEDE que está conversando (pelo telefone dele). Use quando perguntarem 'minha reserva', check-in/out, endereço do imóvel onde vão ficar, ou durante a estadia. Não recebe telefone como parâmetro — usa o do contato automaticamente.",
+        "Busca a reserva atual ou futura DO HÓSPEDE que está conversando (pelo telefone dele): código, datas, status (confirmada?) e imóvel. NÃO traz Wi-Fi/código de acesso/endereço exato — para isso use property_private_info. Não recebe telefone como parâmetro.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  search_knowledge: {
+    type: "function",
+    function: {
+      name: "search_knowledge",
+      description:
+        "Busca na base de conhecimento / FAQ de Milagres: como chegar, restaurantes, praias, passeios, mercados, açougues, café da manhã, vida noturna, beach clubs, beleza/spa, emergência, regras e dúvidas frequentes. Use para QUALQUER dúvida de lead ou hóspede sobre o destino e a estadia. Informações públicas para todos; conteúdo restrito só aparece para hóspede com reserva confirmada.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "termo de busca (ex: 'restaurante pé na areia', 'como chegar', 'farmácia')" },
+          category: {
+            type: "string",
+            description: "categoria opcional",
+            enum: [
+              "como_chegar", "checkin", "enxoval", "locomocao", "mercados", "acougues",
+              "restaurantes", "cafe_da_manha", "vida_noturna", "praias", "passeios",
+              "beleza_spa", "imperdiveis", "emergencia", "faq",
+            ],
+          },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  property_guide_info: {
+    type: "function",
+    function: {
+      name: "property_guide_info",
+      description:
+        "Guia de uma unidade (PÚBLICO): descrição, capacidade, comodidades, regras da casa, horários de check-in/out, política de cancelamento, vídeos/fotos. Forneça unit_code (ex: 'cotinguiba-08') ou name; sem parâmetros, lista todas as unidades. NÃO retorna Wi-Fi/código de acesso para hóspede — use property_private_info.",
+      parameters: {
+        type: "object",
+        properties: {
+          unit_code: { type: "string", description: "ex: 'cotinguiba-08', 'kanui-201', 'tamona-18', 'villa-green'" },
+          name: { type: "string", description: "nome aproximado da unidade" },
+        },
+      },
+    },
+  },
+  property_private_info: {
+    type: "function",
+    function: {
+      name: "property_private_info",
+      description:
+        "Libera informações PRIVADAS da acomodação do hóspede — Wi-Fi (rede e senha), método/código de acesso (fechadura/portaria/cofre), endereço exato e link do guia em PDF. SÓ retorna dados se o telefone do contato tiver uma reserva CONFIRMADA; caso contrário recusa educadamente. Não recebe telefone nem unidade como parâmetro — resolve pela reserva confirmada do contato. Use quando o hóspede confirmado pedir Wi-Fi, senha, como entrar, endereço.",
       parameters: { type: "object", properties: {}, required: [] },
     },
   },
@@ -515,7 +667,15 @@ const TOOL_DEFS: Record<string, ToolDef> = {
 };
 
 const MODE_TOOLS: Record<AiMode, string[]> = {
-  guest: ["list_properties", "check_availability", "property_details", "find_my_reservation"],
+  guest: [
+    "list_properties",
+    "check_availability",
+    "property_details",
+    "find_my_reservation",
+    "search_knowledge",
+    "property_guide_info",
+    "property_private_info",
+  ],
   operations: [
     "today_summary",
     "list_properties",
@@ -524,6 +684,8 @@ const MODE_TOOLS: Record<AiMode, string[]> = {
     "search_reservations",
     "calendar_range",
     "tasks_today",
+    "search_knowledge",
+    "property_guide_info",
   ],
   management: [
     "today_summary",
@@ -531,6 +693,8 @@ const MODE_TOOLS: Record<AiMode, string[]> = {
     "search_reservations",
     "calendar_range",
     "finance_summary",
+    "search_knowledge",
+    "property_guide_info",
   ],
 };
 
