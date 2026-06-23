@@ -12,20 +12,20 @@ import { cn } from "@/lib/utils/cn";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { id: "reservations", label: "Reservations", href: "/reservations", icon: CalendarDays },
-  { id: "calendar", label: "Calendar", href: "/calendar", icon: CalendarDays },
-  { id: "guests", label: "Guests", href: "/guests", icon: Users },
-  { id: "conversations", label: "Reservas Chat", href: "/conversations", icon: MessageSquare },
-  { id: "vendas", label: "Vendas Chat", href: "/vendas", icon: Target },
-  { id: "properties", label: "Properties", href: "/properties", icon: Home },
-  { id: "owners", label: "Owners", href: "/owners", icon: UserCheck },
-  { id: "finance", label: "Finance", href: "/finance", icon: DollarSign },
-  { id: "operations", label: "Operations", href: "/operations", icon: ClipboardList },
+  { id: "reservations", label: "Reservas", href: "/reservations", icon: CalendarDays },
+  { id: "calendar", label: "Agenda", href: "/calendar", icon: CalendarDays },
+  { id: "guests", label: "Hóspedes", href: "/guests", icon: Users },
+  { id: "conversations", label: "Chat Reservas", href: "/conversations", icon: MessageSquare },
+  { id: "vendas", label: "Chat Vendas", href: "/vendas", icon: Target },
+  { id: "properties", label: "Imóveis", href: "/properties", icon: Home },
+  { id: "owners", label: "Proprietários", href: "/owners", icon: UserCheck },
+  { id: "finance", label: "Financeiro", href: "/finance", icon: DollarSign },
+  { id: "operations", label: "Operações", href: "/operations", icon: ClipboardList },
 ];
 
 const bottomItems = [
-  { id: "ai", label: "AI Assistant", href: "/ai-assistant", icon: Sparkles, highlight: true },
-  { id: "settings", label: "Settings", href: "/settings", icon: Settings },
+  { id: "ai", label: "Assistente IA", href: "/ai-assistant", icon: Sparkles, highlight: true },
+  { id: "settings", label: "Ajustes", href: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -169,11 +169,11 @@ export function BottomNav() {
   const pathname = usePathname();
 
   const items = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-    { href: "/reservations", icon: CalendarDays, label: "Bookings" },
-    { href: "/calendar", icon: CalendarDays, label: "Calendar" },
-    { href: "/properties", icon: Home, label: "Properties" },
-    { href: "/ai-assistant", icon: Sparkles, label: "AI" },
+    { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
+    { href: "/reservations", icon: CalendarDays, label: "Reservas" },
+    { href: "/calendar", icon: CalendarDays, label: "Agenda" },
+    { href: "/properties", icon: Home, label: "Imóveis" },
+    { href: "/ai-assistant", icon: Sparkles, label: "IA" },
   ];
 
   return (

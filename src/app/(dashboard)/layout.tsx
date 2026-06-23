@@ -7,14 +7,17 @@ import { Topbar } from "@/components/layout/topbar";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
-  "/reservations": "Reservations",
-  "/calendar": "Calendar",
-  "/guests": "Guests",
-  "/properties": "Properties",
-  "/finance": "Finance",
-  "/operations": "Operations",
-  "/ai-assistant": "AI Assistant",
-  "/settings": "Settings",
+  "/reservations": "Reservas",
+  "/calendar": "Agenda",
+  "/guests": "Hóspedes",
+  "/conversations": "Chat Reservas",
+  "/vendas": "Chat Vendas",
+  "/properties": "Imóveis",
+  "/owners": "Proprietários",
+  "/finance": "Financeiro",
+  "/operations": "Operações",
+  "/ai-assistant": "Assistente IA",
+  "/settings": "Ajustes",
 };
 
 function getTitle(pathname: string): string {
@@ -53,8 +56,8 @@ export default function DashboardLayout({
           userRole="admin"
         />
 
-        <main className="flex-1 overflow-auto p-3 md:p-4 lg:p-6 2xl:p-8 pb-20 lg:pb-6">
-          <div className="max-w-[1920px] mx-auto">{children}</div>
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 xl:px-12 xl:py-9 pb-24 lg:pb-8">
+          <div className="max-w-[1800px] mx-auto">{children}</div>
         </main>
       </div>
 
