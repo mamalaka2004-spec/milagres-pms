@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
-  Target, Send, Loader2, Search, Bot, BotOff, AlertCircle, Phone, Sparkles,
+  Target, Loader2, Search, Bot, BotOff, AlertCircle, Phone, Sparkles,
   LayoutGrid, MessageSquare, ChevronLeft, Maximize2, Minimize2,
   PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { SalesKanban } from "./sales-kanban";
-import { AiAssistBar } from "@/components/chat/ai-assist-bar";
-import { ComposerTools } from "@/components/chat/composer-tools";
+import { ChatComposer } from "@/components/chat/chat-composer";
+import { MediaContent } from "@/components/chat/media-content";
 import { api, formatTime } from "@/lib/chat/utils";
 import { Avatar } from "@/components/chat/avatar";
 import { StatusIcon } from "@/components/chat/status-icon";
@@ -279,15 +279,10 @@ function SalesThread({ conversation, onChange, onBackMobile, focusMode, onToggle
   focusMode: boolean; onToggleFocus: () => void; panelOpen: boolean; onTogglePanel: () => void;
 }) {
   const [messages, setMessages] = useState<MsgRow[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
   const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => { const el = taRef.current; if (!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 140) + "px"; }, [text]);
 
   const refresh = useCallback(async () => {
     try { setMessages(await api<MsgRow[]>(`/api/whatsapp/conversations/${conversation.id}/messages?limit=80`)); }
@@ -312,16 +307,6 @@ function SalesThread({ conversation, onChange, onBackMobile, focusMode, onToggle
   }, [supabase, conversation.id]);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages.length]);
-
-  const send = async () => {
-    if (!text.trim() || sending) return;
-    setSending(true); setErr(null);
-    try {
-      await api(`/api/whatsapp/conversations/${conversation.id}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text.trim() }) });
-      setText(""); onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Falha ao enviar"); }
-    finally { setSending(false); }
-  };
 
   if (loading) return <div className="flex-1 flex items-center justify-center text-gray-400"><Loader2 className="animate-spin" size={20} /></div>;
 
@@ -363,20 +348,16 @@ function SalesThread({ conversation, onChange, onBackMobile, focusMode, onToggle
           ))}
       </div>
 
-      <div className="p-3 border-t border-gray-100 bg-white shrink-0">
-        {err && <div className="text-xs text-red-500 mb-2 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
-        {conversation.ai_active && (
-          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 mb-2 flex items-center gap-2"><Sparkles size={12} /> IA da Sarah ativa. Pause (no painel) antes de responder manualmente, pra não enviar duas respostas.</div>
-        )}
-        <AiAssistBar conversationId={conversation.id} purpose="sales" accent="amber" onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))} />
-        <div className="flex gap-2 items-end">
-          <ComposerTools accent="amber" onInsert={(t) => setText((prev) => prev + t)} variables={{ nome: conversation.contact_name, empresa: "Milagres Hospedagens", telefone: conversation.contact_phone }} />
-          <textarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            aria-label="Resposta manual" placeholder="Resposta manual… (Enter envia)" rows={1}
-            className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition-colors duration-200 focus:outline-none focus:border-amber-500 focus:bg-white focus-visible:ring-2 focus-visible:ring-amber-400/40 max-h-36 overflow-y-auto" />
-          <button onClick={send} aria-label="Enviar" disabled={!text.trim() || sending} className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 text-white h-10 w-10 flex items-center justify-center rounded-full transition-colors duration-200 shrink-0">{sending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}</button>
-        </div>
-      </div>
+      {err && <div className="px-3 pt-2 text-xs text-red-500 flex items-center gap-1 bg-white"><AlertCircle size={12} aria-hidden="true" /> {err}</div>}
+      <ChatComposer
+        conversationId={conversation.id}
+        purpose="sales"
+        accent="amber"
+        contactName={conversation.contact_name}
+        contactPhone={conversation.contact_phone}
+        aiActive={conversation.ai_active}
+        onSent={() => { refresh(); onChange(); }}
+      />
     </>
   );
 }
@@ -390,9 +371,14 @@ function SalesBubble({ message, grouped }: { message: MsgRow; grouped: boolean }
       <div className={cn("max-w-[80%] md:max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
         outbound ? isAi ? "bg-amber-50 border border-amber-200 text-amber-900 rounded-br-md" : "bg-amber-600 text-white rounded-br-md" : "bg-white border border-gray-200 text-gray-900 rounded-bl-md")}>
         {isAi && <span className="flex items-center gap-1 mb-1 text-[9px] uppercase font-bold tracking-wide text-amber-600"><Sparkles size={11} /> Sarah · IA</span>}
-        {message.media_url && message.message_type === "image" && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={message.media_url} alt={message.file_name || "imagem"} className="rounded-lg mb-1 max-h-64 object-cover" />
+        {message.media_url && message.message_type !== "text" && (
+          <MediaContent
+            type={message.message_type}
+            url={message.media_url}
+            mime={message.media_mime_type}
+            fileName={message.file_name}
+            tone={outbound && !isAi ? "sent" : "neutral"}
+          />
         )}
         {message.text && <p className="whitespace-pre-wrap break-words leading-snug">{message.text}</p>}
         <div className={cn("flex items-center gap-1 justify-end mt-0.5 text-[10px]", outbound ? (isAi ? "text-amber-600" : "text-white/80") : "text-gray-400")}>

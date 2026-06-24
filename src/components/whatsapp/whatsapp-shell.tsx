@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
-  MessageSquare, Send, Loader2, Search, Pin, PinOff, Star, Bot, BotOff,
+  MessageSquare, Loader2, Search, Pin, PinOff, Star, Bot, BotOff,
   Phone, AlertCircle, ChevronLeft, Play, Maximize2, Minimize2,
   PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
-import { AiAssistBar } from "@/components/chat/ai-assist-bar";
-import { ComposerTools } from "@/components/chat/composer-tools";
+import { ChatComposer } from "@/components/chat/chat-composer";
+import { MediaContent } from "@/components/chat/media-content";
 import { ContactPanel } from "@/components/whatsapp/contact-panel";
 import { api, formatTime } from "@/lib/chat/utils";
 import { Avatar } from "@/components/chat/avatar";
@@ -300,20 +300,10 @@ function ConversationView({ conversationId, onConversationChange, onBackMobile, 
 }) {
   const [conversation, setConversation] = useState<ConvRow | null>(null);
   const [messages, setMessages] = useState<MsgRow[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
   const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    const el = taRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 140) + "px";
-  }, [text]);
 
   const refresh = useCallback(async () => {
     try {
@@ -354,19 +344,6 @@ function ConversationView({ conversationId, onConversationChange, onBackMobile, 
   }, [supabase, conversationId]);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages.length]);
-
-  const send = async () => {
-    if (!text.trim() || sending) return;
-    setSending(true); setErr(null);
-    try {
-      await api<MsgRow>(`/api/whatsapp/conversations/${conversationId}/messages`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text.trim() }),
-      });
-      setText(""); onConversationChange();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Falha ao enviar");
-    } finally { setSending(false); }
-  };
 
   const patchConv = async (patch: Record<string, unknown>) => {
     if (!conversation) return;
@@ -453,26 +430,16 @@ function ConversationView({ conversationId, onConversationChange, onBackMobile, 
       </div>
 
       {/* Composer */}
-      <div className="p-3 border-t border-gray-100 bg-white shrink-0">
-        {err && <div className="text-xs text-red-500 mb-2 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
-        <AiAssistBar conversationId={conversationId} purpose="booking" accent="brand" onInsert={(t) => setText((prev) => (prev.trim() ? prev + "\n" + t : t))} />
-        <div className="flex gap-2 items-end">
-          <ComposerTools accent="brand" onInsert={(t) => setText((prev) => prev + t)} variables={{ nome: conversation.contact_name, empresa: "Milagres Hospedagens", telefone: conversation.contact_phone }} />
-          <textarea
-            ref={taRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            aria-label="Digite uma mensagem"
-            placeholder="Mensagem… (Enter envia · Shift+Enter quebra linha)"
-            rows={1}
-            className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-500 focus:bg-white focus-visible:ring-2 focus-visible:ring-brand-400/40 max-h-36 overflow-y-auto"
-          />
-          <button onClick={send} aria-label="Enviar" disabled={!text.trim() || sending} className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-200 disabled:text-gray-400 text-white h-10 w-10 flex items-center justify-center rounded-full transition-colors duration-200 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
-            {sending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
-          </button>
-        </div>
-      </div>
+      {err && <div className="px-3 pt-2 text-xs text-red-500 flex items-center gap-1 bg-white"><AlertCircle size={12} aria-hidden="true" /> {err}</div>}
+      <ChatComposer
+        conversationId={conversationId}
+        purpose="booking"
+        accent="brand"
+        contactName={conversation.contact_name}
+        contactPhone={conversation.contact_phone}
+        aiActive={conversation.ai_active}
+        onSent={() => { refresh(); onConversationChange(); }}
+      />
     </>
   );
 }
@@ -494,9 +461,14 @@ function MessageBubble({ message, grouped }: { message: MsgRow; grouped: boolean
           : "bg-white border border-gray-200 text-gray-900 rounded-bl-md"
       )}>
         {isAi && <span className="flex items-center gap-1 mb-1 text-[9px] uppercase font-bold tracking-wide text-amber-600"><Bot size={11} /> Resposta IA</span>}
-        {message.media_url && message.message_type === "image" && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={message.media_url} alt={message.file_name || "imagem"} className="rounded-lg mb-1 max-h-64 object-cover" />
+        {message.media_url && message.message_type !== "text" && (
+          <MediaContent
+            type={message.message_type}
+            url={message.media_url}
+            mime={message.media_mime_type}
+            fileName={message.file_name}
+            tone={outbound && !isAi ? "sent" : "neutral"}
+          />
         )}
         {message.text && <p className="whitespace-pre-wrap break-words leading-snug">{message.text}</p>}
         <div className={cn("flex items-center gap-1 justify-end mt-0.5 text-[10px]", outbound ? (isAi ? "text-amber-600" : "text-white/80") : "text-gray-400")}>

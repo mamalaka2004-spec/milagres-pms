@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Zap, Braces, Smile, Loader2, Search, X } from "lucide-react";
+import { Zap, Braces, Smile, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { EmojiPicker } from "@/components/chat/emoji-picker";
 
 interface QuickReply {
   id: string;
@@ -17,12 +18,6 @@ interface ApiResp<T> {
   data?: T;
   error?: string;
 }
-
-const EMOJIS = [
-  "😊", "😀", "😉", "🙏", "👍", "👏", "🙌", "🎉", "✨", "🌴",
-  "🏖️", "🏡", "🔑", "📅", "💬", "📞", "✅", "❤️", "🤝", "😎",
-  "🥰", "😅", "🙆", "👌", "💚", "🌟", "☀️", "🌊", "🛏️", "🧳",
-];
 
 /** Resolve {{nome}}/{{empresa}}/{{telefone}} tokens against the given values. */
 function resolve(text: string, vars: Record<string, string | null | undefined>): string {
@@ -173,20 +168,8 @@ export function ComposerTools({
 
       {/* Emoji popover */}
       {open === "emoji" && (
-        <div className="absolute bottom-full left-0 mb-2 w-60 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-2">
-          <div className="grid grid-cols-8 gap-0.5">
-            {EMOJIS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => { onInsert(e); setOpen(null); }}
-                className="text-lg p-1 rounded hover:bg-gray-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-                aria-label={`Emoji ${e}`}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
+        <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-2">
+          <EmojiPicker onSelect={(e) => onInsert(e)} />
         </div>
       )}
     </div>
