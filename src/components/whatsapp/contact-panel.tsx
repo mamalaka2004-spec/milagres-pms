@@ -14,10 +14,14 @@ type ConvRow = Database["public"]["Tables"]["whatsapp_conversations"]["Row"];
 type ConvWithFlags = ConvRow & { important?: boolean | null; marked_unread?: boolean | null };
 type WaContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 
-const CATEGORY_LABEL: Record<string, string> = {
-  guest: "Hóspede", guest_maybe: "Possível hóspede", lead: "Lead / cotação",
-  provider: "Prestador", personal: "Pessoal", spam: "Spam",
-};
+type Classification = WaContact["classification"];
+const CLASSIFICATIONS: { value: Classification; label: string }[] = [
+  { value: "sem_classificacao", label: "Sem classif." },
+  { value: "lead", label: "Lead" },
+  { value: "cliente", label: "Cliente" },
+  { value: "hospede", label: "Hóspede" },
+  { value: "fornecedor", label: "Fornecedor" },
+];
 
 async function patchConversation(id: string, patch: Record<string, unknown>) {
   const res = await fetch(`/api/whatsapp/conversations/${id}`, {
@@ -31,7 +35,20 @@ async function patchConversation(id: string, patch: Record<string, unknown>) {
 export function ContactPanel({ conversation, onChange }: { conversation: ConvWithFlags; onChange: () => void; }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [waContact, setWaContact] = useState<WaContact | null>(null);
+  const [savingClass, setSavingClass] = useState(false);
   const supabase = useMemo(() => createClient(), []);
+
+  async function setClassification(value: Classification) {
+    if (!waContact || waContact.classification === value) return;
+    const prev = waContact;
+    setSavingClass(true);
+    setWaContact({ ...waContact, classification: value });
+    const { error } = await (supabase.from("whatsapp_contacts") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .update({ classification: value })
+      .eq("id", waContact.id);
+    if (error) setWaContact(prev);
+    setSavingClass(false);
+  }
 
   // Pull the matching imported contact (category / unit / original label).
   useEffect(() => {
@@ -84,18 +101,33 @@ export function ContactPanel({ conversation, onChange }: { conversation: ConvWit
           >
             <Phone size={11} aria-hidden="true" /> {conversation.contact_phone}
           </a>
-          {waContact?.category && (
-            <span className={cn(
-              "mt-2 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
-              waContact.category === "guest" || waContact.category === "guest_maybe"
-                ? "bg-brand-50 text-brand-700 border-brand-200"
-                : waContact.category === "lead" ? "bg-amber-50 text-amber-700 border-amber-200"
-                : "bg-gray-50 text-gray-600 border-gray-200"
-            )}>
-              <Tag size={10} /> {CATEGORY_LABEL[waContact.category] || waContact.category}
-            </span>
-          )}
         </div>
+
+        {/* Classification funnel */}
+        {waContact ? (
+          <div className="space-y-2">
+            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
+              <Tag size={11} /> Classificação
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {CLASSIFICATIONS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setClassification(c.value)}
+                  disabled={savingClass}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-60",
+                    waContact.classification === c.value
+                      ? "bg-brand-500 text-white border-brand-500"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {/* Imported-list details */}
         {waContact && (waContact.unit_hint || waContact.raw_label) && (

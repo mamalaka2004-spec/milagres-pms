@@ -342,6 +342,7 @@ export interface Database {
           line_id: string;
           guest_id: string | null;
           reservation_id: string | null;
+          contact_id: string | null;
           contact_phone: string;
           contact_name: string | null;
           status: WaConversationStatus;
@@ -464,6 +465,8 @@ export interface Database {
           display_name: string | null;
           raw_label: string | null;
           category: string | null;
+          classification: "sem_classificacao" | "lead" | "cliente" | "hospede" | "fornecedor";
+          guest_id: string | null;
           unit_hint: string | null;
           tags: string[] | null;
           source: string | null;
