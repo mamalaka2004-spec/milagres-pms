@@ -14,7 +14,7 @@ export default async function AiAssistantPage() {
           <Sparkles size={16} className="text-white" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">AI Assistant</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Assistente de IA</h1>
           <p className="text-xs text-gray-500">Powered by OpenAI · responde com dados reais via tools</p>
         </div>
       </div>

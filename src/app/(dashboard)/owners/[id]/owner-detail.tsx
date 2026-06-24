@@ -13,8 +13,8 @@ import type { OwnerWithProperties } from "@/lib/db/queries/owners";
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   cpf: "CPF",
   cnpj: "CNPJ",
-  passport: "Passport",
-  other: "Other",
+  passport: "Passaporte",
+  other: "Outro",
 };
 
 export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
@@ -48,11 +48,11 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
         body: JSON.stringify(data),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed");
+      if (!res.ok) throw new Error(result.error || "Falha ao salvar");
       setEditing(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
     } finally {
       setSubmitting(false);
     }
@@ -64,11 +64,11 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
     try {
       const res = await fetch(`/api/owners/${owner.id}`, { method: "DELETE" });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed");
+      if (!res.ok) throw new Error(result.error || "Falha ao excluir");
       router.push("/owners");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
       setDeleting(false);
       setConfirmingDelete(false);
     }
@@ -83,7 +83,7 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
         <div className="flex items-center gap-3">
           <Link
             href="/owners"
-            aria-label="Back to owners"
+            aria-label="Voltar para proprietários"
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             <ArrowLeft size={18} aria-hidden="true" />
@@ -91,13 +91,13 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
           <div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{owner.full_name}</h1>
             <span className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${owner.is_active ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-              {owner.is_active ? "Active" : "Inactive"}
+              {owner.is_active ? "Ativo" : "Inativo"}
             </span>
           </div>
         </div>
         {!editing && (
           <Button onClick={() => { setError(""); setEditing(true); }}>
-            <Edit size={15} aria-hidden="true" /> Edit
+            <Edit size={15} aria-hidden="true" /> Editar
           </Button>
         )}
       </div>
@@ -111,7 +111,7 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
         <Card>
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
             <div>
-              <Label className="mb-1.5">Full Name *</Label>
+              <Label className="mb-1.5">Nome completo *</Label>
               <Input {...register("full_name")} />
               {errors.full_name && <p className="text-xs text-red-500 mt-1">{errors.full_name.message}</p>}
             </div>
@@ -122,31 +122,31 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
                 {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
               </div>
               <div>
-                <Label className="mb-1.5">Phone</Label>
+                <Label className="mb-1.5">Telefone</Label>
                 <Input {...register("phone")} />
               </div>
               <div>
-                <Label className="mb-1.5">Document Type</Label>
+                <Label className="mb-1.5">Tipo de documento</Label>
                 <Select {...register("document_type")}>
-                  <option value="">Select</option>
+                  <option value="">Selecione</option>
                   <option value="cpf">CPF</option>
                   <option value="cnpj">CNPJ</option>
-                  <option value="passport">Passport</option>
-                  <option value="other">Other</option>
+                  <option value="passport">Passaporte</option>
+                  <option value="other">Outro</option>
                 </Select>
               </div>
               <div>
-                <Label className="mb-1.5">Document Number</Label>
+                <Label className="mb-1.5">Número do documento</Label>
                 <Input {...register("document_number")} />
               </div>
             </div>
             <div>
-              <Label className="mb-1.5">Notes</Label>
+              <Label className="mb-1.5">Observações</Label>
               <Textarea {...register("notes")} rows={3} />
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" {...register("is_active")} className="rounded border-gray-300 text-brand-500 focus:ring-brand-400/40" />
-              Active
+              Ativo
             </label>
             <div className="flex justify-end gap-3 pt-2">
               <Button
@@ -154,10 +154,10 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
                 variant="secondary"
                 onClick={() => { reset(); setEditing(false); setError(""); }}
               >
-                <X size={16} aria-hidden="true" /> Cancel
+                <X size={16} aria-hidden="true" /> Cancelar
               </Button>
               <Button type="submit" loading={submitting}>
-                <Save size={16} aria-hidden="true" /> {submitting ? "Saving..." : "Save Changes"}
+                <Save size={16} aria-hidden="true" /> {submitting ? "Salvando..." : "Salvar alterações"}
               </Button>
             </div>
           </form>
@@ -167,7 +167,7 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
         <>
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Contact</h2>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Contato</h2>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail size={16} aria-hidden="true" className="text-brand-500 shrink-0" />
                 {owner.email || "—"}
@@ -188,7 +188,7 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
           {owner.notes && (
             <Card>
               <CardContent>
-                <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Notes</h2>
+                <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Observações</h2>
                 <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{owner.notes}</p>
               </CardContent>
             </Card>
@@ -196,9 +196,9 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
 
           <Card>
             <CardContent>
-              <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Properties</h2>
+              <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Imóveis</h2>
               {ownerships.length === 0 ? (
-                <p className="text-sm text-gray-400">No property ownership assigned.</p>
+                <p className="text-sm text-gray-400">Nenhuma participação em imóvel atribuída.</p>
               ) : (
                 <div className="space-y-2">
                   {ownerships.map((o) => (
@@ -213,7 +213,7 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
                         <span className="text-xs text-gray-400 font-mono">{o.property!.code}</span>
                       </span>
                       <span className="text-xs text-gray-500">
-                        {o.share_percentage}% share · {o.commission_percentage}% commission
+                        {o.share_percentage}% participação · {o.commission_percentage}% comissão
                       </span>
                     </Link>
                   ))}
@@ -226,22 +226,22 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
           <Card className="border-red-200">
             <CardContent className="flex items-center justify-between gap-3 flex-wrap">
               <div>
-                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Danger Zone</h2>
-                <p className="text-xs text-gray-500 mt-1">Permanently delete this owner. This cannot be undone.</p>
+                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Zona de perigo</h2>
+                <p className="text-xs text-gray-500 mt-1">Excluir este proprietário permanentemente. Esta ação não pode ser desfeita.</p>
               </div>
               {confirmingDelete ? (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">Are you sure?</span>
+                  <span className="text-sm text-gray-600">Tem certeza?</span>
                   <Button variant="secondary" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
-                    Cancel
+                    Cancelar
                   </Button>
                   <Button variant="danger" onClick={onDelete} loading={deleting}>
-                    <Trash2 size={16} aria-hidden="true" /> {deleting ? "Deleting..." : "Confirm Delete"}
+                    <Trash2 size={16} aria-hidden="true" /> {deleting ? "Excluindo..." : "Confirmar exclusão"}
                   </Button>
                 </div>
               ) : (
                 <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
-                  <Trash2 size={16} aria-hidden="true" /> Delete Owner
+                  <Trash2 size={16} aria-hidden="true" /> Excluir proprietário
                 </Button>
               )}
             </CardContent>

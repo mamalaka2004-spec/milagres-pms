@@ -39,7 +39,7 @@ export function DeleteReservationButton({ reservationId }: DeleteReservationButt
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-white border border-red-200 text-red-600 hover:bg-red-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Trash2 size={14} aria-hidden="true" />
-        Delete reservation
+        Excluir reserva
       </button>
     );
   }
@@ -47,7 +47,7 @@ export function DeleteReservationButton({ reservationId }: DeleteReservationButt
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
       <div className="text-sm font-semibold text-red-700">
-        Delete this reservation? It will be removed from lists and the calendar.
+        Excluir esta reserva? Ela será removida das listas e da agenda.
       </div>
       <div className="flex gap-2">
         <button
@@ -61,7 +61,7 @@ export function DeleteReservationButton({ reservationId }: DeleteReservationButt
           ) : (
             <Trash2 size={14} aria-hidden="true" />
           )}
-          {deleting ? "Deleting..." : "Yes, delete"}
+          {deleting ? "Excluindo..." : "Sim, excluir"}
         </button>
         <button
           type="button"
@@ -69,7 +69,7 @@ export function DeleteReservationButton({ reservationId }: DeleteReservationButt
           disabled={deleting}
           className="px-4 py-1.5 rounded border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
-          Keep reservation
+          Manter reserva
         </button>
       </div>
       {error && (

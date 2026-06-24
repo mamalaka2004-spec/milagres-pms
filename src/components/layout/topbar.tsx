@@ -51,7 +51,7 @@ export function Topbar({ title, onMenuClick, userName = "Admin", userRole = "adm
 
       {/* Notifications */}
       <button
-        aria-label="Notifications"
+        aria-label="Notificações"
         className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Bell size={18} aria-hidden="true" />

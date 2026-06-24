@@ -37,7 +37,7 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
 
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Upload failed");
+        if (!res.ok) throw new Error(result.error || "Falha no upload");
 
         // Link to property
         const linkRes = await fetch(`/api/properties/${propertyId}/images`, {
@@ -49,7 +49,7 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
         if (linkRes.ok) setImages((prev) => [...prev, linkResult.data]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Falha no upload");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -66,7 +66,7 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
   };
 
   const deleteImage = async (imageId: string) => {
-    if (!confirm("Delete this image?")) return;
+    if (!confirm("Excluir esta imagem?")) return;
     await fetch(`/api/properties/${propertyId}/images/${imageId}`, { method: "DELETE" });
     setImages(images.filter((img) => img.id !== imageId));
   };
@@ -91,11 +91,11 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
         >
           {uploading ? (
             <>
-              <Loader2 size={18} aria-hidden="true" className="animate-spin" /> Uploading...
+              <Loader2 size={18} aria-hidden="true" className="animate-spin" /> Enviando...
             </>
           ) : (
             <>
-              <Upload size={18} aria-hidden="true" /> Upload Photos
+              <Upload size={18} aria-hidden="true" /> Enviar fotos
             </>
           )}
         </button>
@@ -118,7 +118,7 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
 
               {image.is_cover && (
                 <div className="absolute top-2 left-2 bg-brand-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                  <Star size={10} aria-hidden="true" fill="currentColor" /> Cover
+                  <Star size={10} aria-hidden="true" fill="currentColor" /> Capa
                 </div>
               )}
 
@@ -128,8 +128,8 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
                     type="button"
                     onClick={() => setCover(image.id)}
                     className="p-2 rounded-full bg-white/90 hover:bg-white text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-                    title="Set as cover"
-                    aria-label="Set as cover"
+                    title="Definir como capa"
+                    aria-label="Definir como capa"
                   >
                     <Star size={14} aria-hidden="true" />
                   </button>
@@ -138,8 +138,8 @@ export function PhotoGallery({ propertyId, initialImages = [] }: PhotoGalleryPro
                   type="button"
                   onClick={() => deleteImage(image.id)}
                   className="p-2 rounded-full bg-white/90 hover:bg-red-500 hover:text-white text-red-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-                  title="Delete"
-                  aria-label="Delete image"
+                  title="Excluir"
+                  aria-label="Excluir imagem"
                 >
                   <X size={14} aria-hidden="true" />
                 </button>

@@ -27,14 +27,14 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       <div className="flex justify-between items-center gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           <select
-            aria-label="Filter by status"
+            aria-label="Filtrar por status"
             defaultValue={params.status || ""}
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm font-body bg-white text-gray-700 cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400"
           >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="maintenance">Maintenance</option>
+            <option value="">Todos os status</option>
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+            <option value="maintenance">Manutenção</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
             href="/properties/new"
             className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <Plus size={16} aria-hidden="true" /> Add Property
+            <Plus size={16} aria-hidden="true" /> Adicionar imóvel
           </Link>
         </div>
       </div>
@@ -52,9 +52,9 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       {properties.length === 0 ? (
         <EmptyState
           icon={Home}
-          title="No properties yet"
-          description="Add your first property to start managing reservations and bookings."
-          action={{ label: "+ Add Property", href: "/properties/new" }}
+          title="Nenhum imóvel ainda"
+          description="Adicione seu primeiro imóvel para começar a gerenciar reservas."
+          action={{ label: "+ Adicionar imóvel", href: "/properties/new" }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
@@ -67,7 +67,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
       {/* Mobile FAB */}
       <Link
         href="/properties/new"
-        aria-label="Add Property"
+        aria-label="Adicionar imóvel"
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Plus size={24} aria-hidden="true" />

@@ -100,48 +100,48 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       <div className="flex items-center gap-3">
         <Link
           href="/properties"
-          aria-label="Back to properties"
+          aria-label="Voltar para imóveis"
           className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-          {isEditing ? "Edit Property" : "New Property"}
+          {isEditing ? "Editar imóvel" : "Novo imóvel"}
         </h1>
       </div>
 
       {/* Basic Info */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Basic Information
+          Informações básicas
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Name *" error={errors.name?.message}>
+          <Field label="Nome *" error={errors.name?.message}>
             <input {...register("name")} placeholder="Casa Coral" className="form-input" />
           </Field>
-          <Field label="Code *" error={errors.code?.message}>
+          <Field label="Código *" error={errors.code?.message}>
             <input {...register("code")} placeholder="MIL-01" className="form-input uppercase" />
           </Field>
           <Field label="Slug (URL) *" error={errors.slug?.message}>
             <input {...register("slug")} placeholder="casa-coral" className="form-input" />
           </Field>
-          <Field label="Type">
+          <Field label="Tipo">
             <select {...register("type")} className="form-input cursor-pointer">
-              <option value="">Select type</option>
-              <option value="house">House</option>
-              <option value="apartment">Apartment</option>
+              <option value="">Selecione o tipo</option>
+              <option value="house">Casa</option>
+              <option value="apartment">Apartamento</option>
               <option value="studio">Studio</option>
               <option value="villa">Villa</option>
-              <option value="cabin">Cabin</option>
-              <option value="room">Room</option>
-              <option value="other">Other</option>
+              <option value="cabin">Chalé</option>
+              <option value="room">Quarto</option>
+              <option value="other">Outro</option>
             </select>
           </Field>
           <Field label="Status">
             <select {...register("status")} className="form-input cursor-pointer">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="maintenance">Maintenance</option>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+              <option value="maintenance">Manutenção</option>
             </select>
           </Field>
         </div>
@@ -150,17 +150,17 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Display */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Display
+          Exibição
         </h2>
         <div className="space-y-4">
-          <Field label="Public Title">
+          <Field label="Título público">
             <input {...register("title")} placeholder="Casa Coral - Refúgio à beira-mar" className="form-input" />
           </Field>
-          <Field label="Subtitle">
+          <Field label="Subtítulo">
             <input {...register("subtitle")} placeholder="Refúgio com piscina privativa" className="form-input" />
           </Field>
-          <Field label="Description">
-            <textarea {...register("description")} rows={5} placeholder="Tell guests about this property..." className="form-input resize-y" />
+          <Field label="Descrição">
+            <textarea {...register("description")} rows={5} placeholder="Conte aos hóspedes sobre este imóvel..." className="form-input resize-y" />
           </Field>
         </div>
       </section>
@@ -168,19 +168,19 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Location */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Location
+          Localização
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Address">
+          <Field label="Endereço">
             <input {...register("address")} className="form-input" />
           </Field>
-          <Field label="Neighborhood">
+          <Field label="Bairro">
             <input {...register("neighborhood")} className="form-input" />
           </Field>
-          <Field label="City">
+          <Field label="Cidade">
             <input {...register("city")} className="form-input" />
           </Field>
-          <Field label="State">
+          <Field label="Estado">
             <input {...register("state")} className="form-input" />
           </Field>
         </div>
@@ -189,19 +189,19 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Capacity */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Capacity
+          Capacidade
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Field label="Max Guests *" error={errors.max_guests?.message}>
+          <Field label="Máx. de hóspedes *" error={errors.max_guests?.message}>
             <input type="number" {...register("max_guests")} className="form-input" />
           </Field>
-          <Field label="Bedrooms">
+          <Field label="Quartos">
             <input type="number" {...register("bedrooms")} className="form-input" />
           </Field>
-          <Field label="Beds">
+          <Field label="Camas">
             <input type="number" {...register("beds")} className="form-input" />
           </Field>
-          <Field label="Bathrooms">
+          <Field label="Banheiros">
             <input type="number" {...register("bathrooms")} className="form-input" />
           </Field>
         </div>
@@ -213,16 +213,16 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           Pricing (BRL)
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Base Price / Night *" error={errors.base_price?.message}>
+          <Field label="Preço base / noite *" error={errors.base_price?.message}>
             <input type="number" step="0.01" {...register("base_price")} className="form-input" placeholder="490.00" />
           </Field>
-          <Field label="Cleaning Fee">
+          <Field label="Taxa de limpeza">
             <input type="number" step="0.01" {...register("cleaning_fee")} className="form-input" placeholder="150.00" />
           </Field>
-          <Field label="Extra Guest Fee">
+          <Field label="Taxa por hóspede extra">
             <input type="number" step="0.01" {...register("extra_guest_fee")} className="form-input" placeholder="0.00" />
           </Field>
-          <Field label="Charge after N guests">
+          <Field label="Cobrar a partir de N hóspedes">
             <input type="number" {...register("extra_guest_after")} className="form-input" placeholder="0" />
           </Field>
         </div>
@@ -231,27 +231,27 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Rules */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Rules & Policies
+          Regras & Políticas
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <Field label="Check-in Time">
+          <Field label="Horário de check-in">
             <input {...register("check_in_time")} className="form-input" placeholder="15:00" />
           </Field>
-          <Field label="Check-out Time">
+          <Field label="Horário de check-out">
             <input {...register("check_out_time")} className="form-input" placeholder="11:00" />
           </Field>
-          <Field label="Min Nights">
+          <Field label="Mín. de noites">
             <input type="number" {...register("min_nights")} className="form-input" />
           </Field>
-          <Field label="Max Nights">
+          <Field label="Máx. de noites">
             <input type="number" {...register("max_nights")} className="form-input" />
           </Field>
         </div>
         <div className="space-y-4">
-          <Field label="House Rules">
+          <Field label="Regras da casa">
             <textarea {...register("house_rules")} rows={4} className="form-input resize-y" />
           </Field>
-          <Field label="Cancellation Policy">
+          <Field label="Política de cancelamento">
             <textarea {...register("cancellation_policy")} rows={3} className="form-input resize-y" />
           </Field>
         </div>
@@ -260,7 +260,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Channel Sync */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-1 uppercase tracking-wider">
-          Channel Sync
+          Sincronização de canais
         </h2>
         <p className="text-xs text-gray-500 mb-4">
           Cole os links iCal de exportação do Airbnb e Booking — usamos para puxar bloqueios de calendário automaticamente.
@@ -273,10 +273,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
               className="form-input"
             />
             <p className="text-[10px] text-gray-400 mt-1">
-              Em Airbnb: Listing → Calendar → Availability → Connect to another website → Export Calendar
+              No Airbnb: Anúncio → Calendário → Disponibilidade → Conectar a outro site → Exportar calendário
             </p>
           </Field>
-          <Field label="Airbnb listing URL (optional)" error={errors.airbnb_listing_url?.message}>
+          <Field label="URL do anúncio no Airbnb (opcional)" error={errors.airbnb_listing_url?.message}>
             <input
               {...register("airbnb_listing_url")}
               placeholder="https://www.airbnb.com/rooms/12345678"
@@ -290,10 +290,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
               className="form-input"
             />
             <p className="text-[10px] text-gray-400 mt-1">
-              Em Booking Extranet: Rates & Availability → Sync calendars → Export calendar
+              Na Extranet da Booking: Tarifas e disponibilidade → Sincronizar calendários → Exportar calendário
             </p>
           </Field>
-          <Field label="Booking listing URL (optional)" error={errors.booking_listing_url?.message}>
+          <Field label="URL do anúncio na Booking (opcional)" error={errors.booking_listing_url?.message}>
             <input
               {...register("booking_listing_url")}
               placeholder="https://www.booking.com/hotel/br/casa-coral.html"
@@ -306,21 +306,21 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       {/* Booking Settings */}
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          Booking Settings
+          Configurações de reserva
         </h2>
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" {...register("instant_booking_enabled")} className="w-4 h-4 accent-brand-500" />
             <div>
-              <div className="text-sm font-semibold text-gray-900">Instant Booking</div>
-              <div className="text-xs text-gray-500">Guests can book without waiting for approval</div>
+              <div className="text-sm font-semibold text-gray-900">Reserva instantânea</div>
+              <div className="text-xs text-gray-500">Hóspedes podem reservar sem aguardar aprovação</div>
             </div>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" {...register("is_featured")} className="w-4 h-4 accent-brand-500" />
             <div>
-              <div className="text-sm font-semibold text-gray-900">Featured Property</div>
-              <div className="text-xs text-gray-500">Show on homepage featured section</div>
+              <div className="text-sm font-semibold text-gray-900">Imóvel em destaque</div>
+              <div className="text-xs text-gray-500">Exibir na seção de destaques da página inicial</div>
             </div>
           </label>
         </div>
@@ -339,7 +339,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           href="/properties"
           className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          Cancel
+          Cancelar
         </Link>
         <button
           type="submit"
@@ -347,7 +347,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
         >
           <Save size={16} aria-hidden="true" />
-          {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Property"}
+          {submitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Criar imóvel"}
         </button>
       </div>
 

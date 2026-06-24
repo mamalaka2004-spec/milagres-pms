@@ -53,11 +53,11 @@ export function NewTaskButton({
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to create task");
+      if (!res.ok) throw new Error(json.error || "Falha ao criar tarefa");
       setOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
     } finally {
       setSubmitting(false);
     }
@@ -70,17 +70,17 @@ export function NewTaskButton({
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={15} aria-hidden="true" /> New task
+        <Plus size={15} aria-hidden="true" /> Nova tarefa
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-md shadow-xl">
             <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-base text-gray-900">New task</h2>
+              <h2 className="font-bold text-base text-gray-900">Nova tarefa</h2>
               <button
                 type="button"
-                aria-label="Close dialog"
+                aria-label="Fechar diálogo"
                 onClick={() => setOpen(false)}
                 className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
               >
@@ -89,7 +89,7 @@ export function NewTaskButton({
             </div>
 
             <form onSubmit={submit} className="p-5 space-y-3">
-              <Field label="Property *">
+              <Field label="Imóvel *">
                 <select
                   value={propertyId}
                   onChange={(e) => setPropertyId(e.target.value)}
@@ -105,7 +105,7 @@ export function NewTaskButton({
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Type">
+                <Field label="Tipo">
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as (typeof TASK_TYPES)[number])}
@@ -118,22 +118,22 @@ export function NewTaskButton({
                     ))}
                   </select>
                 </Field>
-                <Field label="Priority">
+                <Field label="Prioridade">
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as typeof priority)}
                     className="form-input bg-white"
                   >
-                    <option value="low">Low</option>
+                    <option value="low">Baixa</option>
                     <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
                   </select>
                 </Field>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Due date">
+                <Field label="Data de vencimento">
                   <input
                     type="date"
                     value={dueDate}
@@ -141,7 +141,7 @@ export function NewTaskButton({
                     className="form-input"
                   />
                 </Field>
-                <Field label="Due time">
+                <Field label="Horário de vencimento">
                   <input
                     type="time"
                     value={dueTime}
@@ -151,7 +151,7 @@ export function NewTaskButton({
                 </Field>
               </div>
 
-              <Field label="Notes">
+              <Field label="Observações">
                 <textarea
                   rows={2}
                   value={notes}
@@ -172,7 +172,7 @@ export function NewTaskButton({
                   onClick={() => setOpen(false)}
                   className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -181,10 +181,10 @@ export function NewTaskButton({
                 >
                   {submitting ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Saving...
+                      <Loader2 size={14} className="animate-spin" aria-hidden="true" /> Salvando...
                     </>
                   ) : (
-                    "Create"
+                    "Criar"
                   )}
                 </button>
               </div>

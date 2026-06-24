@@ -53,7 +53,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Finance</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Financeiro</h1>
           <p className="text-xs text-gray-500">
             {formatDate(range.from)} → {formatDate(range.to)}
           </p>
@@ -62,7 +62,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
           <input
             type="date"
             name="from"
-            aria-label="From date"
+            aria-label="Data inicial"
             defaultValue={range.from}
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
@@ -70,7 +70,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
           <input
             type="date"
             name="to"
-            aria-label="To date"
+            aria-label="Data final"
             defaultValue={range.to}
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
@@ -78,7 +78,7 @@ export default async function FinancePage({ searchParams }: PageProps) {
             type="submit"
             className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            Apply
+            Aplicar
           </button>
         </form>
       </div>
@@ -87,34 +87,34 @@ export default async function FinancePage({ searchParams }: PageProps) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat
           icon={DollarSign}
-          label="Gross revenue"
+          label="Receita bruta"
           value={formatCurrency(summary.gross_revenue_cents)}
           tone="positive"
         />
         <Stat
           icon={TrendingUp}
-          label="Net revenue"
+          label="Receita líquida"
           value={formatCurrency(summary.net_cents)}
-          subtitle={`After fees & expenses`}
+          subtitle={`Após taxas e despesas`}
         />
         <Stat
           icon={BedDouble}
-          label="Occupancy"
+          label="Ocupação"
           value={`${(summary.occupancy_rate * 100).toFixed(0)}%`}
           subtitle={`${summary.reservations_count} reservas no período`}
         />
         <Stat
           icon={CreditCard}
-          label="Payments"
+          label="Pagamentos"
           value={String(payments.length)}
-          subtitle={`${payments.filter((p) => p.status === "completed").length} completed`}
+          subtitle={`${payments.filter((p) => p.status === "completed").length} concluído`}
         />
       </div>
 
       {/* Revenue chart */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-          Revenue by month
+          Receita por mês
         </h2>
         <RevenueChart data={summary.monthly} />
       </div>
@@ -123,10 +123,10 @@ export default async function FinancePage({ searchParams }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-            By channel
+            Por canal
           </h2>
           {summary.by_channel.length === 0 ? (
-            <div className="text-sm text-gray-400 py-4">No data.</div>
+            <div className="text-sm text-gray-400 py-4">Sem dados.</div>
           ) : (
             <div className="space-y-2">
               {summary.by_channel.map((c) => {
@@ -162,10 +162,10 @@ export default async function FinancePage({ searchParams }: PageProps) {
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-            By property
+            Por imóvel
           </h2>
           {summary.by_property.length === 0 ? (
-            <div className="text-sm text-gray-400 py-4">No data.</div>
+            <div className="text-sm text-gray-400 py-4">Sem dados.</div>
           ) : (
             <div className="space-y-2">
               {summary.by_property.slice(0, 6).map((p) => {
@@ -203,28 +203,28 @@ export default async function FinancePage({ searchParams }: PageProps) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Payments ({payments.length})
+            Pagamentos ({payments.length})
           </h2>
         </div>
         {payments.length === 0 ? (
           <div className="px-5 py-12 text-center text-sm text-gray-400">
-            No payments in this period.
+            Nenhum pagamento neste período.
           </div>
         ) : (
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase">
-                  Date
+                  Data
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase">
-                  Reservation
+                  Reserva
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase hidden md:table-cell">
-                  Method
+                  Método
                 </th>
                 <th className="px-4 py-2 text-right text-[11px] font-semibold text-gray-500 uppercase">
-                  Amount
+                  Valor
                 </th>
                 <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase">
                   Status

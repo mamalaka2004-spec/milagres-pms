@@ -189,15 +189,15 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/reservations" aria-label="Back to reservations" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+        <Link href="/reservations" aria-label="Voltar para reservas" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">New Reservation</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Nova Reserva</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Guest */}
-        <Section title="Guest">
+        <Section title="Hóspede">
           <GuestSearchSelect
             value={guest}
             onChange={setGuest}
@@ -210,14 +210,14 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
         </Section>
 
         {/* Property + Dates */}
-        <Section title="Property & dates">
+        <Section title="Imóvel e datas">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-3">
-              <label className={labelClass}>Property *</label>
+              <label className={labelClass}>Imóvel *</label>
               <select {...register("property_id")} className={`${inputClass} bg-white cursor-pointer`}>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.code}) — up to {p.max_guests}
+                    {p.name} ({p.code}) — até {p.max_guests}
                   </option>
                 ))}
               </select>
@@ -240,7 +240,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               )}
             </div>
             <div>
-              <label className={labelClass}>Nights</label>
+              <label className={labelClass}>Noites</label>
               <div className="px-4 py-2.5 rounded-lg border border-gray-100 bg-gray-50 text-sm font-mono">
                 {nights || "—"}
               </div>
@@ -251,12 +251,12 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
             <div className="mt-3">
               {availability.state === "loading" && (
                 <span className="inline-flex items-center gap-2 text-xs text-gray-500">
-                  <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Checking availability...
+                  <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Verificando disponibilidade...
                 </span>
               )}
               {availability.state === "available" && (
                 <span className="inline-flex items-center gap-2 text-xs text-green-700 font-semibold">
-                  <CheckCircle2 size={14} aria-hidden="true" /> Property available
+                  <CheckCircle2 size={14} aria-hidden="true" /> Imóvel disponível
                 </span>
               )}
               {availability.state === "unavailable" && (
@@ -269,7 +269,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
         </Section>
 
         {/* Guests count */}
-        <Section title="Guests">
+        <Section title="Hóspedes">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Total *</label>
@@ -284,7 +284,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               )}
             </div>
             <div>
-              <label className={labelClass}>Adults</label>
+              <label className={labelClass}>Adultos</label>
               <input
                 type="number"
                 min={1}
@@ -293,7 +293,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               />
             </div>
             <div>
-              <label className={labelClass}>Children</label>
+              <label className={labelClass}>Crianças</label>
               <input
                 type="number"
                 min={0}
@@ -305,10 +305,10 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
         </Section>
 
         {/* Channel */}
-        <Section title="Channel">
+        <Section title="Canal">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Source *</label>
+              <label className={labelClass}>Origem *</label>
               <select {...register("channel")} className={`${inputClass} bg-white cursor-pointer`}>
                 {CHANNEL_VALUES.map((c) => (
                   <option key={c} value={c}>
@@ -318,7 +318,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               </select>
             </div>
             <div>
-              <label className={labelClass}>Channel reference</label>
+              <label className={labelClass}>Referência do canal</label>
               <input
                 {...register("channel_ref")}
                 placeholder="HMABC1234"
@@ -336,23 +336,23 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               register={register("base_amount", { valueAsNumber: true })}
             />
             <PriceInput
-              label="Cleaning fee"
+              label="Taxa de limpeza"
               register={register("cleaning_fee", { valueAsNumber: true })}
             />
             <PriceInput
-              label="Extra guests"
+              label="Hóspedes extras"
               register={register("extra_guest_fee", { valueAsNumber: true })}
             />
             <PriceInput
-              label="Discount"
+              label="Desconto"
               register={register("discount", { valueAsNumber: true })}
             />
             <PriceInput
-              label="Tax"
+              label="Imposto"
               register={register("tax", { valueAsNumber: true })}
             />
             <PriceInput
-              label="Platform fee"
+              label="Taxa da plataforma"
               register={register("platform_fee", { valueAsNumber: true })}
             />
           </div>
@@ -376,29 +376,29 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
         <Section title="Status">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Reservation status</label>
+              <label className={labelClass}>Status da reserva</label>
               <select {...register("status")} className={`${inputClass} bg-white cursor-pointer`}>
-                <option value="inquiry">Inquiry</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
+                <option value="inquiry">Consulta</option>
+                <option value="pending">Pendente</option>
+                <option value="confirmed">Confirmada</option>
               </select>
             </div>
             <div>
-              <label className={labelClass}>Payment status</label>
+              <label className={labelClass}>Status do pagamento</label>
               <select {...register("payment_status")} className={`${inputClass} bg-white cursor-pointer`}>
-                <option value="unpaid">Unpaid</option>
-                <option value="partially_paid">Partially paid</option>
-                <option value="paid">Paid</option>
+                <option value="unpaid">Não pago</option>
+                <option value="partially_paid">Parcialmente pago</option>
+                <option value="paid">Pago</option>
               </select>
             </div>
           </div>
         </Section>
 
         {/* Notes */}
-        <Section title="Notes">
+        <Section title="Notas">
           <div className="space-y-3">
             <div>
-              <label className={labelClass}>Special requests (visible to guest)</label>
+              <label className={labelClass}>Solicitações especiais (visível ao hóspede)</label>
               <textarea
                 {...register("special_requests")}
                 rows={2}
@@ -406,7 +406,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               />
             </div>
             <div>
-              <label className={labelClass}>Internal notes</label>
+              <label className={labelClass}>Notas internas</label>
               <textarea
                 {...register("internal_notes")}
                 rows={2}
@@ -427,7 +427,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
             href="/reservations"
             className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            Cancel
+            Cancelar
           </Link>
           <button
             type="submit"
@@ -435,7 +435,7 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
             <Save size={16} aria-hidden="true" />
-            {submitting ? "Creating..." : "Create Reservation"}
+            {submitting ? "Criando..." : "Criar Reserva"}
           </button>
         </div>
       </form>

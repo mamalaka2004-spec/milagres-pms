@@ -39,12 +39,12 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Reservations</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Reservas</h1>
         <Link
           href="/reservations/new"
           className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={16} aria-hidden="true" /> New Reservation
+          <Plus size={16} aria-hidden="true" /> Nova Reserva
         </Link>
       </div>
 
@@ -52,17 +52,17 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         <input
           name="search"
           defaultValue={params.search || ""}
-          placeholder="Booking code..."
-          aria-label="Search by booking code"
+          placeholder="Código da reserva..."
+          aria-label="Buscar por código da reserva"
           className="flex-1 min-w-[180px] px-4 py-2 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-400/40"
         />
         <select
           name="status"
           defaultValue={params.status || ""}
-          aria-label="Filter by status"
+          aria-label="Filtrar por status"
           className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <option value="">All statuses</option>
+          <option value="">Todos os status</option>
           {Object.entries(RESERVATION_STATUSES).map(([k, v]) => (
             <option key={k} value={k}>
               {v.label}
@@ -72,10 +72,10 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
         <select
           name="channel"
           defaultValue={params.channel || ""}
-          aria-label="Filter by channel"
+          aria-label="Filtrar por canal"
           className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <option value="">All channels</option>
+          <option value="">Todos os canais</option>
           {Object.entries(CHANNELS).map(([k, v]) => (
             <option key={k} value={k}>
               {v.label}
@@ -86,30 +86,30 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
           type="submit"
           className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          Filter
+          Filtrar
         </button>
       </form>
 
       {reservations.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title={params.search || params.status ? "No reservations match your filters" : "No reservations yet"}
+          title={params.search || params.status ? "Nenhuma reserva corresponde aos filtros" : "Nenhuma reserva ainda"}
           description={
             params.search || params.status
-              ? "Try clearing the filters."
-              : "Create your first reservation to start tracking bookings."
+              ? "Tente limpar os filtros."
+              : "Crie sua primeira reserva para começar."
           }
-          action={!params.search && !params.status ? { label: "+ New Reservation", href: "/reservations/new" } : undefined}
+          action={!params.search && !params.status ? { label: "+ Nova Reserva", href: "/reservations/new" } : undefined}
         />
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Code</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Guest</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Property</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Dates</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Código</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Hóspede</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Imóvel</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Datas</th>
                 <th className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Total</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
@@ -167,7 +167,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
 
       <Link
         href="/reservations/new"
-        aria-label="New reservation"
+        aria-label="Nova reserva"
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Plus size={24} aria-hidden="true" />

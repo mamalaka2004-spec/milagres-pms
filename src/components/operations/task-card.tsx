@@ -41,26 +41,26 @@ export function TaskCard({ task }: TaskCardProps) {
         body: JSON.stringify({ status: next }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Update failed");
+      if (!res.ok) throw new Error(json.error || "Falha ao atualizar");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
     } finally {
       setPending(null);
     }
   };
 
   const remove = async () => {
-    if (!window.confirm("Delete this task? This cannot be undone.")) return;
+    if (!window.confirm("Excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
     setDeleting(true);
     setError("");
     try {
       const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Delete failed");
+      if (!res.ok) throw new Error(json.error || "Falha ao excluir");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
       setDeleting(false);
     }
   };
@@ -87,7 +87,7 @@ export function TaskCard({ task }: TaskCardProps) {
             </span>
             {isOverdue && (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600">
-                <Clock size={10} aria-hidden="true" /> Overdue
+                <Clock size={10} aria-hidden="true" /> Atrasada
               </span>
             )}
           </div>
@@ -124,8 +124,8 @@ export function TaskCard({ task }: TaskCardProps) {
             type="button"
             onClick={remove}
             disabled={deleting || pending !== null}
-            aria-label="Delete task"
-            title="Delete task"
+            aria-label="Excluir tarefa"
+            title="Excluir tarefa"
             className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             {deleting ? (
@@ -141,7 +141,7 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="flex items-center gap-2">
           <Clock size={12} className="text-gray-400" aria-hidden="true" />
           <span>
-            {task.due_date ? formatDate(task.due_date) : "No due date"}
+            {task.due_date ? formatDate(task.due_date) : "Sem prazo"}
             {task.due_time && ` · ${formatTime(task.due_time)}`}
           </span>
         </div>
@@ -157,7 +157,7 @@ export function TaskCard({ task }: TaskCardProps) {
               <span className="hidden sm:inline">{task.assignee.full_name}</span>
             </span>
           ) : (
-            <span className="text-[11px] text-gray-400 italic">Unassigned</span>
+            <span className="text-[11px] text-gray-400 italic">Sem responsável</span>
           )}
         </div>
       </div>
@@ -176,7 +176,7 @@ export function TaskCard({ task }: TaskCardProps) {
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
               {pending === "in_progress" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <Play size={11} aria-hidden="true" />}
-              Start
+              Iniciar
             </button>
           )}
           <button
@@ -186,7 +186,7 @@ export function TaskCard({ task }: TaskCardProps) {
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             {pending === "completed" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={11} aria-hidden="true" />}
-            Complete
+            Concluir
           </button>
           <button
             type="button"
@@ -195,7 +195,7 @@ export function TaskCard({ task }: TaskCardProps) {
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             {pending === "skipped" ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <SkipForward size={11} aria-hidden="true" />}
-            Skip
+            Pular
           </button>
         </div>
       )}

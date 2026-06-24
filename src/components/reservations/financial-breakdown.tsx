@@ -44,24 +44,24 @@ export function FinancialBreakdown({ input, className }: Props) {
         value={formatCurrency(input.base_amount_cents)}
       />
       {input.cleaning_fee_cents > 0 && (
-        <Row label="Cleaning fee" value={formatCurrency(input.cleaning_fee_cents)} />
+        <Row label="Taxa de limpeza" value={formatCurrency(input.cleaning_fee_cents)} />
       )}
       {input.extra_guest_fee_cents > 0 && (
         <Row
-          label="Extra guests"
+          label="Hóspedes extras"
           value={formatCurrency(input.extra_guest_fee_cents)}
         />
       )}
       {input.discount_cents > 0 && (
         <Row
-          label="Discount"
+          label="Desconto"
           value={`− ${formatCurrency(input.discount_cents)}`}
           tone="positive"
         />
       )}
       <Row label="Subtotal" value={formatCurrency(subtotal_cents)} muted />
       {input.tax_cents > 0 && (
-        <Row label="Tax" value={formatCurrency(input.tax_cents)} muted />
+        <Row label="Imposto" value={formatCurrency(input.tax_cents)} muted />
       )}
 
       <div className="pt-2 mt-2 border-t border-gray-200">
@@ -74,11 +74,11 @@ export function FinancialBreakdown({ input, className }: Props) {
       {input.platform_fee_cents > 0 && (
         <>
           <Row
-            label="Platform fee"
+            label="Taxa da plataforma"
             value={`− ${formatCurrency(input.platform_fee_cents)}`}
             muted
           />
-          <Row label="Net" value={formatCurrency(net_amount_cents)} tone="positive" strong />
+          <Row label="Líquido" value={formatCurrency(net_amount_cents)} tone="positive" strong />
         </>
       )}
     </div>

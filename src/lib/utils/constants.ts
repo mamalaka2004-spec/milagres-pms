@@ -5,13 +5,13 @@ export const RESERVATION_STATUSES: Record<
   ReservationStatus,
   { label: string; color: string; bgColor: string }
 > = {
-  inquiry: { label: "Inquiry", color: "#6b21a8", bgColor: "#f3e8ff" },
-  pending: { label: "Pending", color: "#92400e", bgColor: "#fef3c7" },
-  confirmed: { label: "Confirmed", color: "#166534", bgColor: "#dcfce7" },
-  checked_in: { label: "Checked In", color: "#1e40af", bgColor: "#dbeafe" },
-  checked_out: { label: "Checked Out", color: "#374151", bgColor: "#f3f4f6" },
-  canceled: { label: "Canceled", color: "#991b1b", bgColor: "#fee2e2" },
-  no_show: { label: "No Show", color: "#991b1b", bgColor: "#fee2e2" },
+  inquiry: { label: "Consulta", color: "#6b21a8", bgColor: "#f3e8ff" },
+  pending: { label: "Pendente", color: "#92400e", bgColor: "#fef3c7" },
+  confirmed: { label: "Confirmada", color: "#166534", bgColor: "#dcfce7" },
+  checked_in: { label: "Hospedado", color: "#1e40af", bgColor: "#dbeafe" },
+  checked_out: { label: "Finalizada", color: "#374151", bgColor: "#f3f4f6" },
+  canceled: { label: "Cancelada", color: "#991b1b", bgColor: "#fee2e2" },
+  no_show: { label: "Não compareceu", color: "#991b1b", bgColor: "#fee2e2" },
 };
 
 // ─── Payment Status ───
@@ -19,10 +19,10 @@ export const PAYMENT_STATUSES: Record<
   PaymentStatus,
   { label: string; color: string; bgColor: string }
 > = {
-  unpaid: { label: "Unpaid", color: "#991b1b", bgColor: "#fee2e2" },
-  partially_paid: { label: "Partial", color: "#92400e", bgColor: "#fef3c7" },
-  paid: { label: "Paid", color: "#166534", bgColor: "#dcfce7" },
-  refunded: { label: "Refunded", color: "#374151", bgColor: "#f3f4f6" },
+  unpaid: { label: "Não pago", color: "#991b1b", bgColor: "#fee2e2" },
+  partially_paid: { label: "Parcial", color: "#92400e", bgColor: "#fef3c7" },
+  paid: { label: "Pago", color: "#166534", bgColor: "#dcfce7" },
+  refunded: { label: "Reembolsado", color: "#374151", bgColor: "#f3f4f6" },
 };
 
 // ─── Channels ───
@@ -30,13 +30,13 @@ export const CHANNELS: Record<
   Channel,
   { label: string; color: string }
 > = {
-  direct: { label: "Direct", color: "#6B7F5E" },
+  direct: { label: "Direto", color: "#6B7F5E" },
   airbnb: { label: "Airbnb", color: "#FF5A5F" },
   booking: { label: "Booking", color: "#003580" },
   expedia: { label: "Expedia", color: "#00355F" },
   vrbo: { label: "VRBO", color: "#0061E0" },
   manual: { label: "Manual", color: "#737373" },
-  other: { label: "Other", color: "#94a3b8" },
+  other: { label: "Outro", color: "#94a3b8" },
 };
 
 // ─── Task Status ───
@@ -44,10 +44,10 @@ export const TASK_STATUSES: Record<
   TaskStatus,
   { label: string; color: string; bgColor: string }
 > = {
-  pending: { label: "Pending", color: "#92400e", bgColor: "#fef3c7" },
-  in_progress: { label: "In Progress", color: "#1e40af", bgColor: "#dbeafe" },
-  completed: { label: "Completed", color: "#166534", bgColor: "#dcfce7" },
-  skipped: { label: "Skipped", color: "#374151", bgColor: "#f3f4f6" },
+  pending: { label: "Pendente", color: "#92400e", bgColor: "#fef3c7" },
+  in_progress: { label: "Em andamento", color: "#1e40af", bgColor: "#dbeafe" },
+  completed: { label: "Concluída", color: "#166534", bgColor: "#dcfce7" },
+  skipped: { label: "Ignorada", color: "#374151", bgColor: "#f3f4f6" },
 };
 
 // ─── Priority ───
@@ -55,10 +55,10 @@ export const PRIORITIES: Record<
   Priority,
   { label: string; color: string; bgColor: string }
 > = {
-  low: { label: "Low", color: "#374151", bgColor: "#f3f4f6" },
+  low: { label: "Baixa", color: "#374151", bgColor: "#f3f4f6" },
   normal: { label: "Normal", color: "#374151", bgColor: "#f3f4f6" },
-  high: { label: "High", color: "#92400e", bgColor: "#fef3c7" },
-  urgent: { label: "Urgent", color: "#991b1b", bgColor: "#fee2e2" },
+  high: { label: "Alta", color: "#92400e", bgColor: "#fef3c7" },
+  urgent: { label: "Urgente", color: "#991b1b", bgColor: "#fee2e2" },
 };
 
 // ─── Valid Status Transitions ───

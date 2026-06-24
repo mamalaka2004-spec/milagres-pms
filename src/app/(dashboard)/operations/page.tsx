@@ -52,7 +52,7 @@ export default async function OperationsPage() {
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Operations</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Operações</h1>
         <NewTaskButton properties={properties} />
       </div>
 
@@ -60,20 +60,20 @@ export default async function OperationsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat
           icon={AlertOctagon}
-          label="Overdue"
+          label="Atrasadas"
           value={String(overdue.length)}
           tone={overdue.length > 0 ? "danger" : undefined}
         />
         <Stat
           icon={ChevronRight}
-          label="Today"
+          label="Hoje"
           value={String(todayTasks.length)}
           tone={todayTasks.length > 0 ? "active" : undefined}
         />
-        <Stat icon={ClipboardList} label="Upcoming" value={String(upcomingTasks.length)} />
+        <Stat icon={ClipboardList} label="Próximas" value={String(upcomingTasks.length)} />
         <Stat
           icon={CheckCircle2}
-          label="Completed (14d)"
+          label="Concluídas (14d)"
           value={String(completed.length)}
           tone="positive"
         />
@@ -81,7 +81,7 @@ export default async function OperationsPage() {
 
       {/* Sections */}
       {overdue.length > 0 && (
-        <Section title="Overdue" tone="danger">
+        <Section title="Atrasadas" tone="danger">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {overdue.map((t) => (
               <TaskCard key={t.id} task={t} />
@@ -90,9 +90,9 @@ export default async function OperationsPage() {
         </Section>
       )}
 
-      <Section title="Today">
+      <Section title="Hoje">
         {todayTasks.length === 0 ? (
-          <Empty message="No tasks scheduled for today." />
+          <Empty message="Nenhuma tarefa agendada para hoje." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {todayTasks.map((t) => (
@@ -102,9 +102,9 @@ export default async function OperationsPage() {
         )}
       </Section>
 
-      <Section title="Upcoming">
+      <Section title="Próximas">
         {upcomingTasks.length === 0 ? (
-          <Empty message="Nothing scheduled ahead." />
+          <Empty message="Nada agendado à frente." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {upcomingTasks.map((t) => (
@@ -115,7 +115,7 @@ export default async function OperationsPage() {
       </Section>
 
       {noDueTasks.length > 0 && (
-        <Section title="No due date">
+        <Section title="Sem prazo">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {noDueTasks.map((t) => (
               <TaskCard key={t.id} task={t} />
@@ -124,9 +124,9 @@ export default async function OperationsPage() {
         </Section>
       )}
 
-      <Section title="Recently completed">
+      <Section title="Concluídas recentemente">
         {completed.length === 0 ? (
-          <Empty message="No tasks completed recently." />
+          <Empty message="Nenhuma tarefa concluída recentemente." />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {completed.slice(0, 9).map((t) => (

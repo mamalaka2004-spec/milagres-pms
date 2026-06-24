@@ -190,20 +190,20 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
       <div className="flex items-center gap-3">
         <Link
           href={`/reservations/${reservation.id}`}
-          aria-label="Back to reservation"
+          aria-label="Voltar para a reserva"
           className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className="flex-1">
           <div className="font-mono text-xs text-gray-400">{reservation.booking_code}</div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Edit Reservation</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Editar Reserva</h1>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Guest (read-only) */}
-        <Section title="Guest">
+        <Section title="Hóspede">
           {reservation.guest ? (
             <Link
               href={`/guests/${reservation.guest.id}`}
@@ -215,19 +215,19 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
               )}
             </Link>
           ) : (
-            <div className="text-sm text-gray-400">Guest not found.</div>
+            <div className="text-sm text-gray-400">Hóspede não encontrado.</div>
           )}
         </Section>
 
         {/* Property + Dates */}
-        <Section title="Property & dates">
+        <Section title="Imóvel e datas">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-3">
-              <label className={labelClass}>Property *</label>
+              <label className={labelClass}>Imóvel *</label>
               <select {...register("property_id")} className={`${inputClass} bg-white cursor-pointer`}>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.code}) — up to {p.max_guests}
+                    {p.name} ({p.code}) — até {p.max_guests}
                   </option>
                 ))}
               </select>
@@ -250,7 +250,7 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
               )}
             </div>
             <div>
-              <label className={labelClass}>Nights</label>
+              <label className={labelClass}>Noites</label>
               <div className="px-4 py-2.5 rounded-lg border border-gray-100 bg-gray-50 text-sm font-mono">
                 {nights || "—"}
               </div>
@@ -261,12 +261,12 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
             <div className="mt-3">
               {availability.state === "loading" && (
                 <span className="inline-flex items-center gap-2 text-xs text-gray-500">
-                  <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Checking availability...
+                  <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Verificando disponibilidade...
                 </span>
               )}
               {availability.state === "available" && (
                 <span className="inline-flex items-center gap-2 text-xs text-green-700 font-semibold">
-                  <CheckCircle2 size={14} aria-hidden="true" /> Property available
+                  <CheckCircle2 size={14} aria-hidden="true" /> Imóvel disponível
                 </span>
               )}
               {availability.state === "unavailable" && (
@@ -279,7 +279,7 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
         </Section>
 
         {/* Guests count */}
-        <Section title="Guests">
+        <Section title="Hóspedes">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Total *</label>
@@ -289,21 +289,21 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
               )}
             </div>
             <div>
-              <label className={labelClass}>Adults</label>
+              <label className={labelClass}>Adultos</label>
               <input type="number" min={1} {...register("num_adults")} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Children</label>
+              <label className={labelClass}>Crianças</label>
               <input type="number" min={0} {...register("num_children")} className={inputClass} />
             </div>
           </div>
         </Section>
 
         {/* Channel */}
-        <Section title="Channel">
+        <Section title="Canal">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Source *</label>
+              <label className={labelClass}>Origem *</label>
               <select {...register("channel")} className={`${inputClass} bg-white cursor-pointer`}>
                 {CHANNEL_VALUES.map((c) => (
                   <option key={c} value={c}>
@@ -313,7 +313,7 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
               </select>
             </div>
             <div>
-              <label className={labelClass}>Channel reference</label>
+              <label className={labelClass}>Referência do canal</label>
               <input {...register("channel_ref")} placeholder="HMABC1234" className={inputClass} />
             </div>
           </div>
@@ -323,11 +323,11 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
         <Section title="Pricing (R$)">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <PriceInput label="Base" register={register("base_amount", { valueAsNumber: true })} />
-            <PriceInput label="Cleaning fee" register={register("cleaning_fee", { valueAsNumber: true })} />
-            <PriceInput label="Extra guests" register={register("extra_guest_fee", { valueAsNumber: true })} />
-            <PriceInput label="Discount" register={register("discount", { valueAsNumber: true })} />
-            <PriceInput label="Tax" register={register("tax", { valueAsNumber: true })} />
-            <PriceInput label="Platform fee" register={register("platform_fee", { valueAsNumber: true })} />
+            <PriceInput label="Taxa de limpeza" register={register("cleaning_fee", { valueAsNumber: true })} />
+            <PriceInput label="Hóspedes extras" register={register("extra_guest_fee", { valueAsNumber: true })} />
+            <PriceInput label="Desconto" register={register("discount", { valueAsNumber: true })} />
+            <PriceInput label="Imposto" register={register("tax", { valueAsNumber: true })} />
+            <PriceInput label="Taxa da plataforma" register={register("platform_fee", { valueAsNumber: true })} />
           </div>
 
           <div className="mt-4">
@@ -349,29 +349,29 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
         <Section title="Status">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Payment status</label>
+              <label className={labelClass}>Status do pagamento</label>
               <select {...register("payment_status")} className={`${inputClass} bg-white cursor-pointer`}>
-                <option value="unpaid">Unpaid</option>
-                <option value="partially_paid">Partially paid</option>
-                <option value="paid">Paid</option>
-                <option value="refunded">Refunded</option>
+                <option value="unpaid">Não pago</option>
+                <option value="partially_paid">Parcialmente pago</option>
+                <option value="paid">Pago</option>
+                <option value="refunded">Reembolsado</option>
               </select>
             </div>
           </div>
           <p className="text-[11px] text-gray-400 mt-2">
-            Reservation status is managed through the status actions on the detail page.
+            O status da reserva é gerenciado pelas ações de status na página de detalhes.
           </p>
         </Section>
 
         {/* Notes */}
-        <Section title="Notes">
+        <Section title="Notas">
           <div className="space-y-3">
             <div>
-              <label className={labelClass}>Special requests (visible to guest)</label>
+              <label className={labelClass}>Solicitações especiais (visível ao hóspede)</label>
               <textarea {...register("special_requests")} rows={2} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Internal notes</label>
+              <label className={labelClass}>Notas internas</label>
               <textarea {...register("internal_notes")} rows={2} className={inputClass} />
             </div>
           </div>
@@ -388,7 +388,7 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
             href={`/reservations/${reservation.id}`}
             className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            Cancel
+            Cancelar
           </Link>
           <button
             type="submit"
@@ -396,7 +396,7 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
             <Save size={16} aria-hidden="true" />
-            {submitting ? "Saving..." : "Save changes"}
+            {submitting ? "Salvando..." : "Salvar alterações"}
           </button>
         </div>
       </form>

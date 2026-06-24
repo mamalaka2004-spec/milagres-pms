@@ -36,7 +36,7 @@ export default async function GuestDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/guests" aria-label="Back to guests" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+        <Link href="/guests" aria-label="Voltar para hóspedes" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className="flex-1">
@@ -73,44 +73,44 @@ export default async function GuestDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Total stays" value={String(guest.total_stays)} />
-        <Stat label="Total spent" value={formatCurrency(guest.total_spent_cents)} />
-        <Stat label="Country" value={guest.country || guest.nationality || "—"} />
-        <Stat label="Language" value={guest.language} />
+        <Stat label="Total de estadias" value={String(guest.total_stays)} />
+        <Stat label="Total gasto" value={formatCurrency(guest.total_spent_cents)} />
+        <Stat label="País" value={guest.country || guest.nationality || "—"} />
+        <Stat label="Idioma" value={guest.language} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3 lg:col-span-1">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-            Contact
+            Contato
           </h2>
-          <Field icon={Mail} label="Email" value={guest.email || "—"} />
+          <Field icon={Mail} label="E-mail" value={guest.email || "—"} />
           <Field
             icon={Phone}
-            label="Phone"
+            label="Telefone"
             value={guest.phone ? formatPhone(guest.phone) : "—"}
             mono
           />
           <Field
             icon={Globe}
-            label="From"
+            label="De"
             value={
               [guest.city, guest.state, guest.country].filter(Boolean).join(", ") || "—"
             }
           />
           {guest.document_number && (
             <Field
-              label={guest.document_type?.toUpperCase() || "Document"}
+              label={guest.document_type?.toUpperCase() || "Documento"}
               value={guest.document_number}
             />
           )}
           {guest.date_of_birth && (
-            <Field label="Birth date" value={formatDate(guest.date_of_birth)} />
+            <Field label="Data de nascimento" value={formatDate(guest.date_of_birth)} />
           )}
           {guest.notes && (
             <div className="pt-2 border-t border-gray-100">
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                Notes
+                Observações
               </div>
               <div className="text-sm text-gray-700 whitespace-pre-wrap">
                 {guest.notes}
@@ -122,18 +122,18 @@ export default async function GuestDetailPage({ params }: PageProps) {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:col-span-2">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-              Stay history ({sorted.length})
+              Histórico de estadias ({sorted.length})
             </h2>
             <Link
               href={`/reservations/new?guest_id=${guest.id}`}
               className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              + New reservation
+              + Nova reserva
             </Link>
           </div>
           {sorted.length === 0 ? (
             <div className="text-sm text-gray-400 py-8 text-center">
-              No reservations yet for this guest.
+              Nenhuma reserva ainda para este hóspede.
             </div>
           ) : (
             <div className="divide-y divide-gray-100">

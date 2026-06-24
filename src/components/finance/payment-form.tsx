@@ -18,12 +18,12 @@ const labelClass =
 
 const METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
   pix: "Pix",
-  credit_card: "Credit card",
-  debit_card: "Debit card",
-  bank_transfer: "Bank transfer",
-  cash: "Cash",
-  platform: "Channel platform",
-  other: "Other",
+  credit_card: "Cartão de crédito",
+  debit_card: "Cartão de débito",
+  bank_transfer: "Transferência bancária",
+  cash: "Dinheiro",
+  platform: "Plataforma do canal",
+  other: "Outro",
 };
 
 export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps) {
@@ -65,12 +65,12 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to record payment");
+      if (!res.ok) throw new Error(json.error || "Falha ao registrar pagamento");
       setOpen(false);
       reset();
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Erro");
       setSubmitting(false);
     }
   };
@@ -82,7 +82,7 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
-        <Plus size={14} aria-hidden="true" /> Record payment
+        <Plus size={14} aria-hidden="true" /> Registrar pagamento
       </button>
     );
   }
@@ -93,10 +93,10 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
       className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3"
     >
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-sm text-gray-900">New payment</h3>
+        <h3 className="font-semibold text-sm text-gray-900">Novo pagamento</h3>
         <button
           type="button"
-          aria-label="Close payment form"
+          aria-label="Fechar formulário de pagamento"
           onClick={() => {
             setOpen(false);
             reset();
@@ -109,7 +109,7 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Amount (R$) *</label>
+          <label className={labelClass}>Valor (R$) *</label>
           <input
             type="number"
             step="0.01"
@@ -121,7 +121,7 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
           />
         </div>
         <div>
-          <label className={labelClass}>Method *</label>
+          <label className={labelClass}>Método *</label>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value as (typeof PAYMENT_METHODS)[number])}
@@ -137,17 +137,17 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
       </div>
 
       <div>
-        <label className={labelClass}>Reference (optional)</label>
+        <label className={labelClass}>Referência (opcional)</label>
         <input
           value={reference}
           onChange={(e) => setReference(e.target.value)}
-          placeholder="Transaction ID, NSU, etc."
+          placeholder="ID da transação, NSU, etc."
           className={inputClass}
         />
       </div>
 
       <div>
-        <label className={labelClass}>Notes (optional)</label>
+        <label className={labelClass}>Observações (opcional)</label>
         <input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -170,7 +170,7 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
           }}
           className="px-3 py-1.5 rounded border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          Cancel
+          Cancelar
         </button>
         <button
           type="submit"
@@ -179,10 +179,10 @@ export function PaymentForm({ reservationId, suggestedAmount }: PaymentFormProps
         >
           {submitting ? (
             <>
-              <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Saving...
+              <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Salvando...
             </>
           ) : (
-            "Record"
+            "Registrar"
           )}
         </button>
       </div>

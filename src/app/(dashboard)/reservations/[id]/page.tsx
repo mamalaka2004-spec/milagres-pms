@@ -52,7 +52,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/reservations" aria-label="Back to reservations" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+        <Link href="/reservations" aria-label="Voltar para reservas" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className="flex-1">
@@ -76,7 +76,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           {/* Stay info */}
-          <Section title="Stay">
+          <Section title="Hospedagem">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <KV
                 icon={CalendarIcon}
@@ -91,30 +91,30 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                 hint={property?.check_out_time?.slice(0, 5)}
               />
               <KV
-                label="Nights"
+                label="Noites"
                 value={String(r.nights)}
               />
               <KV
                 icon={UsersIcon}
-                label="Guests"
+                label="Hóspedes"
                 value={`${r.num_guests}`}
-                hint={`${r.num_adults} adults · ${r.num_children} children`}
+                hint={`${r.num_adults} adultos · ${r.num_children} crianças`}
               />
             </div>
             {(r.special_requests || r.internal_notes) && (
               <div className="mt-4 space-y-3">
                 {r.special_requests && (
-                  <NotesBlock label="Special requests" value={r.special_requests} />
+                  <NotesBlock label="Solicitações especiais" value={r.special_requests} />
                 )}
                 {r.internal_notes && (
-                  <NotesBlock label="Internal notes" value={r.internal_notes} />
+                  <NotesBlock label="Notas internas" value={r.internal_notes} />
                 )}
               </div>
             )}
             {r.cancellation_reason && (
               <div className="mt-3 p-3 rounded bg-red-50 border border-red-200 text-sm text-red-700">
                 <div className="text-[11px] font-semibold uppercase tracking-wider mb-1">
-                  Cancellation reason
+                  Motivo do cancelamento
                 </div>
                 {r.cancellation_reason}
               </div>
@@ -122,7 +122,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
           </Section>
 
           {/* Financials */}
-          <Section title="Financials">
+          <Section title="Financeiro">
             <FinancialBreakdown
               input={{
                 base_amount_cents: r.base_amount_cents,
@@ -136,12 +136,12 @@ export default async function ReservationDetailPage({ params }: PageProps) {
             />
             <div className="grid grid-cols-2 gap-3 mt-3">
               <KV
-                label="Paid"
+                label="Pago"
                 value={formatCurrency(totalPaid)}
                 tone="positive"
               />
               <KV
-                label="Balance"
+                label="Saldo"
                 value={formatCurrency(balance)}
                 tone={balance > 0 ? "danger" : "positive"}
               />
@@ -149,7 +149,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
           </Section>
 
           {/* Payments */}
-          <Section title={`Payments (${payments.length})`}>
+          <Section title={`Pagamentos (${payments.length})`}>
             <div className="mb-3">
               <PaymentForm
                 reservationId={r.id}
@@ -158,7 +158,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
             </div>
             {payments.length === 0 ? (
               <div className="text-sm text-gray-400 py-4 text-center">
-                No payments recorded yet.
+                Nenhum pagamento registrado ainda.
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -195,7 +195,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
 
         <div className="space-y-4">
           {/* Guest panel */}
-          <Section title="Guest">
+          <Section title="Hóspede">
             {guest ? (
               <div className="space-y-2">
                 <Link
@@ -220,11 +220,11 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                 )}
                 <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <div className="text-gray-400">Stays</div>
+                    <div className="text-gray-400">Hospedagens</div>
                     <div className="font-semibold text-gray-900">{guest.total_stays}</div>
                   </div>
                   <div>
-                    <div className="text-gray-400">Spent</div>
+                    <div className="text-gray-400">Gasto</div>
                     <div className="font-semibold text-gray-900 font-mono">
                       {formatCurrency(guest.total_spent_cents)}
                     </div>
@@ -232,12 +232,12 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-400">Guest not found.</div>
+              <div className="text-sm text-gray-400">Hóspede não encontrado.</div>
             )}
           </Section>
 
           {/* Status actions */}
-          <Section title="Actions">
+          <Section title="Ações">
             <StatusActions reservationId={r.id} currentStatus={r.status} />
             <div className="pt-3 mt-3 border-t border-gray-100">
               <DeleteReservationButton reservationId={r.id} />
@@ -246,7 +246,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
 
           {/* Property panel */}
           {property && (
-            <Section title="Property">
+            <Section title="Imóvel">
               <Link
                 href={`/properties/${property.id}`}
                 className="block hover:opacity-90 transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
@@ -254,20 +254,20 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                 <div className="font-semibold text-sm text-gray-900">{property.name}</div>
                 <div className="font-mono text-[11px] text-gray-400">{property.code}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Up to {property.max_guests} guests
+                  Até {property.max_guests} hóspedes
                 </div>
               </Link>
             </Section>
           )}
 
           {/* Timeline */}
-          <Section title="Timeline">
+          <Section title="Linha do tempo">
             <div className="space-y-2 text-xs text-gray-600">
-              <Tick label="Created" at={r.created_at} />
-              {r.confirmed_at && <Tick label="Confirmed" at={r.confirmed_at} />}
-              {r.checked_in_at && <Tick label="Checked in" at={r.checked_in_at} />}
-              {r.checked_out_at && <Tick label="Checked out" at={r.checked_out_at} />}
-              {r.canceled_at && <Tick label="Canceled" at={r.canceled_at} tone="red" />}
+              <Tick label="Criada" at={r.created_at} />
+              {r.confirmed_at && <Tick label="Confirmada" at={r.confirmed_at} />}
+              {r.checked_in_at && <Tick label="Check-in" at={r.checked_in_at} />}
+              {r.checked_out_at && <Tick label="Check-out" at={r.checked_out_at} />}
+              {r.canceled_at && <Tick label="Cancelada" at={r.canceled_at} tone="red" />}
             </div>
           </Section>
         </div>

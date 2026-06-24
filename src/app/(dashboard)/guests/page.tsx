@@ -22,41 +22,41 @@ export default async function GuestsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Guests</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Hóspedes</h1>
         <Link
           href="/guests/new"
           className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Plus size={16} aria-hidden="true" /> Add Guest
+          <Plus size={16} aria-hidden="true" /> Adicionar hóspede
         </Link>
       </div>
 
       <form className="flex gap-2" action="/guests" method="GET">
         <input
           name="search"
-          aria-label="Search guests"
+          aria-label="Buscar hóspedes"
           defaultValue={params.search || ""}
-          placeholder="Search by name, email or phone..."
+          placeholder="Buscar por nome, e-mail ou telefone..."
           className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
         />
         <button
           type="submit"
           className="px-4 py-2.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          Search
+          Buscar
         </button>
       </form>
 
       {guests.length === 0 ? (
         <EmptyState
           icon={Users}
-          title={params.search ? "No guests match your search" : "No guests yet"}
+          title={params.search ? "Nenhum hóspede corresponde à busca" : "Nenhum hóspede ainda"}
           description={
             params.search
-              ? "Try a different search term."
-              : "Add your first guest to start tracking stays and preferences."
+              ? "Tente outro termo de busca."
+              : "Adicione seu primeiro hóspede para acompanhar estadias e preferências."
           }
-          action={!params.search ? { label: "+ Add Guest", href: "/guests/new" } : undefined}
+          action={!params.search ? { label: "+ Adicionar hóspede", href: "/guests/new" } : undefined}
         />
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -64,16 +64,16 @@ export default async function GuestsPage({ searchParams }: PageProps) {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Name
+                  Nome
                 </th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                  Contact
+                  Contato
                 </th>
                 <th className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                  Stays
+                  Estadias
                 </th>
                 <th className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                  Spent
+                  Gasto
                 </th>
               </tr>
             </thead>
@@ -116,7 +116,7 @@ export default async function GuestsPage({ searchParams }: PageProps) {
 
       <Link
         href="/guests/new"
-        aria-label="Add Guest"
+        aria-label="Adicionar hóspede"
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Plus size={24} aria-hidden="true" />

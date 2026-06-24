@@ -13,7 +13,7 @@ export default async function SettingsPage() {
           <SettingsIcon size={16} className="text-white" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Ajustes</h1>
           <p className="text-xs text-gray-500">Configurações do sistema</p>
         </div>
       </div>

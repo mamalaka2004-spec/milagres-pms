@@ -12,13 +12,13 @@ interface StatusActionsProps {
 }
 
 const STATUS_LABEL_ACTION: Record<ReservationStatus, { label: string; icon: React.ElementType; tone: string }> = {
-  inquiry: { label: "Move to Inquiry", icon: AlertOctagon, tone: "purple" },
-  pending: { label: "Mark Pending", icon: AlertOctagon, tone: "amber" },
-  confirmed: { label: "Confirm", icon: CheckCircle2, tone: "green" },
-  checked_in: { label: "Check In", icon: LogIn, tone: "blue" },
-  checked_out: { label: "Check Out", icon: LogOut, tone: "gray" },
-  canceled: { label: "Cancel", icon: XCircle, tone: "red" },
-  no_show: { label: "Mark No-Show", icon: XCircle, tone: "red" },
+  inquiry: { label: "Mover para Consulta", icon: AlertOctagon, tone: "purple" },
+  pending: { label: "Marcar como Pendente", icon: AlertOctagon, tone: "amber" },
+  confirmed: { label: "Confirmar", icon: CheckCircle2, tone: "green" },
+  checked_in: { label: "Fazer check-in", icon: LogIn, tone: "blue" },
+  checked_out: { label: "Fazer check-out", icon: LogOut, tone: "gray" },
+  canceled: { label: "Cancelar", icon: XCircle, tone: "red" },
+  no_show: { label: "Marcar não comparecimento", icon: XCircle, tone: "red" },
 };
 
 const TONE_CLASS: Record<string, string> = {
@@ -66,7 +66,7 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
   if (next.length === 0) {
     return (
       <div className="text-xs text-gray-400">
-        No further transitions from <span className="font-semibold">{RESERVATION_STATUSES[currentStatus].label}</span>.
+        Nenhuma transição possível a partir de <span className="font-semibold">{RESERVATION_STATUSES[currentStatus].label}</span>.
       </div>
     );
   }
@@ -106,13 +106,13 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
       {confirmCancel && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
           <div className="text-sm font-semibold text-red-700">
-            Are you sure you want to cancel this reservation?
+            Tem certeza que deseja cancelar esta reserva?
           </div>
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason (optional)"
-            aria-label="Cancellation reason"
+            placeholder="Motivo (opcional)"
+            aria-label="Motivo do cancelamento"
             className="w-full px-3 py-2 rounded border border-red-200 text-sm bg-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
           <div className="flex gap-2">
@@ -122,7 +122,7 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
               disabled={pending !== null}
               className="px-4 py-1.5 rounded bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
             >
-              {pending === "canceled" ? "Cancelling..." : "Yes, cancel"}
+              {pending === "canceled" ? "Cancelando..." : "Sim, cancelar"}
             </button>
             <button
               type="button"
@@ -132,7 +132,7 @@ export function StatusActions({ reservationId, currentStatus }: StatusActionsPro
               }}
               className="px-4 py-1.5 rounded border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
             >
-              Keep reservation
+              Manter reserva
             </button>
           </div>
         </div>

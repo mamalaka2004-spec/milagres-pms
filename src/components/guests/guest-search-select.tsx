@@ -23,7 +23,7 @@ export function GuestSearchSelect({
   value,
   onChange,
   onCreateNew,
-  placeholder = "Search guest by name, email or phone...",
+  placeholder = "Buscar hóspede por nome, email ou telefone...",
 }: GuestSearchSelectProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -80,7 +80,7 @@ export function GuestSearchSelect({
         <button
           type="button"
           onClick={() => onChange(null)}
-          aria-label="Clear selected guest"
+          aria-label="Limpar hóspede selecionado"
           className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
           <X size={16} aria-hidden="true" />
@@ -98,7 +98,7 @@ export function GuestSearchSelect({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          aria-label="Search guest"
+          aria-label="Buscar hóspede"
           className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15"
         />
       </div>
@@ -106,10 +106,10 @@ export function GuestSearchSelect({
       {open && (query.length >= 2 || onCreateNew) && (
         <div className="absolute z-30 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg max-h-72 overflow-y-auto">
           {loading && (
-            <div className="px-4 py-3 text-sm text-gray-400">Searching...</div>
+            <div className="px-4 py-3 text-sm text-gray-400">Buscando...</div>
           )}
           {!loading && query.length >= 2 && results.length === 0 && (
-            <div className="px-4 py-3 text-sm text-gray-400">No guests found.</div>
+            <div className="px-4 py-3 text-sm text-gray-400">Nenhum hóspede encontrado.</div>
           )}
           {results.map((g) => (
             <button
@@ -148,7 +148,7 @@ export function GuestSearchSelect({
               }}
               className="w-full px-4 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 font-semibold flex items-center gap-2 border-t border-gray-100 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400/40"
             >
-              <Plus size={14} aria-hidden="true" /> Create new guest
+              <Plus size={14} aria-hidden="true" /> Criar novo hóspede
             </button>
           )}
         </div>

@@ -71,11 +71,11 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={redirectAfter} aria-label="Go back" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+        <Link href={redirectAfter} aria-label="Voltar" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-          {isEditing ? "Edit Guest" : "New Guest"}
+          {isEditing ? "Editar hóspede" : "Novo hóspede"}
         </h1>
       </div>
 
@@ -84,7 +84,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4"
       >
         <div>
-          <label className={labelClass}>Full Name *</label>
+          <label className={labelClass}>Nome completo *</label>
           <input {...register("full_name")} className={inputClass} />
           {errors.full_name && (
             <p className="text-xs text-red-500 mt-1">{errors.full_name.message}</p>
@@ -93,14 +93,14 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Email</label>
+            <label className={labelClass}>E-mail</label>
             <input type="email" {...register("email")} className={inputClass} />
             {errors.email && (
               <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
             )}
           </div>
           <div>
-            <label className={labelClass}>Phone</label>
+            <label className={labelClass}>Telefone</label>
             <input
               {...register("phone")}
               placeholder="+55 82 99999-0000"
@@ -108,42 +108,42 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
             />
           </div>
           <div>
-            <label className={labelClass}>Document Type</label>
+            <label className={labelClass}>Tipo de documento</label>
             <select {...register("document_type")} className={`${inputClass} bg-white cursor-pointer`}>
-              <option value="">Select</option>
+              <option value="">Selecione</option>
               <option value="cpf">CPF</option>
               <option value="rg">RG</option>
-              <option value="passport">Passport</option>
-              <option value="id_card">ID Card</option>
-              <option value="other">Other</option>
+              <option value="passport">Passaporte</option>
+              <option value="id_card">Documento de identidade</option>
+              <option value="other">Outro</option>
             </select>
           </div>
           <div>
-            <label className={labelClass}>Document Number</label>
+            <label className={labelClass}>Número do documento</label>
             <input {...register("document_number")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Date of Birth</label>
+            <label className={labelClass}>Data de nascimento</label>
             <input type="date" {...register("date_of_birth")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Nationality</label>
+            <label className={labelClass}>Nacionalidade</label>
             <input
               {...register("nationality")}
-              placeholder="Brazilian"
+              placeholder="Brasileiro"
               className={inputClass}
             />
           </div>
           <div>
-            <label className={labelClass}>City</label>
+            <label className={labelClass}>Cidade</label>
             <input {...register("city")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>State</label>
+            <label className={labelClass}>Estado</label>
             <input {...register("state")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>Country</label>
+            <label className={labelClass}>País</label>
             <input
               {...register("country")}
               placeholder="BR"
@@ -152,7 +152,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
             />
           </div>
           <div>
-            <label className={labelClass}>Language</label>
+            <label className={labelClass}>Idioma</label>
             <select {...register("language")} className={`${inputClass} bg-white cursor-pointer`}>
               <option value="pt-BR">Português</option>
               <option value="en">English</option>
@@ -162,12 +162,12 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
         </div>
 
         <div>
-          <label className={labelClass}>Notes</label>
+          <label className={labelClass}>Observações</label>
           <textarea
             {...register("notes")}
             rows={3}
             className={inputClass}
-            placeholder="Internal notes about this guest..."
+            placeholder="Observações internas sobre este hóspede..."
           />
         </div>
 
@@ -177,7 +177,7 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
             {...register("is_vip")}
             className="w-4 h-4 rounded border-gray-300 text-brand-500 focus:ring-brand-400/30"
           />
-          <span className="text-sm text-gray-700">Mark as VIP</span>
+          <span className="text-sm text-gray-700">Marcar como VIP</span>
         </label>
 
         {error && (
@@ -191,14 +191,14 @@ export function GuestForm({ initialData, redirectAfter = "/guests" }: GuestFormP
             href={redirectAfter}
             className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            Cancel
+            Cancelar
           </Link>
           <button
             type="submit"
             disabled={submitting}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
-            <Save size={16} aria-hidden="true" /> {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Guest"}
+            <Save size={16} aria-hidden="true" /> {submitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Criar hóspede"}
           </button>
         </div>
       </form>

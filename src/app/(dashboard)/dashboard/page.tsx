@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const s = data.stats;
 
   const occupancyValue = `${(s.occupancy_rate * 100).toFixed(0)}%`;
-  const occupancySub = `${s.occupied_units} of ${s.active_units} units`;
+  const occupancySub = `${s.occupied_units} de ${s.active_units} unidades`;
   const revenueValue = formatCurrencyShort(s.monthly_revenue_cents);
   const revenueTrend =
     s.monthly_revenue_change_pct === 0
@@ -41,29 +41,29 @@ export default async function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatsCard
-          label="Occupancy"
+          label="Ocupação"
           value={occupancyValue}
           subtitle={occupancySub}
           icon={BedDouble}
         />
         <StatsCard
-          label="Revenue"
+          label="Receita"
           value={revenueValue}
-          subtitle="This month"
+          subtitle="Este mês"
           icon={DollarSign}
           trend={revenueTrend ?? undefined}
           trendUp={s.monthly_revenue_change_pct >= 0}
         />
         <StatsCard
-          label="Reservations"
+          label="Reservas"
           value={String(s.reservations_this_month)}
-          subtitle="This month"
+          subtitle="Este mês"
           icon={CalendarDays}
         />
         <StatsCard
-          label="Pending"
+          label="Pendente"
           value={formatCurrencyShort(s.pending_amount_cents)}
-          subtitle={`${s.pending_count} unpaid`}
+          subtitle={`${s.pending_count} não pago`}
           icon={CreditCard}
         />
       </div>
@@ -73,13 +73,13 @@ export default async function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
             <span className="text-brand-500" aria-hidden="true">✈️</span>
-            <span className="font-semibold text-sm text-gray-900">Check-ins Today</span>
+            <span className="font-semibold text-sm text-gray-900">Check-ins hoje</span>
             <span className="ml-auto bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full text-[11px] font-bold">
               {data.today_checkins.length}
             </span>
           </div>
           {data.today_checkins.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-400">No check-ins today.</div>
+            <div className="px-4 py-8 text-center text-sm text-gray-400">Nenhum check-in hoje.</div>
           ) : (
             data.today_checkins.map((ci) => (
               <Link
@@ -113,13 +113,13 @@ export default async function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
             <span className="text-amber-500" aria-hidden="true">🛫</span>
-            <span className="font-semibold text-sm text-gray-900">Check-outs Today</span>
+            <span className="font-semibold text-sm text-gray-900">Check-outs hoje</span>
             <span className="ml-auto bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full text-[11px] font-bold">
               {data.today_checkouts.length}
             </span>
           </div>
           {data.today_checkouts.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-400">No check-outs today.</div>
+            <div className="px-4 py-8 text-center text-sm text-gray-400">Nenhum check-out hoje.</div>
           ) : (
             data.today_checkouts.map((co) => (
               <Link
@@ -152,9 +152,9 @@ export default async function DashboardPage() {
       {data.recent_reservations.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <span className="font-semibold text-sm text-gray-900">Recent reservations</span>
+            <span className="font-semibold text-sm text-gray-900">Reservas recentes</span>
             <Link href="/reservations" className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded">
-              See all →
+              Ver todas →
             </Link>
           </div>
           <div className="divide-y divide-gray-100">
@@ -190,19 +190,19 @@ export default async function DashboardPage() {
           href="/reservations/new"
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-brand-400 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          + New Reservation
+          + Nova Reserva
         </Link>
         <Link
           href="/calendar"
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          View Calendar
+          Ver Agenda
         </Link>
         <Link
           href="/finance"
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          Finance
+          Financeiro
         </Link>
       </div>
     </div>

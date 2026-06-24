@@ -43,11 +43,11 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
         method: "POST",
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Sync failed");
+      if (!res.ok) throw new Error(json.error || "Falha na sincronização");
       setResults(json.data.results);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync error");
+      setError(err instanceof Error ? err.message : "Erro na sincronização");
     } finally {
       setSyncing(false);
     }
@@ -71,7 +71,7 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
       {hasAny ? (
         <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100">
           <div className="text-xs text-gray-500">
-            Sync pulls calendar blocks from configured channels into the local calendar.
+            A sincronização traz os bloqueios de calendário dos canais configurados para o calendário local.
           </div>
           <button
             type="button"
@@ -81,18 +81,18 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
           >
             {syncing ? (
               <>
-                <Loader2 size={14} aria-hidden="true" className="animate-spin" /> Syncing...
+                <Loader2 size={14} aria-hidden="true" className="animate-spin" /> Sincronizando...
               </>
             ) : (
               <>
-                <RefreshCw size={14} aria-hidden="true" /> Sync now
+                <RefreshCw size={14} aria-hidden="true" /> Sincronizar agora
               </>
             )}
           </button>
         </div>
       ) : (
         <div className="text-xs text-gray-400 italic">
-          No channels configured. Add iCal URLs in Edit to enable sync.
+          Nenhum canal configurado. Adicione URLs de iCal em Editar para habilitar a sincronização.
         </div>
       )}
 
@@ -125,8 +125,8 @@ export function ChannelSyncPanel(props: ChannelSyncPanelProps) {
                 <div>{r.error}</div>
               ) : (
                 <div>
-                  Imported {r.inserted} block{r.inserted === 1 ? "" : "s"} (replaced {r.removed} prior),
-                  parsed {r.fetched} event{r.fetched === 1 ? "" : "s"}.
+                  {r.inserted} bloqueio{r.inserted === 1 ? "" : "s"} importado{r.inserted === 1 ? "" : "s"} (substituindo {r.removed} anterior{r.removed === 1 ? "" : "es"}),
+                  {r.fetched} evento{r.fetched === 1 ? "" : "s"} processado{r.fetched === 1 ? "" : "s"}.
                 </div>
               )}
             </div>
@@ -157,16 +157,16 @@ function ChannelRow({
             {icalUrl}
           </div>
         ) : (
-          <div className="text-xs text-gray-400 italic">No iCal URL configured</div>
+          <div className="text-xs text-gray-400 italic">Nenhuma URL de iCal configurada</div>
         )}
       </div>
       <div className="text-right flex-shrink-0">
         {lastSyncedAt ? (
           <div className="text-[11px] text-gray-500">
-            Last sync: <span className="font-mono">{formatDate(lastSyncedAt, "dd/MM HH:mm")}</span>
+            Última sincronização: <span className="font-mono">{formatDate(lastSyncedAt, "dd/MM HH:mm")}</span>
           </div>
         ) : (
-          <div className="text-[11px] text-gray-400">Never synced</div>
+          <div className="text-[11px] text-gray-400">Nunca sincronizado</div>
         )}
         {listingUrl && (
           <a
@@ -175,7 +175,7 @@ function ChannelRow({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 mt-0.5 transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <ExternalLink size={10} aria-hidden="true" /> Listing
+            <ExternalLink size={10} aria-hidden="true" /> Anúncio
           </a>
         )}
       </div>

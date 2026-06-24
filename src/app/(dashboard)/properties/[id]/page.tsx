@@ -36,7 +36,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/properties"
-            aria-label="Back to properties"
+            aria-label="Voltar para imóveis"
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
             <ArrowLeft size={18} aria-hidden="true" />
@@ -50,7 +50,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           href={`/properties/${id}/edit`}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
         >
-          <Edit size={15} aria-hidden="true" /> Edit
+          <Edit size={15} aria-hidden="true" /> Editar
         </Link>
       </div>
 
@@ -67,10 +67,10 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { icon: Users, label: "Max Guests", value: property.max_guests },
-          { icon: BedDouble, label: "Bedrooms", value: property.bedrooms },
-          { icon: BedDouble, label: "Beds", value: property.beds },
-          { icon: Bath, label: "Bathrooms", value: property.bathrooms },
+          { icon: Users, label: "Máx. de hóspedes", value: property.max_guests },
+          { icon: BedDouble, label: "Quartos", value: property.bedrooms },
+          { icon: BedDouble, label: "Camas", value: property.beds },
+          { icon: Bath, label: "Banheiros", value: property.bathrooms },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
@@ -84,23 +84,23 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Pricing */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Pricing</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Preços</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Base Price</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Preço base</div>
             <div className="font-heading text-2xl text-brand-600">
               {formatCurrency(property.base_price_cents)}
-              <span className="text-sm text-gray-400 font-body"> /night</span>
+              <span className="text-sm text-gray-400 font-body"> /noite</span>
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Cleaning Fee</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Taxa de limpeza</div>
             <div className="font-heading text-xl text-gray-700">
               {formatCurrency(property.cleaning_fee_cents)}
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Min / Max Nights</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Mín. / Máx. de noites</div>
             <div className="font-heading text-xl text-gray-700">
               {property.min_nights} / {property.max_nights}
             </div>
@@ -111,7 +111,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       {/* Location */}
       {(property.address || property.neighborhood || property.city) && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-          <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Location</h2>
+          <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Localização</h2>
           <div className="flex items-start gap-3 text-sm text-gray-600">
             <MapPin size={16} aria-hidden="true" className="text-brand-500 mt-0.5 shrink-0" />
             <div>
@@ -127,7 +127,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       {/* Description */}
       {property.description && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">About</h2>
+          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Sobre</h2>
           <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
             {property.description}
           </p>
@@ -137,7 +137,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       {/* House Rules */}
       {property.house_rules && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">House Rules</h2>
+          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Regras da casa</h2>
           <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{property.house_rules}</p>
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
             <span className="flex items-center gap-1">
@@ -152,7 +152,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Photos */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Photos</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Fotos</h2>
         <PhotoGallery
           propertyId={property.id}
           initialImages={(property.property_images || []).map((img) => ({
@@ -166,7 +166,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Amenities */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Amenities</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Comodidades</h2>
         <AmenitySelector
           propertyId={property.id}
           initialSelectedIds={(property.property_amenities || []).map((pa) => pa.amenity.id)}
@@ -175,7 +175,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Channel Sync */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Channel Sync</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Sincronização de canais</h2>
         <ChannelSyncPanel
           propertyId={property.id}
           airbnbIcalUrl={property.airbnb_ical_url}
@@ -189,26 +189,26 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
       {/* Settings */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Settings</h2>
+        <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Ajustes</h2>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Status</span>
             <span className="font-semibold text-gray-900 capitalize">{property.status}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Instant Booking</span>
+            <span className="text-gray-600">Reserva instantânea</span>
             <span className="font-semibold text-gray-900">
-              {property.instant_booking_enabled ? "Enabled" : "Disabled"}
+              {property.instant_booking_enabled ? "Ativada" : "Desativada"}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Featured</span>
+            <span className="text-gray-600">Em destaque</span>
             <span className="font-semibold text-gray-900">
-              {property.is_featured ? "Yes" : "No"}
+              {property.is_featured ? "Sim" : "Não"}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Public URL</span>
+            <span className="text-gray-600">URL pública</span>
             <span className="font-mono text-xs text-brand-600">/properties/{property.slug}</span>
           </div>
         </div>
