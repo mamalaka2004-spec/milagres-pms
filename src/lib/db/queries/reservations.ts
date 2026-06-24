@@ -166,6 +166,12 @@ export type ReservationWithDetails = ReservationRow & {
     paid_at: string | null;
     notes: string | null;
     created_at: string;
+    gateway: string | null;
+    billing_type: string | null;
+    invoice_url: string | null;
+    pix_payload: string | null;
+    due_date: string | null;
+    external_status: string | null;
   }>;
 };
 
@@ -178,7 +184,7 @@ export async function getReservationById(id: string): Promise<ReservationWithDet
       property:properties (id, name, code, slug, cover_image_url, max_guests, check_in_time, check_out_time, airbnb_listing_url, booking_listing_url, airbnb_last_synced_at, booking_last_synced_at),
       guest:guests (id, full_name, email, phone, document_number, document_type, is_vip, total_stays, total_spent_cents),
       reservation_guests (id, full_name, email, phone, document_number, is_primary),
-      payments (id, amount_cents, method, status, reference, paid_at, notes, created_at)
+      payments (id, amount_cents, method, status, reference, paid_at, notes, created_at, gateway, billing_type, invoice_url, pix_payload, due_date, external_status)
     `)
     .eq("id", id)
     .is("deleted_at", null)

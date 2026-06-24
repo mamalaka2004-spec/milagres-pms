@@ -6,6 +6,7 @@ import {
   Users as UsersIcon,
   Star,
   Pencil,
+  ExternalLink,
 } from "lucide-react";
 import { getReservationById } from "@/lib/db/queries/reservations";
 import { requireAuth } from "@/lib/auth";
@@ -24,8 +25,16 @@ import { ChannelCard } from "@/components/reservations/channel-card";
 import { StatusActions } from "@/components/reservations/status-actions";
 import { DeleteReservationButton } from "@/components/reservations/delete-reservation-button";
 import { PaymentForm } from "@/components/finance/payment-form";
+import { ChargeButton } from "@/components/finance/charge-button";
 
 export const dynamic = "force-dynamic";
+
+const PAYMENT_ROW_STATUS: Record<string, string> = {
+  pending: "Pendente",
+  completed: "Pago",
+  failed: "Falhou",
+  refunded: "Reembolsado",
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -156,6 +165,7 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                 reservationId={r.id}
                 suggestedAmount={Math.max(0, balance) / 100}
               />
+              <ChargeButton reservationId={r.id} balanceCents={balance} />
             </div>
             {payments.length === 0 ? (
               <div className="text-sm text-gray-400 py-4 text-center">
@@ -169,16 +179,27 @@ export default async function ReservationDetailPage({ params }: PageProps) {
                       <div className="text-sm font-semibold text-gray-900">
                         {p.method.toUpperCase()}
                         <span className="ml-2 text-[10px] uppercase font-bold tracking-wider text-gray-400">
-                          {p.status}
+                          {PAYMENT_ROW_STATUS[p.status] || p.status}
                         </span>
+                        {p.gateway === "asaas" && (
+                          <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider text-brand-600 bg-brand-500/10 px-1 py-0.5 rounded">Asaas</span>
+                        )}
                       </div>
                       {p.reference && (
                         <div className="text-xs text-gray-500 font-mono">{p.reference}</div>
+                      )}
+                      {p.due_date && p.status === "pending" && (
+                        <div className="text-xs text-gray-400">vence {formatDate(p.due_date)}</div>
                       )}
                       {p.paid_at && (
                         <div className="text-xs text-gray-400">
                           {formatDate(p.paid_at, "dd/MM/yyyy HH:mm")}
                         </div>
+                      )}
+                      {p.invoice_url && (
+                        <a href={p.invoice_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-700 hover:text-brand-800 font-semibold inline-flex items-center gap-1 mt-0.5">
+                          <ExternalLink size={11} aria-hidden="true" /> Abrir fatura
+                        </a>
                       )}
                       {p.notes && (
                         <div className="text-xs text-gray-500 mt-0.5">{p.notes}</div>

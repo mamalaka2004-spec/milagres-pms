@@ -174,6 +174,7 @@ export interface Database {
           is_vip: boolean;
           total_stays: number;
           total_spent_cents: number;
+          asaas_customer_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -237,6 +238,14 @@ export interface Database {
           paid_at: string | null;
           notes: string | null;
           created_by: string | null;
+          gateway: string | null;
+          external_id: string | null;
+          billing_type: string | null;
+          invoice_url: string | null;
+          pix_payload: string | null;
+          due_date: string | null;
+          external_status: string | null;
+          synced_at: string | null;
           created_at: string;
           updated_at: string;
         };

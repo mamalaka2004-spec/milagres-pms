@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { DollarSign, TrendingUp, BedDouble, CreditCard } from "lucide-react";
+import { DollarSign, TrendingUp, BedDouble, CreditCard, Clock } from "lucide-react";
 import { requireAuth } from "@/lib/auth";
 import { getFinanceSummary } from "@/lib/db/queries/finance";
 import { listPaymentsForCompany } from "@/lib/db/queries/payments";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { CHANNELS } from "@/lib/utils/constants";
 import { RevenueChart } from "@/components/finance/revenue-chart";
@@ -33,10 +34,19 @@ export default async function FinancePage({ searchParams }: PageProps) {
     to: params.to || defaultRange().to,
   };
 
-  const [summary, paymentsRaw] = await Promise.all([
+  const [summary, paymentsRaw, openChargesRaw] = await Promise.all([
     getFinanceSummary(user.company_id, range.from, range.to),
     listPaymentsForCompany(user.company_id, { from: range.from, to: range.to }),
+    // Open charges (money to receive) — pending payments across the company.
+    createAdminClient()
+      .from("payments")
+      .select("amount_cents")
+      .eq("company_id", user.company_id)
+      .eq("status", "pending"),
   ]);
+
+  const openCharges = (openChargesRaw.data as { amount_cents: number }[] | null) || [];
+  const receivableCents = openCharges.reduce((s, p) => s + (p.amount_cents || 0), 0);
 
   const payments = (paymentsRaw as unknown as Array<{
     id: string;
@@ -84,12 +94,19 @@ export default async function FinancePage({ searchParams }: PageProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Stat
           icon={DollarSign}
           label="Receita bruta"
           value={formatCurrency(summary.gross_revenue_cents)}
           tone="positive"
+        />
+        <Stat
+          icon={Clock}
+          label="A receber"
+          value={formatCurrency(receivableCents)}
+          subtitle={`${openCharges.length} cobrança(s) em aberto`}
+          tone={receivableCents > 0 ? "warning" : undefined}
         />
         <Stat
           icon={TrendingUp}
@@ -307,7 +324,7 @@ function Stat({
   label: string;
   value: string;
   subtitle?: string;
-  tone?: "positive";
+  tone?: "positive" | "warning";
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
@@ -317,7 +334,7 @@ function Stat({
       </div>
       <div
         className={`text-xl lg:text-2xl font-bold ${
-          tone === "positive" ? "text-green-700" : "text-gray-900"
+          tone === "positive" ? "text-green-700" : tone === "warning" ? "text-amber-700" : "text-gray-900"
         }`}
       >
         {value}
