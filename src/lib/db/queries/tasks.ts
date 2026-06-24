@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ChecklistItem, TaskPhotoKind } from "@/types/database";
 
 export type TaskType =
   | "checkout_clean"
@@ -32,6 +33,20 @@ export interface TaskWithJoins extends TaskRow {
   property: { id: string; name: string; code: string } | null;
   reservation: { id: string; booking_code: string; guest: { full_name: string } | null } | null;
   assignee: { id: string; full_name: string; avatar_url: string | null } | null;
+}
+
+export interface TaskPhoto {
+  id: string;
+  kind: TaskPhotoKind;
+  url: string;
+  created_at: string;
+  uploaded_by: string | null;
+}
+
+export interface TaskDetail extends TaskWithJoins {
+  started_at: string | null;
+  checklist: ChecklistItem[];
+  photos: TaskPhoto[];
 }
 
 export interface TaskFilters {
@@ -144,6 +159,29 @@ export async function getTaskById(id: string): Promise<TaskWithJoins | null> {
     throw error;
   }
   return data as unknown as TaskWithJoins;
+}
+
+const TASK_DETAIL_SELECT = `${TASK_LIST_SELECT},
+  started_at, checklist,
+  photos:task_photos (id, kind, url, created_at, uploaded_by)
+`;
+
+/** Single task with checklist + photos for the field-worker detail view. */
+export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("housekeeping_tasks")
+    .select(TASK_DETAIL_SELECT)
+    .eq("id", id)
+    .single();
+  if (error) {
+    if ((error as { code?: string }).code === "PGRST116") return null;
+    throw error;
+  }
+  const t = data as unknown as TaskDetail;
+  // newest photos first
+  t.photos = (t.photos || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  return t;
 }
 
 /**

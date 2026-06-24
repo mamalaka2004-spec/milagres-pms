@@ -23,10 +23,13 @@ export default async function OperationsPage() {
   const today = todayISO();
   const completedFrom = plusDays(today, -14);
 
+  // Staff (camareiras/prestadores) see only the tasks assigned to them.
+  const mine = user.role === "staff" ? { assigned_to: user.id } : {};
+
   const [allActive, completed, overdue, propsRaw] = await Promise.all([
-    listTasks(user.company_id, { status: "all" }),
-    listTasks(user.company_id, { status: "completed", from: completedFrom }),
-    listTasks(user.company_id, { overdue_before: today }),
+    listTasks(user.company_id, { status: "all", ...mine }),
+    listTasks(user.company_id, { status: "completed", from: completedFrom, ...mine }),
+    listTasks(user.company_id, { overdue_before: today, ...mine }),
     getProperties(user.company_id, { status: "active" }),
   ]);
 

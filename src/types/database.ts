@@ -19,6 +19,8 @@ export type Channel = "direct" | "airbnb" | "booking" | "expedia" | "vrbo" | "ma
 export type TaskStatus = "pending" | "in_progress" | "completed" | "skipped";
 export type TaskType = "checkout_clean" | "checkin_prep" | "deep_clean" | "inspection" | "turnover";
 export type Priority = "low" | "normal" | "high" | "urgent";
+export type ChecklistItem = { id: string; label: string; done: boolean };
+export type TaskPhotoKind = "before" | "after" | "worker";
 export type AiMode = "guest" | "operations" | "management";
 export type BlockedDateReason = "owner_use" | "maintenance" | "cleaning" | "seasonal" | "other";
 export type WaLinePurpose = "booking" | "sales" | "other";
@@ -265,6 +267,8 @@ export interface Database {
           due_date: string | null;
           due_time: string | null;
           notes: string | null;
+          started_at: string | null;
+          checklist: ChecklistItem[];
           completed_at: string | null;
           completed_by: string | null;
           created_at: string;
@@ -272,6 +276,19 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["housekeeping_tasks"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["housekeeping_tasks"]["Insert"]>;
+      };
+      task_photos: {
+        Row: {
+          id: string;
+          company_id: string;
+          task_id: string;
+          kind: TaskPhotoKind;
+          url: string;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["task_photos"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["task_photos"]["Insert"]>;
       };
       blocked_dates: {
         Row: {

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { taskUpdateSchema } from "@/lib/validations/task";
-import { getTaskById, updateTask, deleteTask } from "@/lib/db/queries/tasks";
-import { requireRole } from "@/lib/auth";
+import { getTaskById, getTaskDetail, updateTask, deleteTask } from "@/lib/db/queries/tasks";
+import { requireAuth, requireRole } from "@/lib/auth";
 import {
   apiSuccess,
   apiError,
@@ -15,12 +15,28 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+// ─── GET /api/tasks/[id] ─── single task with checklist + photos (worker detail view)
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await requireAuth();
+    const { id } = await params;
+    const task = await getTaskDetail(id);
+    if (!task) return apiNotFound("Task");
+    if (task.company_id !== user.company_id) return apiForbidden();
+    return apiSuccess(task);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
+    return apiServerError(error);
+  }
+}
+
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await requireRole(["admin", "manager", "staff"]);
     const { id } = await params;
 
-    const existing = await getTaskById(id);
+    const existing = await getTaskDetail(id);
     if (!existing) return apiNotFound("Task");
     if (existing.company_id !== user.company_id) return apiForbidden();
 
@@ -42,11 +58,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     ] as const) {
       if (data[k] !== undefined) patch[k] = data[k] === "" ? null : data[k];
     }
+    if (data.checklist !== undefined) patch.checklist = data.checklist;
+
+    // Service check-in: stamp started_at the first time work begins.
+    if (patch.status === "in_progress" && !existing.started_at) {
+      patch.started_at = new Date().toISOString();
+    }
 
     // Auto-stamp completed metadata when status flips to completed
     if (patch.status === "completed" && existing.status !== "completed") {
       patch.completed_at = new Date().toISOString();
       patch.completed_by = user.id;
+      if (!existing.started_at) patch.started_at = new Date().toISOString();
     }
     if (patch.status && patch.status !== "completed" && existing.status === "completed") {
       patch.completed_at = null;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, CheckCircle2, Play, SkipForward, Clock, Trash2 } from "lucide-react";
+import { Loader2, CheckCircle2, Play, SkipForward, Clock, Trash2, SquareArrowOutUpRight } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { TASK_TYPE_LABELS } from "@/lib/validations/task";
 import { TASK_STATUSES, PRIORITIES } from "@/lib/utils/constants";
@@ -120,6 +120,14 @@ export function TaskCard({ task }: TaskCardProps) {
           >
             {statusCfg.label}
           </span>
+          <Link
+            href={`/operations/${task.id}`}
+            title="Executar serviço"
+            aria-label="Executar serviço"
+            className="p-1 rounded text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+          >
+            <SquareArrowOutUpRight size={13} aria-hidden="true" />
+          </Link>
           <button
             type="button"
             onClick={remove}

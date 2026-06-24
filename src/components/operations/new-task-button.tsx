@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Loader2 } from "lucide-react";
 import { TASK_TYPE_LABELS, TASK_TYPES } from "@/lib/validations/task";
+
+interface AssignableUser { id: string; full_name: string; role: string; is_active: boolean }
 
 interface PropertyOption {
   id: string;
@@ -30,8 +32,25 @@ export function NewTaskButton({
   const [dueDate, setDueDate] = useState<string>("");
   const [dueTime, setDueTime] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [assignedTo, setAssignedTo] = useState<string>("");
+  const [users, setUsers] = useState<AssignableUser[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Load assignable team members when the dialog opens (silently no-ops for staff
+  // who can't list users).
+  useEffect(() => {
+    if (!open || users.length > 0) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/users");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setUsers((json.data as AssignableUser[]).filter((u) => u.is_active));
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [open, users.length]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +69,7 @@ export function NewTaskButton({
           due_date: dueDate || undefined,
           due_time: dueTime || undefined,
           notes: notes || undefined,
+          assigned_to: assignedTo || undefined,
         }),
       });
       const json = await res.json();
@@ -150,6 +170,17 @@ export function NewTaskButton({
                   />
                 </Field>
               </div>
+
+              {users.length > 0 && (
+                <Field label="Atribuir a">
+                  <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} className="form-input bg-white">
+                    <option value="">Sem responsável</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>{u.full_name}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
               <Field label="Observações">
                 <textarea
