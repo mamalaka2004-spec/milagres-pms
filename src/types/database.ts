@@ -454,6 +454,26 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["kb_articles"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["kb_articles"]["Insert"]>;
       };
+      whatsapp_contacts: {
+        Row: {
+          id: string;
+          company_id: string;
+          line_id: string | null;
+          phone_e164: string | null;
+          phone_canonical: string;
+          display_name: string | null;
+          raw_label: string | null;
+          category: string | null;
+          unit_hint: string | null;
+          tags: string[] | null;
+          source: string | null;
+          metadata: unknown | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["whatsapp_contacts"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["whatsapp_contacts"]["Insert"]>;
+      };
     };
   };
 }

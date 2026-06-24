@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   MessageSquare, Send, Loader2, Search, Pin, PinOff, Star, Bot, BotOff,
-  Phone, AlertCircle, ChevronLeft, Play,
+  Phone, AlertCircle, ChevronLeft, Play, Maximize2, Minimize2,
+  PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -113,6 +114,8 @@ function ChatWorkspace({ lineId }: { lineId: string }) {
   const [filter, setFilter] = useState<"all" | "unread" | "open" | "closed">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileThread, setMobileThread] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -156,7 +159,7 @@ function ChatWorkspace({ lineId }: { lineId: string }) {
   return (
     <>
       {/* ── Conversation list ── */}
-      <aside className={cn("w-full lg:w-[330px] xl:w-[370px] shrink-0 border-r border-gray-200 flex-col min-h-0 bg-gray-50/40", mobileThread ? "hidden lg:flex" : "flex")}>
+      <aside className={cn("w-full lg:w-[330px] xl:w-[370px] shrink-0 border-r border-gray-200 flex-col min-h-0 bg-gray-50/40", mobileThread ? "hidden" : "flex", focusMode ? "lg:hidden" : "lg:flex")}>
         <div className="p-3 border-b border-gray-100 space-y-2.5 bg-white">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-800">Conversas</h2>
@@ -211,6 +214,10 @@ function ChatWorkspace({ lineId }: { lineId: string }) {
             conversationId={selectedId}
             onConversationChange={loadConversations}
             onBackMobile={() => setMobileThread(false)}
+            focusMode={focusMode}
+            onToggleFocus={() => setFocusMode((v) => !v)}
+            panelOpen={panelOpen}
+            onTogglePanel={() => setPanelOpen((v) => !v)}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-3">
@@ -221,7 +228,7 @@ function ChatWorkspace({ lineId }: { lineId: string }) {
       </section>
 
       {/* ── Contact panel ── */}
-      <aside className="hidden xl:flex w-[330px] shrink-0 border-l border-gray-200 flex-col min-h-0 bg-gray-50/40">
+      <aside className={cn("w-[330px] shrink-0 border-l border-gray-200 flex-col min-h-0 bg-gray-50/40", panelOpen ? "hidden xl:flex" : "hidden")}>
         {selectedConv ? (
           <ContactPanel conversation={selectedConv} onChange={loadConversations} />
         ) : (
@@ -287,7 +294,10 @@ function dayLabel(iso: string): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
 }
 
-function ConversationView({ conversationId, onConversationChange, onBackMobile }: { conversationId: string; onConversationChange: () => void; onBackMobile: () => void; }) {
+function ConversationView({ conversationId, onConversationChange, onBackMobile, focusMode, onToggleFocus, panelOpen, onTogglePanel }: {
+  conversationId: string; onConversationChange: () => void; onBackMobile: () => void;
+  focusMode: boolean; onToggleFocus: () => void; panelOpen: boolean; onTogglePanel: () => void;
+}) {
   const [conversation, setConversation] = useState<ConvRow | null>(null);
   const [messages, setMessages] = useState<MsgRow[]>([]);
   const [text, setText] = useState("");
@@ -401,6 +411,13 @@ function ConversationView({ conversationId, onConversationChange, onBackMobile }
         </button>
         <button onClick={() => patchConv({ pinned: !conversation.pinned })} title={conversation.pinned ? "Desafixar" : "Fixar"} aria-label={conversation.pinned ? "Desafixar" : "Fixar"} className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
           {conversation.pinned ? <PinOff size={16} /> : <Pin size={16} />}
+        </button>
+        <div className="hidden lg:block w-px h-6 bg-gray-200 mx-0.5" />
+        <button onClick={onToggleFocus} title={focusMode ? "Mostrar lista" : "Expandir conversa"} aria-label={focusMode ? "Mostrar lista" : "Expandir conversa"} className="hidden lg:inline-flex p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+          {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+        <button onClick={onTogglePanel} title={panelOpen ? "Ocultar contato" : "Mostrar contato"} aria-label={panelOpen ? "Ocultar contato" : "Mostrar contato"} className={cn("hidden xl:inline-flex p-2 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40", panelOpen ? "bg-brand-500/10 text-brand-600" : "text-gray-400 hover:bg-gray-100")}>
+          {panelOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
         </button>
       </div>
 
