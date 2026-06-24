@@ -316,6 +316,7 @@ export interface Database {
           purpose: WaLinePurpose;
           provider: WaLineProvider;
           provider_instance: string | null;
+          provider_token: string | null;
           business_hours: WaBusinessHours | null;
           ai_enabled: boolean;
           is_active: boolean;

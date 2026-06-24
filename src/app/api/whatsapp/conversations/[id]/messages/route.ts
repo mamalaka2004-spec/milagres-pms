@@ -97,8 +97,12 @@ export async function POST(request: NextRequest, { params }: Params) {
             ? await sendMedia(
                 conv.contact_phone, data.media_url, data.media_mime_type || "application/octet-stream",
                 data.text ?? undefined, data.file_name ?? undefined, line.provider_instance || undefined,
+                line.provider_token || undefined,
               )
-            : await sendText(conv.contact_phone, data.text ?? "", line.provider_instance || undefined);
+            : await sendText(
+                conv.contact_phone, data.text ?? "", line.provider_instance || undefined,
+                line.provider_token || undefined,
+              );
         externalId = res.external_id;
         finalStatus = "sent";
       } catch (e) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MessageSquare,
   Plus,
@@ -15,8 +15,12 @@ import {
   Phone,
   Clock,
   Download,
+  QrCode,
+  RefreshCw,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { CopyButton } from "@/components/shared/copy-button";
 import type { Database, WaLinePurpose, WaBusinessHours } from "@/types/database";
 
 type LineRow = Database["public"]["Tables"]["whatsapp_lines"]["Row"];
@@ -42,6 +46,7 @@ export function WhatsappLinesShell() {
   const [showCreate, setShowCreate] = useState(false);
   const [grantsFor, setGrantsFor] = useState<LineRow | null>(null);
   const [backfillFor, setBackfillFor] = useState<LineRow | null>(null);
+  const [connFor, setConnFor] = useState<LineRow | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -106,6 +111,7 @@ export function WhatsappLinesShell() {
                 <th className="text-left px-3 py-2 font-semibold">Tipo</th>
                 <th className="text-left px-3 py-2 font-semibold">Provider</th>
                 <th className="text-left px-3 py-2 font-semibold">IA</th>
+                <th className="text-left px-3 py-2 font-semibold">Conexão</th>
                 <th className="text-left px-3 py-2 font-semibold">Horário</th>
                 <th className="text-right px-3 py-2 font-semibold">Ações</th>
               </tr>
@@ -142,6 +148,9 @@ export function WhatsappLinesShell() {
                     ) : (
                       <span className="text-gray-400 inline-flex items-center gap-1 text-xs"><BotOff size={12} aria-hidden="true" /> Desativa</span>
                     )}
+                  </td>
+                  <td className="px-3 py-3">
+                    <ConnectionCell line={l} onOpen={() => setConnFor(l)} />
                   </td>
                   <td className="px-3 py-3 text-xs text-gray-500">
                     {l.business_hours ? (
@@ -192,7 +201,267 @@ export function WhatsappLinesShell() {
       {backfillFor && (
         <BackfillModal line={backfillFor} onClose={() => setBackfillFor(null)} />
       )}
+      {connFor && (
+        <ConnectionModal line={connFor} onClose={() => setConnFor(null)} onChanged={reload} />
+      )}
     </div>
+  );
+}
+
+interface ConnStatus {
+  authorized: boolean;
+  connected: boolean;
+  state: string; // open | connecting | close | unauthorized | unknown
+  qr?: string | null;
+  pairingCode?: string | null;
+}
+
+const STATE_UI: Record<string, { label: string; dot: string; text: string }> = {
+  open: { label: "Conectado", dot: "bg-emerald-500", text: "text-emerald-700" },
+  connecting: { label: "Conectando", dot: "bg-amber-400 animate-pulse", text: "text-amber-700" },
+  close: { label: "Desconectado", dot: "bg-rose-500", text: "text-rose-700" },
+  unauthorized: { label: "Token ausente", dot: "bg-amber-400", text: "text-amber-700" },
+  unknown: { label: "—", dot: "bg-gray-300", text: "text-gray-400" },
+};
+
+/** Live connection dot per line (single fetch on mount) + a button to open the QR modal. */
+function ConnectionCell({ line, onOpen }: { line: LineRow; onOpen: () => void }) {
+  const [status, setStatus] = useState<ConnStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (line.provider !== "evolution" || !line.provider_instance) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const data = await api<ConnStatus>(`/api/whatsapp/lines/${line.id}/connection`);
+        if (!cancelled) setStatus(data);
+      } catch {
+        if (!cancelled) setStatus({ authorized: true, connected: false, state: "unknown" });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [line.id, line.provider, line.provider_instance]);
+
+  if (line.provider !== "evolution" || !line.provider_instance) {
+    return <span className="text-[11px] text-gray-300">—</span>;
+  }
+
+  const ui = STATE_UI[status?.state || "unknown"] || STATE_UI.unknown;
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="inline-flex items-center gap-1.5 text-xs">
+        {loading ? (
+          <Loader2 size={12} className="animate-spin text-gray-400" aria-hidden="true" />
+        ) : (
+          <span className={cn("inline-block w-2 h-2 rounded-full", ui.dot)} />
+        )}
+        <span className={ui.text}>{loading ? "…" : ui.label}</span>
+      </span>
+      {!status?.connected && !loading && (
+        <button
+          onClick={onOpen}
+          title="Reconectar (QR code)"
+          aria-label="Reconectar via QR code"
+          className="text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded hover:bg-brand-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+        >
+          <QrCode size={12} aria-hidden="true" /> Conectar
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ConnectionModal({ line, onClose, onChanged }: { line: LineRow; onClose: () => void; onChanged: () => void }) {
+  const [status, setStatus] = useState<ConnStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [token, setToken] = useState("");
+  const [savingToken, setSavingToken] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const qrRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearTimers = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (qrRef.current) clearInterval(qrRef.current);
+    pollRef.current = null;
+    qrRef.current = null;
+  };
+
+  // Fetch state (and optionally a fresh QR). Keeps the existing QR if this call didn't return one.
+  const load = async (connect: boolean) => {
+    const data = await api<ConnStatus>(`/api/whatsapp/lines/${line.id}/connection${connect ? "?connect=1" : ""}`);
+    setStatus((prev) => ({
+      ...data,
+      qr: data.qr ?? (connect ? null : prev?.qr ?? null),
+      pairingCode: data.pairingCode ?? (connect ? null : prev?.pairingCode ?? null),
+    }));
+    if (data.connected) {
+      clearTimers();
+      onChanged();
+    }
+    return data;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const first = await load(true);
+        if (cancelled) return;
+        if (!first.connected && first.authorized) {
+          // Poll state every 4s; refresh the QR every 24s (it expires).
+          pollRef.current = setInterval(() => { load(false).catch(() => {}); }, 4000);
+          qrRef.current = setInterval(() => { load(true).catch(() => {}); }, 24000);
+        }
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : "Falha ao consultar conexão");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; clearTimers(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line.id]);
+
+  const manualRefresh = async () => {
+    setRefreshing(true);
+    setErr(null);
+    try { await load(true); } catch (e) { setErr(e instanceof Error ? e.message : "Falha"); }
+    finally { setRefreshing(false); }
+  };
+
+  const saveToken = async () => {
+    if (!token.trim()) return;
+    setSavingToken(true);
+    setErr(null);
+    try {
+      await api(`/api/whatsapp/lines/${line.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider_token: token.trim() }),
+      });
+      onChanged();
+      await load(true);
+      // restart polling now that we're (hopefully) authorized
+      clearTimers();
+      pollRef.current = setInterval(() => { load(false).catch(() => {}); }, 4000);
+      qrRef.current = setInterval(() => { load(true).catch(() => {}); }, 24000);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Falha ao salvar token");
+    } finally {
+      setSavingToken(false);
+    }
+  };
+
+  const connected = status?.connected;
+  const unauthorized = status?.state === "unauthorized" || status?.authorized === false;
+
+  return (
+    <Modal onClose={() => { clearTimers(); onClose(); }} title={`Conexão · ${line.label}`}>
+      <div className="space-y-4">
+        <div className="text-xs text-gray-500 flex items-center gap-1.5">
+          <Phone size={11} aria-hidden="true" /> {line.phone}
+          <span className="text-gray-300">·</span>
+          <span className="font-mono text-[11px]">{line.provider_instance}</span>
+        </div>
+
+        {loading ? (
+          <div className="py-10 flex justify-center text-gray-400"><Loader2 className="animate-spin" size={18} /></div>
+        ) : connected ? (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-5 text-center space-y-1">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto">
+              <Check size={20} aria-hidden="true" />
+            </div>
+            <div className="font-semibold text-emerald-800 text-sm">Número conectado</div>
+            <div className="text-xs text-emerald-600">A linha está ativa e pronta para enviar/receber.</div>
+          </div>
+        ) : unauthorized ? (
+          <div className="space-y-3">
+            <div className="text-xs text-gray-600 bg-amber-50 border border-amber-100 rounded p-2.5 flex items-start gap-2">
+              <KeyRound size={14} className="text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>
+                A chave atual não autoriza a instância <strong>{line.provider_instance}</strong>. Cole o
+                <strong> token desta instância</strong> (no Evolution Manager → instância → <em>API Key / token</em>) para
+                conectar pelo PMS.
+              </span>
+            </div>
+            <Field label="Token da instância (Evolution)">
+              <input
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="input"
+                placeholder="cole o token aqui"
+                autoComplete="off"
+              />
+            </Field>
+            <div className="flex justify-end">
+              <button
+                onClick={saveToken}
+                disabled={savingToken || !token.trim()}
+                className="bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+              >
+                {savingToken && <Loader2 className="animate-spin" size={14} aria-hidden="true" />} Salvar e conectar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 text-center">
+              Abra o WhatsApp no celular → <strong>Aparelhos conectados</strong> → <strong>Conectar um aparelho</strong> e escaneie o QR.
+            </p>
+            <div className="flex justify-center">
+              {status?.qr ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={status.qr} alt="QR code para conectar o WhatsApp" className="w-56 h-56 rounded-lg border border-gray-200" />
+              ) : (
+                <div className="w-56 h-56 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs text-center p-4">
+                  Gerando QR… se não aparecer, toque em "Atualizar QR".
+                </div>
+              )}
+            </div>
+            {status?.pairingCode && (
+              <div className="text-center text-xs text-gray-600">
+                Ou use o código de pareamento:
+                <span className="inline-flex items-center gap-1 ml-1 font-mono font-semibold text-gray-900">
+                  {status.pairingCode}
+                  <CopyButton text={status.pairingCode} label="Copiar código" />
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
+              <Loader2 size={11} className="animate-spin" aria-hidden="true" /> aguardando leitura… atualiza sozinho
+            </div>
+          </div>
+        )}
+
+        {err && <div className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} /> {err}</div>}
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={() => { clearTimers(); onClose(); }} className="px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
+            Fechar
+          </button>
+          {!connected && !unauthorized && (
+            <button
+              onClick={manualRefresh}
+              disabled={refreshing}
+              className="bg-white border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+            >
+              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} aria-hidden="true" /> Atualizar QR
+            </button>
+          )}
+        </div>
+      </div>
+      <style jsx>{`.input { width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; border: 1px solid rgb(229,231,235); transition: border-color 0.2s, box-shadow 0.2s; }
+       .input:focus { outline: none; border-color: rgb(107,127,94); box-shadow: 0 0 0 3px rgba(107,127,94,0.15); }`}</style>
+    </Modal>
   );
 }
 

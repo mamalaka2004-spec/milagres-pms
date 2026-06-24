@@ -12,15 +12,20 @@ interface EvolutionConfig {
   instance: string;
 }
 
-function getConfig(overrideInstance?: string): EvolutionConfig {
+function getConfig(overrideInstance?: string, overrideKey?: string): EvolutionConfig {
   const baseUrl = process.env.EVOLUTION_API_URL;
-  const apiKey = process.env.EVOLUTION_API_KEY;
+  // Per-line instance token takes precedence over the env key, so each line can
+  // talk to its own Evolution instance (the env key may only authorize one).
+  const apiKey = overrideKey || process.env.EVOLUTION_API_KEY;
   const instance = overrideInstance || process.env.EVOLUTION_DEFAULT_INSTANCE;
   if (!baseUrl || !apiKey || !instance) {
     throw new Error("Evolution API not configured (EVOLUTION_API_URL / EVOLUTION_API_KEY / EVOLUTION_DEFAULT_INSTANCE)");
   }
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey, instance };
 }
+
+/** Thrown when Evolution rejects the API key for an instance (HTTP 401). */
+export const EVO_UNAUTHORIZED = "EvoUnauthorized";
 
 /** Strip Brazil-specific prefixes etc. and return a digits-only Evolution-style number (E.164 without "+"). */
 export function normalizePhone(input: string): string {
@@ -53,9 +58,10 @@ export interface SendTextResult {
 export async function sendText(
   toPhone: string,
   text: string,
-  instance?: string
+  instance?: string,
+  apiKey?: string
 ): Promise<SendTextResult> {
-  const cfg = getConfig(instance);
+  const cfg = getConfig(instance, apiKey);
   const number = toEvolutionRecipient(toPhone);
   const res = await fetch(`${cfg.baseUrl}/message/sendText/${cfg.instance}`, {
     method: "POST",
@@ -169,6 +175,53 @@ export async function findContacts(instance?: string): Promise<EvoContact[]> {
   }));
 }
 
+/* ─────────────────────── Connection / QR ─────────────────────── */
+
+export interface EvoConnection {
+  state: string; // open | connecting | close | unknown
+  qrBase64?: string; // data:image/png;base64,... for <img>
+  pairingCode?: string; // short code to type in WhatsApp ("link with phone number")
+  code?: string; // raw QR string
+}
+
+/** Current connection state of an instance. Throws EVO_UNAUTHORIZED on 401. */
+export async function getConnectionState(instance: string, apiKey?: string): Promise<string> {
+  const cfg = getConfig(instance, apiKey);
+  const res = await fetch(`${cfg.baseUrl}/instance/connectionState/${cfg.instance}`, {
+    headers: { apikey: cfg.apiKey },
+  });
+  if (res.status === 401) throw new Error(EVO_UNAUTHORIZED);
+  const raw = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Evolution connectionState HTTP ${res.status}: ${JSON.stringify(raw).slice(0, 200)}`);
+  return (raw as { instance?: { state?: string } })?.instance?.state || "unknown";
+}
+
+/** Ask the instance to (re)connect, returning the QR/pairing payload. Throws EVO_UNAUTHORIZED on 401. */
+export async function connectInstance(instance: string, apiKey?: string): Promise<EvoConnection> {
+  const cfg = getConfig(instance, apiKey);
+  const res = await fetch(`${cfg.baseUrl}/instance/connect/${cfg.instance}`, {
+    headers: { apikey: cfg.apiKey },
+  });
+  if (res.status === 401) throw new Error(EVO_UNAUTHORIZED);
+  const raw = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Evolution connect HTTP ${res.status}: ${JSON.stringify(raw).slice(0, 200)}`);
+  const r = raw as {
+    base64?: string; code?: string; pairingCode?: string; count?: number;
+    qrcode?: { base64?: string; code?: string; pairingCode?: string };
+    instance?: { state?: string };
+  };
+  const base64 = r.base64 || r.qrcode?.base64;
+  const code = r.code || r.qrcode?.code;
+  const pairingCode = r.pairingCode || r.qrcode?.pairingCode;
+  const state = r.instance?.state || (base64 || code ? "connecting" : "unknown");
+  const qrBase64 = base64
+    ? base64.startsWith("data:")
+      ? base64
+      : `data:image/png;base64,${base64}`
+    : undefined;
+  return { state, qrBase64, code, pairingCode };
+}
+
 export function jidToPhoneE164(jid: string): string | null {
   const digits = jid.replace(/@.*$/, "").replace(/[^0-9]/g, "");
   if (!digits || digits.length < 8) return null;
@@ -181,9 +234,10 @@ export async function sendMedia(
   mimeType: string,
   caption?: string,
   fileName?: string,
-  instance?: string
+  instance?: string,
+  apiKey?: string
 ): Promise<SendTextResult> {
-  const cfg = getConfig(instance);
+  const cfg = getConfig(instance, apiKey);
   const number = toEvolutionRecipient(toPhone);
   const mediaType = mimeType.startsWith("image/")
     ? "image"

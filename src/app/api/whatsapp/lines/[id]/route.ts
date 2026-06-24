@@ -19,6 +19,7 @@ const patchSchema = z.object({
   ai_enabled: z.boolean().optional(),
   is_active: z.boolean().optional(),
   provider_instance: z.string().max(80).nullable().optional(),
+  provider_token: z.string().max(300).nullable().optional(),
   business_hours: z
     .record(
       z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
