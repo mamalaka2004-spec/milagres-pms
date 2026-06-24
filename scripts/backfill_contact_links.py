@@ -89,7 +89,7 @@ for cv in need:
 print("conversas vinculadas a contato:", linked)
 
 # 3. link contacts.guest_id from guests (by canonical phone)
-guests = get_all("/rest/v1/guests?select=id,phone&deleted_at=is.null")
+guests = get_all("/rest/v1/guests?select=id,phone")
 gid_by_canon = {}
 for g in guests:
     ck = canon(g.get("phone"))
