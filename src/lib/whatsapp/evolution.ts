@@ -27,6 +27,24 @@ export function normalizePhone(input: string): string {
   return input.replace(/[^0-9]/g, "");
 }
 
+/**
+ * Build the Evolution `number` field from a stored contact phone.
+ *
+ * Many WhatsApp contacts now present as a privacy "@lid" identifier instead of a
+ * real phone number. We stored those as the LID digits (14-15 digits), while real
+ * Brazilian numbers are 12-13 digits (55 + DDD + number). When the value is a LID we
+ * must address Evolution with the full `<lid>@lid` JID — Evolution resolves it to the
+ * real number internally. Sending the bare LID digits as a phone number fails.
+ */
+export function toEvolutionRecipient(phone: string): string {
+  const digits = normalizePhone(phone);
+  // Already a JID? (caller passed something like "123@lid")
+  if (/@lid$/i.test(phone.trim())) return `${digits}@lid`;
+  // Heuristic: 14+ digits is a LID, not a phone (E.164 BR numbers are ≤13 digits).
+  if (digits.length >= 14) return `${digits}@lid`;
+  return digits;
+}
+
 export interface SendTextResult {
   external_id?: string;
   raw: unknown;
@@ -38,7 +56,7 @@ export async function sendText(
   instance?: string
 ): Promise<SendTextResult> {
   const cfg = getConfig(instance);
-  const number = normalizePhone(toPhone);
+  const number = toEvolutionRecipient(toPhone);
   const res = await fetch(`${cfg.baseUrl}/message/sendText/${cfg.instance}`, {
     method: "POST",
     headers: {
@@ -166,7 +184,7 @@ export async function sendMedia(
   instance?: string
 ): Promise<SendTextResult> {
   const cfg = getConfig(instance);
-  const number = normalizePhone(toPhone);
+  const number = toEvolutionRecipient(toPhone);
   const mediaType = mimeType.startsWith("image/")
     ? "image"
     : mimeType.startsWith("video/")
