@@ -133,6 +133,10 @@ export type ReservationWithDetails = ReservationRow & {
     max_guests: number;
     check_in_time: string;
     check_out_time: string;
+    airbnb_listing_url: string | null;
+    booking_listing_url: string | null;
+    airbnb_last_synced_at: string | null;
+    booking_last_synced_at: string | null;
   } | null;
   guest: {
     id: string;
@@ -171,7 +175,7 @@ export async function getReservationById(id: string): Promise<ReservationWithDet
     .from("reservations")
     .select(`
       *,
-      property:properties (id, name, code, slug, cover_image_url, max_guests, check_in_time, check_out_time),
+      property:properties (id, name, code, slug, cover_image_url, max_guests, check_in_time, check_out_time, airbnb_listing_url, booking_listing_url, airbnb_last_synced_at, booking_last_synced_at),
       guest:guests (id, full_name, email, phone, document_number, document_type, is_vip, total_stays, total_spent_cents),
       reservation_guests (id, full_name, email, phone, document_number, is_primary),
       payments (id, amount_cents, method, status, reference, paid_at, notes, created_at)

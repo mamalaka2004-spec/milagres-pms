@@ -20,6 +20,7 @@ import {
   ChannelBadge,
 } from "@/components/shared/status-badges";
 import { FinancialBreakdown } from "@/components/reservations/financial-breakdown";
+import { ChannelCard } from "@/components/reservations/channel-card";
 import { StatusActions } from "@/components/reservations/status-actions";
 import { DeleteReservationButton } from "@/components/reservations/delete-reservation-button";
 import { PaymentForm } from "@/components/finance/payment-form";
@@ -235,6 +236,28 @@ export default async function ReservationDetailPage({ params }: PageProps) {
               <div className="text-sm text-gray-400">Hóspede não encontrado.</div>
             )}
           </Section>
+
+          {/* Channel */}
+          <ChannelCard
+            channel={r.channel}
+            channelRef={r.channel_ref}
+            platformFeeCents={r.platform_fee_cents}
+            netAmountCents={r.net_amount_cents}
+            listingUrl={
+              r.channel === "airbnb"
+                ? property?.airbnb_listing_url ?? null
+                : r.channel === "booking"
+                ? property?.booking_listing_url ?? null
+                : null
+            }
+            lastSyncedAt={
+              r.channel === "airbnb"
+                ? property?.airbnb_last_synced_at ?? null
+                : r.channel === "booking"
+                ? property?.booking_last_synced_at ?? null
+                : null
+            }
+          />
 
           {/* Status actions */}
           <Section title="Ações">
