@@ -7,6 +7,8 @@ import {
   listMessages,
 } from "@/lib/db/queries/whatsapp";
 import { messageSendSchema } from "@/lib/validations/whatsapp";
+import { sendText, sendMedia } from "@/lib/whatsapp/evolution";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
   apiError,
@@ -81,37 +83,54 @@ export async function POST(request: NextRequest, { params }: Params) {
       status: "pending",
     });
 
-    // Outbound dispatch — fire-and-forget through n8n if configured.
-    // Without WHATSAPP_OUTBOUND_WEBHOOK_URL the message stays `pending` (UI shows
-    // it locally) and a real provider can be wired in Phase C without code edits.
-    const webhookUrl = process.env.WHATSAPP_OUTBOUND_WEBHOOK_URL;
-    const secret = process.env.WHATSAPP_WEBHOOK_SECRET;
-    if (webhookUrl && secret) {
-      fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Webhook-Secret": secret,
-        },
-        body: JSON.stringify({
-          conversation_id: id,
-          message_id: message.id,
-          line_phone: line.phone,
-          provider: line.provider,
-          provider_instance: line.provider_instance,
-          contact_phone: conv.contact_phone,
-          text: data.text || null,
-          media_url: data.media_url || null,
-          media_mime_type: data.media_mime_type || null,
-          file_name: data.file_name || null,
-        }),
-      }).catch((err) => {
-        // We don't await — log and let UI show pending; n8n side will eventually flip status via PATCH or new message
-        console.error("[whatsapp] outbound webhook failed:", err);
-      });
+    // Outbound dispatch — send via Evolution directly and resolve the status, so a
+    // message never sticks on "pending" forever. (Previously this fired an n8n webhook
+    // fire-and-forget that never updated the status.)
+    let finalStatus: "sent" | "failed" = "failed";
+    let externalId: string | undefined;
+    let sendError: string | undefined;
+
+    if (line.provider === "evolution") {
+      try {
+        const res =
+          messageType !== "text" && data.media_url
+            ? await sendMedia(
+                conv.contact_phone, data.media_url, data.media_mime_type || "application/octet-stream",
+                data.text ?? undefined, data.file_name ?? undefined, line.provider_instance || undefined,
+              )
+            : await sendText(conv.contact_phone, data.text ?? "", line.provider_instance || undefined);
+        externalId = res.external_id;
+        finalStatus = "sent";
+      } catch (e) {
+        sendError = e instanceof Error ? e.message : String(e);
+        console.error("[whatsapp] Evolution send failed:", sendError);
+      }
+    } else {
+      // Non-Evolution provider — legacy outbound webhook (best-effort, optimistic).
+      const webhookUrl = process.env.WHATSAPP_OUTBOUND_WEBHOOK_URL;
+      const secret = process.env.WHATSAPP_WEBHOOK_SECRET;
+      if (webhookUrl && secret) {
+        finalStatus = "sent";
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Webhook-Secret": secret },
+          body: JSON.stringify({
+            conversation_id: id, message_id: message.id, line_phone: line.phone, provider: line.provider,
+            provider_instance: line.provider_instance, contact_phone: conv.contact_phone,
+            text: data.text || null, media_url: data.media_url || null,
+            media_mime_type: data.media_mime_type || null, file_name: data.file_name || null,
+          }),
+        }).catch((err) => console.error("[whatsapp] outbound webhook failed:", err));
+      }
     }
 
-    return apiSuccess(message, 201);
+    // Resolve the message status so the UI reflects sent/failed (realtime UPDATE picks it up).
+    const supabase = createAdminClient();
+    await (supabase.from("whatsapp_messages") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .update({ status: finalStatus, external_id: externalId ?? null })
+      .eq("id", message.id);
+
+    return apiSuccess({ ...message, status: finalStatus, external_id: externalId ?? message.external_id }, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

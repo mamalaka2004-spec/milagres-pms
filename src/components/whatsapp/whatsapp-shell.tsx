@@ -340,9 +340,14 @@ function ConversationView({ conversationId, onConversationChange, onBackMobile, 
   useEffect(() => {
     const channel = supabase
       .channel(`wa-msg-${conversationId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_messages", filter: `conversation_id=eq.${conversationId}` }, (payload) => {
-        const newMsg = payload.new as MsgRow;
-        setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          const m = payload.new as MsgRow;
+          setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev.map((x) => (x.id === m.id ? m : x)) : [...prev, m]));
+        } else if (payload.eventType === "UPDATE") {
+          const m = payload.new as MsgRow;
+          setMessages((prev) => prev.map((x) => (x.id === m.id ? m : x)));
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

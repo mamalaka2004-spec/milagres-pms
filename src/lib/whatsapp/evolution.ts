@@ -127,6 +127,30 @@ export function decodeMessage(m: EvoMessage): {
   return { text: "[mensagem não suportada]", messageType: "note", mediaMimeType: null, fileName: null };
 }
 
+export interface EvoContact {
+  remoteJid: string;
+  pushName?: string | null;
+  name?: string | null;
+}
+
+/** List the saved contacts of an Evolution instance (has the WhatsApp profile names). */
+export async function findContacts(instance?: string): Promise<EvoContact[]> {
+  const cfg = getConfig(instance);
+  const res = await fetch(`${cfg.baseUrl}/chat/findContacts/${cfg.instance}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
+    body: JSON.stringify({}),
+  });
+  const raw = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`Evolution findContacts failed: HTTP ${res.status}`);
+  const arr = Array.isArray(raw) ? raw : (raw as { contacts?: unknown[] })?.contacts || [];
+  return (arr as Array<Record<string, unknown>>).map((c) => ({
+    remoteJid: String(c.remoteJid || c.id || ""),
+    pushName: (c.pushName as string) || (c.name as string) || null,
+    name: (c.name as string) || null,
+  }));
+}
+
 export function jidToPhoneE164(jid: string): string | null {
   const digits = jid.replace(/@.*$/, "").replace(/[^0-9]/g, "");
   if (!digits || digits.length < 8) return null;
