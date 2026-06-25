@@ -39,18 +39,20 @@ export async function rehostInboundMedia(opts: {
     const media = await getBase64FromMediaMessage(opts.externalId, opts.instance, opts.apiKey);
     const bytes = Buffer.from(media.base64, "base64");
     if (bytes.length === 0) return null;
-    const ext = extForMime(media.mimetype);
+    // Strip codec params (e.g. "audio/ogg; codecs=opus") — storage matches the base type.
+    const mime = (media.mimetype.split(";")[0] || "application/octet-stream").trim();
+    const ext = extForMime(mime);
     const safeId = opts.externalId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || `${Date.now()}`;
     const path = `inbound/${opts.conversationId}/${safeId}.${ext}`;
 
     const supabase = createAdminClient();
     const { error } = await supabase.storage
       .from(CHAT_MEDIA_BUCKET)
-      .upload(path, bytes, { contentType: media.mimetype, cacheControl: "3600", upsert: true });
+      .upload(path, bytes, { contentType: mime, cacheControl: "3600", upsert: true });
     if (error) return null;
 
     const { data } = supabase.storage.from(CHAT_MEDIA_BUCKET).getPublicUrl(path);
-    return { url: data.publicUrl, mime: media.mimetype, fileName: media.fileName };
+    return { url: data.publicUrl, mime, fileName: media.fileName };
   } catch {
     return null;
   }
