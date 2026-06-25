@@ -58,15 +58,15 @@ export async function POST(request: NextRequest) {
 
     const bytes = new Uint8Array(await file.arrayBuffer());
     const ext = extFor(file.name || "", mime);
-    const path = `whatsapp/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    const path = `outbound/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
     const supabase = createAdminClient();
     const { error: uploadError } = await supabase.storage
-      .from("property-images")
+      .from("whatsapp-media")
       .upload(path, bytes, { contentType: mime, cacheControl: "3600", upsert: false });
     if (uploadError) return apiError(`Falha no upload: ${uploadError.message}`, 500);
 
-    const { data: { publicUrl } } = supabase.storage.from("property-images").getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage.from("whatsapp-media").getPublicUrl(path);
     return apiSuccess({ url: publicUrl, mime, name: file.name || `arquivo.${ext}` });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

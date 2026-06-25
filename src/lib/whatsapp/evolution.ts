@@ -222,6 +222,45 @@ export async function connectInstance(instance: string, apiKey?: string): Promis
   return { state, qrBase64, code, pairingCode };
 }
 
+/* ─────────────────────── Inbound media download ─────────────────────── */
+
+export interface EvoMediaBase64 {
+  base64: string;
+  mimetype: string;
+  fileName: string | null;
+  mediaType: string | null;
+}
+
+/**
+ * Download + decrypt an inbound media message via Evolution. WhatsApp delivers media
+ * as encrypted CDN URLs (mmg.whatsapp.net/...) that can't be displayed directly — this
+ * returns the decrypted bytes (base64) so we can re-host them on our storage.
+ * Works with just the message id.
+ */
+export async function getBase64FromMediaMessage(
+  messageId: string,
+  instance?: string,
+  apiKey?: string
+): Promise<EvoMediaBase64> {
+  const cfg = getConfig(instance, apiKey);
+  const res = await fetch(`${cfg.baseUrl}/chat/getBase64FromMediaMessage/${cfg.instance}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
+    body: JSON.stringify({ message: { key: { id: messageId } }, convertToMp4: false }),
+  });
+  const raw = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Evolution getBase64 HTTP ${res.status}: ${JSON.stringify(raw).slice(0, 160)}`);
+  const r = raw as { base64?: string; media?: string; mimetype?: string; fileName?: string; mediaType?: string };
+  const base64 = r.base64 || r.media || "";
+  if (!base64) throw new Error("Evolution getBase64: resposta vazia");
+  return {
+    base64,
+    mimetype: r.mimetype || "application/octet-stream",
+    fileName: r.fileName || null,
+    mediaType: r.mediaType || null,
+  };
+}
+
 export function jidToPhoneE164(jid: string): string | null {
   const digits = jid.replace(/@.*$/, "").replace(/[^0-9]/g, "");
   if (!digits || digits.length < 8) return null;

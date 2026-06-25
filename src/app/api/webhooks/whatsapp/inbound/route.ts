@@ -5,6 +5,7 @@ import {
   findOrCreateConversation,
 } from "@/lib/db/queries/whatsapp";
 import { isOutsideBusinessHours } from "@/lib/whatsapp/auth";
+import { rehostInboundMedia } from "@/lib/whatsapp/media";
 import { inboundWebhookSchema } from "@/lib/validations/whatsapp";
 import {
   apiSuccess,
@@ -15,6 +16,8 @@ import type { Database } from "@/types/database";
 import { timingSafeEqual } from "node:crypto";
 
 type LineRow = Database["public"]["Tables"]["whatsapp_lines"]["Row"];
+
+export const maxDuration = 60;
 
 function safeEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a);
@@ -60,15 +63,36 @@ export async function POST(request: NextRequest) {
       contactName: payload.contact_name ?? null,
     });
 
+    // Inbound media arrives as an encrypted WhatsApp CDN URL (mmg.whatsapp.net/…),
+    // which the browser can't render. Download + decrypt it via Evolution and re-host
+    // on our public bucket so it displays in the chat. Falls back to the original URL.
+    let mediaUrl = payload.media_url ?? null;
+    let mediaMime = payload.media_mime_type ?? null;
+    let fileName = payload.file_name ?? null;
+    const isMedia = ["image", "audio", "video", "document"].includes(payload.message_type);
+    if (isMedia && payload.external_id && line.provider === "evolution" && line.provider_instance) {
+      const rehosted = await rehostInboundMedia({
+        externalId: payload.external_id,
+        conversationId: conv.id,
+        instance: line.provider_instance,
+        apiKey: line.provider_token || undefined,
+      });
+      if (rehosted) {
+        mediaUrl = rehosted.url;
+        mediaMime = rehosted.mime || mediaMime;
+        fileName = rehosted.fileName || fileName;
+      }
+    }
+
     const message = await appendMessage({
       conversationId: conv.id,
       direction: "inbound",
       sender: "guest",
       text: payload.text ?? null,
       messageType: payload.message_type,
-      mediaUrl: payload.media_url ?? null,
-      mediaMimeType: payload.media_mime_type ?? null,
-      fileName: payload.file_name ?? null,
+      mediaUrl,
+      mediaMimeType: mediaMime,
+      fileName,
       externalId: payload.external_id ?? null,
       bumpUnread: true,
     });
