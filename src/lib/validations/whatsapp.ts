@@ -52,4 +52,7 @@ export const inboundWebhookSchema = z.object({
   file_name: z.string().max(200).optional().nullable(),
   external_id: z.string().max(120).optional().nullable(),
   timestamp: z.string().datetime().optional(),
+  // True when the message was sent from the line's own phone (Evolution key.fromMe).
+  // These are stored as outbound/agent so the CRM mirrors the WhatsApp app.
+  from_me: z.boolean().optional().default(false),
 });

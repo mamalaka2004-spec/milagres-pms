@@ -63,10 +63,13 @@ export async function POST(request: NextRequest) {
 
     const { data: companyData } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, ai_enabled")
       .eq("id", line.company_id)
       .maybeSingle();
-    const companyName = (companyData as { name?: string } | null)?.name || "Milagres Hospedagens";
+    const company = companyData as { name?: string; ai_enabled?: boolean } | null;
+    // Master switch (top of hierarchy) — refuse if AI is disabled system-wide.
+    if (company?.ai_enabled !== true) return apiError("AI disabled system-wide", 409);
+    const companyName = company?.name || "Milagres Hospedagens";
 
     // Build chat history (oldest first); keep small for token budget
     const { data: histRows } = await supabase

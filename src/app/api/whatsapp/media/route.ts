@@ -48,7 +48,9 @@ export async function POST(request: NextRequest) {
     if (!file) return apiError("Nenhum arquivo enviado", 400);
     if (file.size > MAX_BYTES) return apiError("Arquivo muito grande. Máximo 16MB.", 400);
 
-    const mime = file.type || "application/octet-stream";
+    // Strip codec params (e.g. "audio/webm;codecs=opus") — Storage matches the base
+    // MIME type against the bucket allowlist and rejects anything with a codec suffix.
+    const mime = (file.type || "application/octet-stream").split(";")[0].trim();
     const ok =
       mime.startsWith("image/") ||
       mime.startsWith("audio/") ||

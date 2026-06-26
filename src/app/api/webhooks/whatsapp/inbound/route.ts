@@ -56,6 +56,15 @@ export async function POST(request: NextRequest) {
     const line = lines[0];
     if (!line.is_active) return apiError("Line is inactive", 410);
 
+    // System-level (company) AI master switch — top of the hierarchy. When off, the AI
+    // never auto-replies regardless of per-line / per-conversation settings.
+    const { data: companyRow } = await supabase
+      .from("companies")
+      .select("ai_enabled")
+      .eq("id", line.company_id)
+      .maybeSingle();
+    const aiMasterEnabled = (companyRow as { ai_enabled?: boolean } | null)?.ai_enabled === true;
+
     const conv = await findOrCreateConversation({
       companyId: line.company_id,
       lineId: line.id,
@@ -84,21 +93,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // fromMe = the operator sent this from the WhatsApp app on the phone itself. Mirror
+    // it into the CRM as an outbound/agent message so the thread matches WhatsApp. (CRM-
+    // sent messages echo back here too, but dedup on external_id keeps them single.)
+    const fromMe = payload.from_me === true;
+
     const message = await appendMessage({
       conversationId: conv.id,
-      direction: "inbound",
-      sender: "guest",
+      direction: fromMe ? "outbound" : "inbound",
+      sender: fromMe ? "agent" : "guest",
       text: payload.text ?? null,
       messageType: payload.message_type,
       mediaUrl,
       mediaMimeType: mediaMime,
       fileName,
       externalId: payload.external_id ?? null,
-      bumpUnread: true,
+      status: fromMe ? "sent" : undefined,
+      bumpUnread: !fromMe,
     });
 
     // Decide whether the AI should auto-reply (n8n calls /api/whatsapp/ai-reply if true).
+    // Never auto-reply to our own outgoing messages.
     const aiShouldRespond =
+      !fromMe &&
+      aiMasterEnabled &&
       line.ai_enabled &&
       conv.ai_active &&
       conv.status === "open" &&

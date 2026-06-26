@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, ChevronRight, Settings as SettingsIcon, Users } from "lucide-react";
+import { MessageSquare, ChevronRight, Settings as SettingsIcon, Users, Bot } from "lucide-react";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,24 @@ export default async function SettingsPage() {
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
               Conectar números, configurar horário comercial e atribuir usuários por linha.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          href="/settings/ai"
+          className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center shrink-0">
+            <Bot className="text-brand-600" size={18} aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-gray-900 flex items-center gap-1">
+              Inteligência Artificial
+              <ChevronRight size={14} className="text-gray-300 group-hover:text-brand-500 transition-colors duration-200" aria-hidden="true" />
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Chave-mestra da IA do sistema e hierarquia de ativação (sistema → linha → conversa).
             </p>
           </div>
         </Link>

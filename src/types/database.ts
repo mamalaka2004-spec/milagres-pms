@@ -79,6 +79,7 @@ export interface Database {
           country: string;
           currency: string;
           timezone: string;
+          ai_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
