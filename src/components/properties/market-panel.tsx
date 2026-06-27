@@ -83,21 +83,28 @@ export default function MarketPanel({
   propertyLng?: number | null;
 }) {
   const dd = defaultDates();
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [comps, setComps] = useState<Comp[]>([]);
+  type SourceData = { snapshot: Snapshot; comps: Comp[] };
+  const [bySource, setBySource] = useState<Record<string, SourceData>>({});
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<"airbnb" | "booking">("airbnb");
+  const [touchedSource, setTouchedSource] = useState(false);
   const [checkIn, setCheckIn] = useState(dd.checkIn);
   const [checkOut, setCheckOut] = useState(dd.checkOut);
 
   const load = useCallback(async () => {
     try {
-      const data = await api<{ snapshot: Snapshot | null; comps: Comp[] }>(`/api/properties/${propertyId}/market`);
-      setSnapshot(data.snapshot);
-      setComps(data.comps);
-      if (data.snapshot) setSource(data.snapshot.source === "booking" ? "booking" : "airbnb");
+      const data = await api<{ bySource: Record<string, SourceData> }>(`/api/properties/${propertyId}/market`);
+      setBySource(data.bySource || {});
+      // On first load, default to a channel that actually has data (prefer Airbnb).
+      setTouchedSource((touched) => {
+        if (!touched) {
+          if (data.bySource?.airbnb) setSource("airbnb");
+          else if (data.bySource?.booking) setSource("booking");
+        }
+        return touched;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -125,6 +132,10 @@ export default function MarketPanel({
     }
   }
 
+  const current = bySource[source] || null;
+  const snapshot = current?.snapshot ?? null;
+  const comps = current?.comps ?? [];
+
   const your = snapshot?.your_nightly ?? null;
   const suggested = snapshot?.suggested_nightly ?? null;
   const delta = your != null && suggested != null ? suggested - your : null;
@@ -138,8 +149,8 @@ export default function MarketPanel({
           <label className="block text-xs text-gray-500 mb-1">Canal</label>
           <select
             value={source}
-            onChange={(e) => setSource(e.target.value as "airbnb" | "booking")}
-            disabled={!canRun || running}
+            onChange={(e) => { setTouchedSource(true); setSource(e.target.value as "airbnb" | "booking"); }}
+            disabled={running}
             className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-60"
           >
             <option value="airbnb">Airbnb (1 crédito)</option>

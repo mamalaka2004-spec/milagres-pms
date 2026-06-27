@@ -40,7 +40,14 @@ async function assertOwnership(propertyId: string, companyId: string) {
   return "ok" as const;
 }
 
-/** Latest market snapshot for a property + its comps (most recent run). */
+const COMP_SELECT =
+  "id, source, listing_id, url, title, name, category, city, latitude, longitude, bedrooms, nightly_price, total_price, currency, rating, reviews_count, is_superhost, guest_favorite, thumbnail";
+
+/**
+ * Latest market analysis per source (airbnb / booking) for a property, each with its
+ * comps. Returning both lets the UI switch channels without re-running (which costs
+ * credits). Shape: { bySource: { airbnb: {snapshot, comps} | null, booking: ... } }.
+ */
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
     const user = await requireAuth();
@@ -50,23 +57,26 @@ export async function GET(_request: NextRequest, { params }: Params) {
     if (own === "forbidden") return apiForbidden();
 
     const supabase = createAdminClient();
-    const { data: snap } = await supabase
+    const { data: snaps } = await supabase
       .from("market_snapshots")
       .select("*")
       .eq("property_id", id)
-      .order("captured_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!snap) return apiSuccess({ snapshot: null, comps: [] });
+      .order("captured_at", { ascending: false });
 
-    const snapshot = snap as { id: string };
-    const { data: comps } = await supabase
-      .from("market_comps")
-      .select("id, source, listing_id, url, title, name, category, city, latitude, longitude, bedrooms, nightly_price, total_price, currency, rating, reviews_count, is_superhost, guest_favorite, thumbnail")
-      .eq("snapshot_id", snapshot.id)
-      .order("nightly_price", { ascending: true });
+    const rows = (snaps as Array<{ id: string; source: string }>) || [];
+    const bySource: Record<string, { snapshot: unknown; comps: unknown[] }> = {};
+    for (const src of ["airbnb", "booking"]) {
+      const latest = rows.find((r) => r.source === src);
+      if (!latest) continue;
+      const { data: comps } = await supabase
+        .from("market_comps")
+        .select(COMP_SELECT)
+        .eq("snapshot_id", latest.id)
+        .order("nightly_price", { ascending: true });
+      bySource[src] = { snapshot: latest, comps: comps || [] };
+    }
 
-    return apiSuccess({ snapshot, comps: comps || [] });
+    return apiSuccess({ bySource });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
