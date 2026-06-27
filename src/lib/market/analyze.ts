@@ -40,6 +40,26 @@ export function parseBedrooms(highlights?: string[]): number | null {
   return null;
 }
 
+/**
+ * Parse a BRL total from Gecko's `totalPriceLabel`, e.g. "Total: R$ 2.990" → 2990, or
+ * "O preço original era R$ 2.217 e o novo preço total é R$ 1.948" → 1948 (last R$ token).
+ *
+ * IMPORTANT: the numeric `price` field from Gecko mis-handles the pt-BR thousands
+ * separator (it returns 2.99 for "R$ 2.990"), so the label is the source of truth.
+ * pt-BR format: "." = thousands, "," = decimals.
+ */
+export function parsePriceLabel(label: string | null | undefined, fallback: number | null): number | null {
+  if (label) {
+    const matches = [...label.matchAll(/R\$[\s ]*([\d.,]+)/g)];
+    if (matches.length > 0) {
+      const tok = matches[matches.length - 1][1];
+      const n = parseFloat(tok.replace(/\./g, "").replace(",", "."));
+      if (!Number.isNaN(n) && n > 0) return n;
+    }
+  }
+  return fallback;
+}
+
 /** Whole nights between two YYYY-MM-DD dates (min 1). */
 export function nightsBetween(checkIn: string, checkOut: string): number {
   const a = new Date(`${checkIn}T00:00:00Z`).getTime();
@@ -50,7 +70,8 @@ export function nightsBetween(checkIn: string, checkOut: string): number {
 
 /** Normalize one PLP item into a comp; price is the window total → divide by nights. */
 export function normalizeComp(item: GeckoPlpItem, source: MarketSource, nights: number): NormalizedComp {
-  const total = typeof item.price === "number" ? item.price : null;
+  // Prefer the label (reliable); the numeric `price` field corrupts pt-BR thousands.
+  const total = parsePriceLabel(item.totalPriceLabel, typeof item.price === "number" ? item.price : null);
   const nightly = total != null ? Math.round((total / nights) * 100) / 100 : null;
   return {
     source,
