@@ -197,6 +197,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         <MarketPanel
           propertyId={property.id}
           canRun={user.role === "admin" || user.role === "manager"}
+          propertyName={property.name}
+          propertyLat={property.latitude}
+          propertyLng={property.longitude}
         />
       </div>
 

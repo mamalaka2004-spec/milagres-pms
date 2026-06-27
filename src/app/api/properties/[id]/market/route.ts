@@ -62,7 +62,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     const snapshot = snap as { id: string };
     const { data: comps } = await supabase
       .from("market_comps")
-      .select("id, source, listing_id, url, title, name, category, city, bedrooms, nightly_price, total_price, currency, rating, reviews_count, is_superhost, guest_favorite, thumbnail")
+      .select("id, source, listing_id, url, title, name, category, city, latitude, longitude, bedrooms, nightly_price, total_price, currency, rating, reviews_count, is_superhost, guest_favorite, thumbnail")
       .eq("snapshot_id", snapshot.id)
       .order("nightly_price", { ascending: true });
 

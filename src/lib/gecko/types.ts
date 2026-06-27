@@ -64,6 +64,35 @@ export interface GeckoPlpItem {
   guestFavorite?: boolean;
 }
 
+/** One result row from a Booking PLP extraction. */
+export interface GeckoBookingItem {
+  url: string;
+  propertyId: number | string;
+  pageName?: string | null;
+  name: string | null;
+  address: string | null;
+  city: string | null;
+  countryCode?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distance?: string | null;
+  distanceMeters?: number | null;
+  thumbnail: string | null;
+  currency: string | null;
+  price: number | null; // total for the window
+  regularPrice: number | null;
+  averagePricePerNight: number | null; // already per night (preferred for nightly)
+  aggregateRating: { rating: number | null; reviewCount: number | null } | null; // 0–10 scale
+  starRating: number | null;
+  mealPlan?: string | null;
+  freeCancellation?: boolean;
+  preferred?: boolean; // Booking "Preferred" property → premium signal
+  preferredPlus?: boolean;
+  badges?: string[];
+}
+
+export type GeckoPlpAnyItem = GeckoPlpItem | GeckoBookingItem;
+
 /** PLP (listing) extraction response — `data.items` holds the rows. */
 export interface GeckoPlpResponse {
   requestId: string;
@@ -89,7 +118,7 @@ export interface GeckoPlpResponse {
     offset: number | null;
     nextPage: number | null;
     nextPageUrl: string | null;
-    items: GeckoPlpItem[];
+    items: GeckoPlpAnyItem[];
   };
 }
 

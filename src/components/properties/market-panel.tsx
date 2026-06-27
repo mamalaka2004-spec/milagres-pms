@@ -1,10 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   TrendingUp, Loader2, AlertCircle, Star, BadgeCheck, RefreshCw, Info, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+
+const MarketMap = dynamic(() => import("./market-map"), {
+  ssr: false,
+  loading: () => <div className="h-72 w-full rounded-xl border border-gray-200 bg-gray-50 animate-pulse" />,
+});
 
 interface Snapshot {
   id: string;
@@ -30,6 +36,8 @@ interface Comp {
   name: string | null;
   title: string | null;
   city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   bedrooms: number | null;
   nightly_price: number | null;
   rating: number | null;
@@ -61,7 +69,19 @@ function defaultDates(): { checkIn: string; checkOut: string } {
   return { checkIn: iso(fri), checkOut: iso(sun) };
 }
 
-export default function MarketPanel({ propertyId, canRun }: { propertyId: string; canRun: boolean }) {
+export default function MarketPanel({
+  propertyId,
+  canRun,
+  propertyName = "Seu imóvel",
+  propertyLat = null,
+  propertyLng = null,
+}: {
+  propertyId: string;
+  canRun: boolean;
+  propertyName?: string;
+  propertyLat?: number | null;
+  propertyLng?: number | null;
+}) {
   const dd = defaultDates();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [comps, setComps] = useState<Comp[]>([]);
@@ -225,14 +245,39 @@ export default function MarketPanel({ propertyId, canRun }: { propertyId: string
                       </div>
                       <div className="text-[11px] text-gray-400 flex items-center gap-2">
                         {c.bedrooms != null && <span>{c.bedrooms === 0 ? "Studio" : `${c.bedrooms} qto`}</span>}
-                        {c.rating != null && <span className="inline-flex items-center gap-0.5"><Star size={10} className="fill-amber-400 text-amber-400" />{c.rating} ({c.reviews_count ?? 0})</span>}
-                        {c.is_superhost && <span className="inline-flex items-center gap-0.5 text-brand-600"><BadgeCheck size={10} />Superhost</span>}
+                        {c.rating != null && (
+                          <span className="inline-flex items-center gap-0.5">
+                            <Star size={10} className="fill-amber-400 text-amber-400" />
+                            {c.rating}{c.source === "booking" ? "/10" : ""} ({c.reviews_count ?? 0})
+                          </span>
+                        )}
+                        {c.is_superhost && (
+                          <span className="inline-flex items-center gap-0.5 text-brand-600">
+                            <BadgeCheck size={10} />{c.source === "booking" ? "Preferred" : "Superhost"}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm font-bold text-gray-900 shrink-0">{BRL(c.nightly_price)}<span className="text-[10px] font-normal text-gray-400">/noite</span></div>
                   </a>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Map of property + nearby listings */}
+          {comps.some((c) => c.latitude != null && c.longitude != null) && (
+            <div className="space-y-1.5">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mapa</div>
+              <MarketMap
+                propertyName={propertyName}
+                propertyLat={propertyLat}
+                propertyLng={propertyLng}
+                comps={comps.map((c) => ({
+                  id: c.id, name: c.name, title: c.title, latitude: c.latitude, longitude: c.longitude,
+                  nightly_price: c.nightly_price, source: c.source, url: c.url, is_superhost: c.is_superhost,
+                }))}
+              />
             </div>
           )}
         </>

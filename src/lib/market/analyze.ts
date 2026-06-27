@@ -1,4 +1,9 @@
-import type { GeckoPlpItem, MarketSource } from "@/lib/gecko/types";
+import type {
+  GeckoBookingItem,
+  GeckoPlpAnyItem,
+  GeckoPlpItem,
+  MarketSource,
+} from "@/lib/gecko/types";
 
 /** Normalized competitor comp ready to persist. */
 export interface NormalizedComp {
@@ -16,12 +21,12 @@ export interface NormalizedComp {
   nightlyPrice: number | null;
   totalPrice: number | null;
   currency: string;
-  rating: number | null;
+  rating: number | null; // Airbnb 0–5, Booking 0–10 (scale depends on source)
   reviewsCount: number | null;
-  isSuperhost: boolean;
+  isSuperhost: boolean; // Airbnb Superhost OR Booking Preferred → "premium" signal
   guestFavorite: boolean;
   thumbnail: string | null;
-  raw: GeckoPlpItem;
+  raw: GeckoPlpAnyItem;
 }
 
 /**
@@ -68,13 +73,12 @@ export function nightsBetween(checkIn: string, checkOut: string): number {
   return n > 0 ? n : 1;
 }
 
-/** Normalize one PLP item into a comp; price is the window total → divide by nights. */
-export function normalizeComp(item: GeckoPlpItem, source: MarketSource, nights: number): NormalizedComp {
-  // Prefer the label (reliable); the numeric `price` field corrupts pt-BR thousands.
+/** Normalize an Airbnb PLP item. Price comes from the label (the numeric field is unsafe). */
+function normalizeAirbnbComp(item: GeckoPlpItem, nights: number): NormalizedComp {
   const total = parsePriceLabel(item.totalPriceLabel, typeof item.price === "number" ? item.price : null);
   const nightly = total != null ? Math.round((total / nights) * 100) / 100 : null;
   return {
-    source,
+    source: "airbnb",
     listingId: item.listingId ?? null,
     url: item.url ?? null,
     title: item.title ?? null,
@@ -95,6 +99,50 @@ export function normalizeComp(item: GeckoPlpItem, source: MarketSource, nights: 
     thumbnail: item.thumbnail ?? null,
     raw: item,
   };
+}
+
+/**
+ * Normalize a Booking PLP item. Booking gives `averagePricePerNight` directly (a clean
+ * float — no pt-BR thousands bug), so we use it for nightly and `price` for the total.
+ * Booking has no bedroom count; the "premium" signal is Preferred / Preferred Plus.
+ */
+function normalizeBookingComp(item: GeckoBookingItem, nights: number): NormalizedComp {
+  const nightly =
+    typeof item.averagePricePerNight === "number"
+      ? item.averagePricePerNight
+      : typeof item.price === "number"
+      ? Math.round((item.price / nights) * 100) / 100
+      : null;
+  const total = typeof item.price === "number" ? item.price : nightly != null ? nightly * nights : null;
+  return {
+    source: "booking",
+    listingId: item.propertyId != null ? String(item.propertyId) : null,
+    url: item.url ?? null,
+    title: item.address ?? item.city ?? null,
+    name: item.name ?? null,
+    category: item.mealPlan ?? null,
+    city: item.city ?? null,
+    latitude: item.latitude ?? null,
+    longitude: item.longitude ?? null,
+    bedrooms: null,
+    capacity: null,
+    nightlyPrice: nightly,
+    totalPrice: total,
+    currency: item.currency || "BRL",
+    rating: item.aggregateRating?.rating ?? null,
+    reviewsCount: item.aggregateRating?.reviewCount ?? null,
+    isSuperhost: item.preferred === true || item.preferredPlus === true,
+    guestFavorite: item.preferredPlus === true,
+    thumbnail: item.thumbnail ?? null,
+    raw: item,
+  };
+}
+
+/** Normalize a PLP item for either source. */
+export function normalizeComp(item: GeckoPlpAnyItem, source: MarketSource, nights: number): NormalizedComp {
+  return source === "booking"
+    ? normalizeBookingComp(item as GeckoBookingItem, nights)
+    : normalizeAirbnbComp(item as GeckoPlpItem, nights);
 }
 
 function percentile(sortedAsc: number[], p: number): number | null {

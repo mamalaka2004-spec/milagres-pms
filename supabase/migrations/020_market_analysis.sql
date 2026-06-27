@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS market_comps (
   nightly_price numeric(12,2),                         -- price normalized per night
   total_price   numeric(12,2),                         -- price for the searched window
   currency      text DEFAULT 'BRL',
-  rating        numeric(3,2),
+  rating        numeric(4,2),                          -- Airbnb 0–5, Booking 0–10
   reviews_count integer,
   is_superhost  boolean DEFAULT false,
   guest_favorite boolean DEFAULT false,
