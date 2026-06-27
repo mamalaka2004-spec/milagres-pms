@@ -86,6 +86,72 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["companies"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["companies"]["Insert"]>;
       };
+      market_snapshots: {
+        Row: {
+          id: string;
+          company_id: string;
+          property_id: string;
+          source: string;
+          check_in: string;
+          check_out: string;
+          nights: number;
+          radius_km: number | null;
+          total_results: number | null;
+          sample_size: number;
+          price_min: number | null;
+          price_p25: number | null;
+          price_median: number | null;
+          price_p75: number | null;
+          price_max: number | null;
+          suggested_nightly: number | null;
+          your_nightly: number | null;
+          credits_used: number;
+          captured_at: string;
+          raw_meta: Json;
+        };
+        Insert: Omit<Database["public"]["Tables"]["market_snapshots"]["Row"], "id" | "captured_at"> & {
+          id?: string;
+          captured_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["market_snapshots"]["Insert"]>;
+      };
+      market_comps: {
+        Row: {
+          id: string;
+          company_id: string;
+          property_id: string | null;
+          snapshot_id: string | null;
+          source: string;
+          listing_id: string | null;
+          url: string | null;
+          title: string | null;
+          name: string | null;
+          category: string | null;
+          city: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          bedrooms: number | null;
+          capacity: number | null;
+          nightly_price: number | null;
+          total_price: number | null;
+          currency: string;
+          rating: number | null;
+          reviews_count: number | null;
+          is_superhost: boolean;
+          guest_favorite: boolean;
+          thumbnail: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          nights: number | null;
+          captured_at: string;
+          raw: Json;
+        };
+        Insert: Omit<Database["public"]["Tables"]["market_comps"]["Row"], "id" | "captured_at"> & {
+          id?: string;
+          captured_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["market_comps"]["Insert"]>;
+      };
       users: {
         Row: {
           id: string;

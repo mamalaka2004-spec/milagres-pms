@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import { PhotoGallery } from "@/components/properties/photo-gallery";
 import { AmenitySelector } from "@/components/properties/amenity-selector";
 import { ChannelSyncPanel } from "@/components/properties/channel-sync-panel";
+import MarketPanel from "@/components/properties/market-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -184,6 +185,18 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           bookingListingUrl={property.booking_listing_url}
           airbnbLastSyncedAt={property.airbnb_last_synced_at}
           bookingLastSyncedAt={property.booking_last_synced_at}
+        />
+      </div>
+
+      {/* Market analysis / suggested rate */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Análise de mercado</h2>
+          <span className="text-[11px] text-gray-400">Tarifa sugerida via GeckoAPI</span>
+        </div>
+        <MarketPanel
+          propertyId={property.id}
+          canRun={user.role === "admin" || user.role === "manager"}
         />
       </div>
 
