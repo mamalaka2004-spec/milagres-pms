@@ -12,6 +12,7 @@ export interface MarketProperty {
   state: string | null;
   latitude: number | null;
   longitude: number | null;
+  bedrooms: number | null;
   base_price_cents: number;
   status: string | null;
 }
@@ -105,6 +106,7 @@ export default function MarketOverview({
               propertyName={selected.name}
               propertyLat={selected.latitude}
               propertyLng={selected.longitude}
+              propertyBedrooms={selected.bedrooms}
             />
           </div>
         ) : (

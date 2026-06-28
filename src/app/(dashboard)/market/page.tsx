@@ -10,7 +10,7 @@ export default async function MarketPage() {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("properties")
-    .select("id, name, city, state, latitude, longitude, base_price_cents, status")
+    .select("id, name, city, state, latitude, longitude, bedrooms, base_price_cents, status")
     .eq("company_id", user.company_id)
     .order("name");
 

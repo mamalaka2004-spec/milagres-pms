@@ -165,38 +165,32 @@ export interface MarketStats {
   suggestedNightly: number | null;
 }
 
+/** Minimal shape needed to compute price stats — works for normalized comps or UI rows. */
+export interface StatCompLike {
+  nightlyPrice: number | null;
+  isSuperhost: boolean;
+  guestFavorite: boolean;
+}
+
 /**
- * Compute market statistics from comps, restricting to listings comparable to ours
- * (bedrooms within ±1 when we know our bedroom count and the comp's). Falls back to the
- * full priced set if the comparable subset is too small (< 4). Suggested nightly = median
- * of the comparable set, nudged toward p75 for Superhost/Guest-favorite density.
+ * Price statistics over a (already-filtered) set of comps. Suggested nightly = median,
+ * nudged ~25% toward p75 when the set skews premium (≥50% Superhost / guest-favorite).
+ * Pure — reused on the server (collection) and client (live filtering).
  */
-export function computeStats(comps: NormalizedComp[], ourBedrooms: number | null): MarketStats {
+export function statsFor(comps: StatCompLike[]): MarketStats {
   const priced = comps.filter((c) => typeof c.nightlyPrice === "number" && c.nightlyPrice! > 0);
-
-  let comparable = priced;
-  if (ourBedrooms != null) {
-    const near = priced.filter((c) => c.bedrooms != null && Math.abs(c.bedrooms - ourBedrooms) <= 1);
-    if (near.length >= 4) comparable = near;
-  }
-
-  const prices = comparable.map((c) => c.nightlyPrice as number).sort((a, b) => a - b);
+  const prices = priced.map((c) => c.nightlyPrice as number).sort((a, b) => a - b);
   const median = percentile(prices, 0.5);
   const p75 = percentile(prices, 0.75);
 
-  // Quality nudge: if most comparable listings are Superhost / guest favorites, the
-  // market skews premium — lean the suggestion ~25% of the way from median to p75.
   let suggested = median;
-  if (median != null && p75 != null && comparable.length > 0) {
-    const premiumShare =
-      comparable.filter((c) => c.isSuperhost || c.guestFavorite).length / comparable.length;
-    if (premiumShare >= 0.5) {
-      suggested = Math.round((median + (p75 - median) * 0.25) * 100) / 100;
-    }
+  if (median != null && p75 != null && priced.length > 0) {
+    const premiumShare = priced.filter((c) => c.isSuperhost || c.guestFavorite).length / priced.length;
+    if (premiumShare >= 0.5) suggested = Math.round((median + (p75 - median) * 0.25) * 100) / 100;
   }
 
   return {
-    sampleSize: comparable.length,
+    sampleSize: priced.length,
     priceMin: percentile(prices, 0),
     priceP25: percentile(prices, 0.25),
     priceMedian: median,
@@ -204,6 +198,31 @@ export function computeStats(comps: NormalizedComp[], ourBedrooms: number | null
     priceMax: percentile(prices, 1),
     suggestedNightly: suggested,
   };
+}
+
+/**
+ * Server-side default: restrict to listings comparable to ours (bedrooms within ±1 when
+ * known), falling back to the full priced set if the subset is too small (< 4).
+ */
+export function computeStats(comps: NormalizedComp[], ourBedrooms: number | null): MarketStats {
+  const priced = comps.filter((c) => typeof c.nightlyPrice === "number" && c.nightlyPrice! > 0);
+  let comparable = priced;
+  if (ourBedrooms != null) {
+    const near = priced.filter((c) => c.bedrooms != null && Math.abs(c.bedrooms - ourBedrooms) <= 1);
+    if (near.length >= 4) comparable = near;
+  }
+  return statsFor(comparable);
+}
+
+/** Great-circle distance in km between two lat/lng points (Haversine). */
+export function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLng = ((bLng - aLng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
 /** Build the provider search URL for a place. */

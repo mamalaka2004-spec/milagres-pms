@@ -200,6 +200,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           propertyName={property.name}
           propertyLat={property.latitude}
           propertyLng={property.longitude}
+          propertyBedrooms={property.bedrooms}
         />
       </div>
 

@@ -18,6 +18,7 @@ export interface CollectParams {
   checkIn: string; // YYYY-MM-DD
   checkOut: string; // YYYY-MM-DD
   pages?: number; // PLP pages to pull (default 1)
+  numAdults?: number; // override (defaults to the property's max_guests, capped 16)
 }
 
 export interface CollectResult {
@@ -84,10 +85,11 @@ export async function collectMarketForProperty(params: CollectParams): Promise<C
       keyword: source === "booking" ? property.city || place : undefined,
       startDate: params.checkIn,
       endDate: params.checkOut,
-      numAdults: Math.min(property.max_guests || 2, 16),
+      numAdults: Math.min(params.numAdults || property.max_guests || 2, 16),
       numRooms: source === "booking" ? 1 : undefined,
-      latitude: property.latitude ?? undefined,
-      longitude: property.longitude ?? undefined,
+      // Gecko only accepts latitude/longitude for Airbnb PLP (Booking rejects them → 400).
+      latitude: source === "airbnb" ? property.latitude ?? undefined : undefined,
+      longitude: source === "airbnb" ? property.longitude ?? undefined : undefined,
       lang: "pt-br",
       currency: "BRL",
     });

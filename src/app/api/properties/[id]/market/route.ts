@@ -25,6 +25,7 @@ const runSchema = z.object({
   check_in: z.string().regex(DATE),
   check_out: z.string().regex(DATE),
   pages: z.number().int().min(1).max(3).optional(),
+  num_adults: z.number().int().min(1).max(16).optional(),
 });
 
 async function assertOwnership(propertyId: string, companyId: string) {
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       checkIn: data.check_in,
       checkOut: data.check_out,
       pages: data.pages,
+      numAdults: data.num_adults,
     });
     return apiSuccess(result, 201);
   } catch (error) {
