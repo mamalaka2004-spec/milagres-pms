@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   Calendar as CalendarIcon,
   Users as UsersIcon,
   Star,
@@ -15,11 +14,7 @@ import {
   formatDate,
   formatPhone,
 } from "@/lib/utils/format";
-import {
-  ReservationStatusBadge,
-  PaymentStatusBadge,
-  ChannelBadge,
-} from "@/components/shared/status-badges";
+import { PageHeader, Section, Button, StatusBadge } from "@/components/ui";
 import { FinancialBreakdown } from "@/components/reservations/financial-breakdown";
 import { ChannelCard } from "@/components/reservations/channel-card";
 import { StatusActions } from "@/components/reservations/status-actions";
@@ -61,27 +56,27 @@ export default async function ReservationDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3">
-        <Link href="/reservations" aria-label="Voltar para reservas" className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40">
-          <ArrowLeft size={18} aria-hidden="true" />
-        </Link>
-        <div className="flex-1">
-          <div className="font-mono text-xs text-gray-400">{r.booking_code}</div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 inline-flex items-center gap-2 flex-wrap">
-            {property?.name}
-            <ReservationStatusBadge status={r.status} />
-            <PaymentStatusBadge status={r.payment_status} />
-            <ChannelBadge channel={r.channel} />
-          </h1>
-        </div>
-        <Link
-          href={`/reservations/${r.id}/edit`}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
-          <Pencil size={14} aria-hidden="true" />
-          Editar
-        </Link>
-      </div>
+      <PageHeader
+        backHref="/reservations"
+        backLabel="Voltar para reservas"
+        eyebrow={r.booking_code}
+        title={property?.name}
+        badges={
+          <>
+            <StatusBadge type="reservation" value={r.status} />
+            <StatusBadge type="payment" value={r.payment_status} />
+            <StatusBadge type="channel" value={r.channel} />
+          </>
+        }
+        actions={
+          <Button asChild variant="secondary">
+            <Link href={`/reservations/${r.id}/edit`}>
+              <Pencil size={14} aria-hidden="true" />
+              Editar
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
@@ -316,15 +311,6 @@ export default async function ReservationDetailPage({ params }: PageProps) {
           </Section>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-      <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">{title}</h2>
-      {children}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Star, LogIn, LogOut, BedDouble, Ban, Home } from "lucide-react";
-import { RESERVATION_STATUSES } from "@/lib/utils/constants";
 import { formatDateShort } from "@/lib/utils/format";
+import { StatusBadge, EntityAvatar } from "@/components/ui";
 import type { CalendarBlock, CalendarPropertyRow, CalendarReservation } from "@/lib/db/queries/calendar";
 
 interface DayBoardProps {
@@ -109,7 +109,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
         <Icon size={16} className={accent} aria-hidden="true" />
         <span className="font-semibold text-sm text-gray-800">{title}</span>
@@ -129,20 +129,12 @@ function ReservationRow({
   prop?: CalendarPropertyRow;
   tag?: "check-in" | "check-out";
 }) {
-  const cfg = RESERVATION_STATUSES[r.status];
   return (
     <Link
       href={`/reservations/${r.id}`}
-      className="flex items-center gap-3 px-4 py-3 hover:bg-brand-50/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/30"
+      className="flex items-center gap-3 px-4 py-3 hover:bg-brand-50/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/30 focus-visible:ring-inset"
     >
-      <div className="w-9 h-9 rounded-lg shrink-0 bg-brand-500/10 text-brand-600 flex items-center justify-center text-sm font-bold overflow-hidden">
-        {prop?.cover_image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={prop.cover_image_url} alt="" loading="lazy" className="w-full h-full object-cover" />
-        ) : (
-          (prop?.name || "?").charAt(0).toUpperCase()
-        )}
-      </div>
+      <EntityAvatar src={prop?.cover_image_url} name={prop?.name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           {r.is_vip && <Star size={12} fill="currentColor" className="text-amber-500 shrink-0" aria-hidden="true" />}
@@ -157,12 +149,7 @@ function ReservationRow({
           {tag === "check-in" ? "Chegada" : "Saída"}
         </span>
       )}
-      <span
-        className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-        style={{ backgroundColor: cfg.bgColor, color: cfg.color }}
-      >
-        {cfg.label}
-      </span>
+      <StatusBadge type="reservation" value={r.status} className="shrink-0" />
     </Link>
   );
 }

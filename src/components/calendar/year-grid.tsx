@@ -47,14 +47,14 @@ export function YearGrid({
 
   if (properties.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-16 text-center text-sm text-gray-400">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card px-6 py-16 text-center text-sm text-gray-400">
         Nenhum imóvel ainda — cadastre um para começar a usar a Agenda.
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
       <div className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
         <table className="w-full border-collapse" style={{ minWidth: "760px" }}>
           <thead>

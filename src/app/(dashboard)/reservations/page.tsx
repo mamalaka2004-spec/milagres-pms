@@ -3,11 +3,7 @@ import { Plus, CalendarDays, Star } from "lucide-react";
 import { getReservations } from "@/lib/db/queries/reservations";
 import { requireAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/shared/empty-state";
-import {
-  ReservationStatusBadge,
-  PaymentStatusBadge,
-  ChannelBadge,
-} from "@/components/shared/status-badges";
+import { PageHeader, Button, Input, Select, StatusBadge, EntityAvatar } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { RESERVATION_STATUSES, CHANNELS } from "@/lib/utils/constants";
 
@@ -36,73 +32,66 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
     to_date: params.to,
   });
 
+  const hasFilters = Boolean(params.search || params.status || params.channel);
+
   return (
     <div className="space-y-4 lg:space-y-6">
-      <div className="flex justify-between items-center gap-3 flex-wrap">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Reservas</h1>
-        <Link
-          href="/reservations/new"
-          className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
-          <Plus size={16} aria-hidden="true" /> Nova Reserva
-        </Link>
-      </div>
+      <PageHeader
+        title="Reservas"
+        subtitle={`${reservations.length} ${reservations.length === 1 ? "reserva" : "reservas"}${
+          hasFilters ? " (filtradas)" : ""
+        }`}
+        actions={
+          <Button asChild className="hidden lg:inline-flex">
+            <Link href="/reservations/new">
+              <Plus size={16} aria-hidden="true" /> Nova Reserva
+            </Link>
+          </Button>
+        }
+      />
 
-      <form className="flex flex-wrap gap-2" action="/reservations" method="GET">
-        <input
+      <form
+        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
+        action="/reservations"
+        method="GET"
+      >
+        <Input
           name="search"
           defaultValue={params.search || ""}
-          placeholder="Código da reserva..."
+          placeholder="Código da reserva…"
           aria-label="Buscar por código da reserva"
-          className="flex-1 min-w-[180px] px-4 py-2 rounded-lg border border-gray-200 text-sm transition-colors duration-200 focus:outline-none focus:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-400/40"
+          className="col-span-2 sm:flex-1 sm:min-w-[200px]"
         />
-        <select
-          name="status"
-          defaultValue={params.status || ""}
-          aria-label="Filtrar por status"
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
+        <Select name="status" defaultValue={params.status || ""} aria-label="Filtrar por status" className="sm:w-auto">
           <option value="">Todos os status</option>
           {Object.entries(RESERVATION_STATUSES).map(([k, v]) => (
             <option key={k} value={k}>
               {v.label}
             </option>
           ))}
-        </select>
-        <select
-          name="channel"
-          defaultValue={params.channel || ""}
-          aria-label="Filtrar por canal"
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
+        </Select>
+        <Select name="channel" defaultValue={params.channel || ""} aria-label="Filtrar por canal" className="sm:w-auto">
           <option value="">Todos os canais</option>
           {Object.entries(CHANNELS).map(([k, v]) => (
             <option key={k} value={k}>
               {v.label}
             </option>
           ))}
-        </select>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
+        </Select>
+        <Button type="submit" variant="secondary" className="col-span-2 sm:col-span-1">
           Filtrar
-        </button>
+        </Button>
       </form>
 
       {reservations.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title={params.search || params.status ? "Nenhuma reserva corresponde aos filtros" : "Nenhuma reserva ainda"}
-          description={
-            params.search || params.status
-              ? "Tente limpar os filtros."
-              : "Crie sua primeira reserva para começar."
-          }
-          action={!params.search && !params.status ? { label: "+ Nova Reserva", href: "/reservations/new" } : undefined}
+          title={hasFilters ? "Nenhuma reserva corresponde aos filtros" : "Nenhuma reserva ainda"}
+          description={hasFilters ? "Tente limpar os filtros." : "Crie sua primeira reserva para começar."}
+          action={!hasFilters ? { label: "+ Nova Reserva", href: "/reservations/new" } : undefined}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -118,23 +107,36 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
               {reservations.map((r) => {
                 const { guest, property } = r;
                 return (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr key={r.id} className="hover:bg-brand-50/40 transition-colors duration-150">
                     <td className="px-4 py-3">
-                      <Link href={`/reservations/${r.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded">
+                      <Link
+                        href={`/reservations/${r.id}`}
+                        className="font-mono text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded"
+                      >
                         {r.booking_code}
                       </Link>
                       <div className="mt-0.5">
-                        <ChannelBadge channel={r.channel} />
+                        <StatusBadge type="channel" value={r.channel} />
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-sm text-gray-900 inline-flex items-center gap-1">
-                        {guest?.full_name || "—"}
-                        {guest?.is_vip && (
-                          <Star size={11} className="text-amber-500" fill="currentColor" aria-hidden="true" />
-                        )}
+                      <div className="flex items-center gap-2.5">
+                        <EntityAvatar
+                          src={property?.cover_image_url}
+                          name={guest?.full_name}
+                          size={32}
+                          className="hidden sm:flex"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm text-gray-900 inline-flex items-center gap-1">
+                            {guest?.full_name || "—"}
+                            {guest?.is_vip && (
+                              <Star size={11} className="text-amber-500" fill="currentColor" aria-hidden="true" />
+                            )}
+                          </div>
+                          <div className="md:hidden text-xs text-gray-500 truncate">{property?.name}</div>
+                        </div>
                       </div>
-                      <div className="md:hidden text-xs text-gray-500">{property?.name}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">
                       {property?.name || "—"}
@@ -153,8 +155,8 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5">
-                        <ReservationStatusBadge status={r.status} />
-                        <PaymentStatusBadge status={r.payment_status} />
+                        <StatusBadge type="reservation" value={r.status} />
+                        <StatusBadge type="payment" value={r.payment_status} />
                       </div>
                     </td>
                   </tr>
@@ -168,7 +170,7 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
       <Link
         href="/reservations/new"
         aria-label="Nova reserva"
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-lg flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-card-hover flex items-center justify-center z-30 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
       >
         <Plus size={24} aria-hidden="true" />
       </Link>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar, BottomNav } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { Toaster } from "@/components/ui/toaster";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -42,7 +43,7 @@ export default function DashboardLayout({
   const title = getTitle(pathname);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-cream overflow-hidden">
       <Sidebar
         mobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
@@ -62,6 +63,7 @@ export default function DashboardLayout({
       </div>
 
       <BottomNav />
+      <Toaster />
     </div>
   );
 }

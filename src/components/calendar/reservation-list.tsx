@@ -1,20 +1,9 @@
 import Link from "next/link";
 import { Star, LogIn, ArrowRight, MoonStar } from "lucide-react";
-import { RESERVATION_STATUSES } from "@/lib/utils/constants";
 import { formatDateShort } from "@/lib/utils/format";
 import { MONTH_NAMES, WEEKDAY_NAMES } from "@/lib/calendar/view";
+import { StatusBadge, EntityAvatar } from "@/components/ui";
 import type { CalendarPropertyRow, CalendarReservation } from "@/lib/db/queries/calendar";
-import type { Channel } from "@/types/database";
-
-const CHANNEL_LABELS: Record<Channel, string> = {
-  direct: "Direto",
-  airbnb: "Airbnb",
-  booking: "Booking",
-  expedia: "Expedia",
-  vrbo: "Vrbo",
-  manual: "Manual",
-  other: "Outro",
-};
 
 function dateGroupLabel(date: string): string {
   const d = new Date(date + "T00:00:00Z");
@@ -46,14 +35,14 @@ export function ReservationList({
 
   if (reservations.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-16 text-center text-sm text-gray-400">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card px-6 py-16 text-center text-sm text-gray-400">
         Nenhuma reserva neste período.
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden divide-y divide-gray-100">
       {groups.map((g) => (
         <div key={g.date}>
           <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur px-4 py-2 text-xs font-semibold text-gray-500 border-b border-gray-100 flex items-center gap-2">
@@ -63,22 +52,14 @@ export function ReservationList({
           </div>
           <div className="divide-y divide-gray-50">
             {g.items.map((r) => {
-              const cfg = RESERVATION_STATUSES[r.status];
               const prop = propName.get(r.property_id);
               return (
                 <Link
                   key={r.id}
                   href={`/reservations/${r.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-brand-50/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/30"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-brand-50/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/30 focus-visible:ring-inset"
                 >
-                  <div className="w-9 h-9 rounded-lg shrink-0 bg-brand-500/10 text-brand-600 flex items-center justify-center text-sm font-bold overflow-hidden">
-                    {prop?.cover_image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={prop.cover_image_url} alt="" loading="lazy" className="w-full h-full object-cover" />
-                    ) : (
-                      (prop?.name || "?").charAt(0).toUpperCase()
-                    )}
-                  </div>
+                  <EntityAvatar src={prop?.cover_image_url} name={prop?.name} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       {r.is_vip && <Star size={12} fill="currentColor" className="text-amber-500 shrink-0" aria-hidden="true" />}
@@ -97,15 +78,10 @@ export function ReservationList({
                       {r.nights}
                     </span>
                   </div>
-                  <span className="hidden md:inline text-[10px] font-medium text-gray-400 shrink-0 w-14 text-right">
-                    {CHANNEL_LABELS[r.channel]}
+                  <span className="hidden md:inline shrink-0 w-14 text-right">
+                    <StatusBadge type="channel" value={r.channel} />
                   </span>
-                  <span
-                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                    style={{ backgroundColor: cfg.bgColor, color: cfg.color }}
-                  >
-                    {cfg.label}
-                  </span>
+                  <StatusBadge type="reservation" value={r.status} className="shrink-0" />
                 </Link>
               );
             })}

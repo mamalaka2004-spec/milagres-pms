@@ -2,6 +2,7 @@ import { ExternalLink, RefreshCw, Hash } from "lucide-react";
 import { CHANNELS } from "@/lib/utils/constants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { CopyButton } from "@/components/shared/copy-button";
+import { Section } from "@/components/ui";
 import type { Channel } from "@/types/database";
 
 interface ChannelCardProps {
@@ -33,9 +34,7 @@ export function ChannelCard({
   const hasFee = platformFeeCents > 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-      <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Canal</h2>
-
+    <Section title="Canal">
       <div className="flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
@@ -99,6 +98,6 @@ export function ChannelCard({
       {isDirect && !channelRef && !hasFee && (
         <div className="text-xs text-gray-400">Sem taxa de canal nesta reserva.</div>
       )}
-    </div>
+    </Section>
   );
 }

@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils/cn";
  * rounded-lg, 200ms transitions, brand focus ring). No new colors.
  */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none motion-reduce:transition-none",
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none motion-reduce:transition-none",
   {
     variants: {
       variant: {
-        primary: "bg-brand-500 text-white hover:bg-brand-600",
+        primary: "bg-brand-500 text-white hover:bg-brand-600 shadow-sm hover:shadow-card",
         secondary: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
         ghost: "text-gray-600 hover:bg-gray-100",
         subtle: "bg-brand-50 text-brand-700 hover:bg-brand-100",

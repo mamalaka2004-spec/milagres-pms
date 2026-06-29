@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, AlertTriangle, CheckCircle2, Loader2, Star } from "lucide-react";
+import { Save, AlertTriangle, CheckCircle2, Loader2, Star } from "lucide-react";
+import { PageHeader, Section, Button } from "@/components/ui";
 import {
   reservationUpdateSchema,
   type ReservationUpdateInput,
@@ -187,19 +188,12 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href={`/reservations/${reservation.id}`}
-          aria-label="Voltar para a reserva"
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        >
-          <ArrowLeft size={18} aria-hidden="true" />
-        </Link>
-        <div className="flex-1">
-          <div className="font-mono text-xs text-gray-400">{reservation.booking_code}</div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Editar Reserva</h1>
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/reservations/${reservation.id}`}
+        backLabel="Voltar para a reserva"
+        eyebrow={reservation.booking_code}
+        title="Editar Reserva"
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Guest (read-only) */}
@@ -383,32 +377,21 @@ export function ReservationEditForm({ reservation, properties }: ReservationEdit
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Link
-            href={`/reservations/${reservation.id}`}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-          >
-            Cancelar
-          </Link>
-          <button
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+          <Button asChild variant="secondary" size="lg">
+            <Link href={`/reservations/${reservation.id}`}>Cancelar</Link>
+          </Button>
+          <Button
             type="submit"
+            size="lg"
+            loading={submitting}
             disabled={submitting || availability.state === "unavailable"}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 disabled:opacity-50"
           >
-            <Save size={16} aria-hidden="true" />
+            {!submitting && <Save size={16} aria-hidden="true" />}
             {submitting ? "Salvando..." : "Salvar alterações"}
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-      <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">{title}</h2>
-      {children}
     </div>
   );
 }

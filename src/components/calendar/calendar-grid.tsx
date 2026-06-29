@@ -118,7 +118,7 @@ export function CalendarGrid({
   const innerMinWidth = propCol + daysInMonth * dayWidth;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
       <div ref={scrollRef} className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
         <div style={{ minWidth: `${innerMinWidth}px` }}>
           {/* Header: weekday + day number */}

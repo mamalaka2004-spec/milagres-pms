@@ -15,6 +15,7 @@ import {
   type CalendarView,
 } from "@/lib/calendar/view";
 import { CalendarDays, LogIn, LogOut, Percent, BedDouble, MoonStar, Home } from "lucide-react";
+import { PageHeader } from "@/components/ui";
 import type { CalendarReservation } from "@/lib/db/queries/calendar";
 
 export const dynamic = "force-dynamic";
@@ -52,19 +53,13 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-5 lg:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-2xl lg:text-3xl text-gray-900">Agenda</h1>
-          <p className="text-sm text-gray-500">{SUBTITLES[view]}</p>
-        </div>
-        <ViewSwitcher params={params} />
-      </div>
+      <PageHeader title="Agenda" subtitle={SUBTITLES[view]} actions={<ViewSwitcher params={params} />} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 lg:p-5 flex items-center gap-4"
+            className="bg-white rounded-2xl border border-gray-200 shadow-card p-4 lg:p-5 flex items-center gap-4"
           >
             <div className="w-11 h-11 rounded-xl bg-brand-500/10 text-brand-600 flex items-center justify-center shrink-0">
               <s.icon size={20} aria-hidden="true" />
