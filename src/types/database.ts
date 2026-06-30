@@ -163,12 +163,41 @@ export interface Database {
           role: UserRole;
           is_active: boolean;
           language: string;
+          // Per-user UI preferences (e.g. { mode: "locacao" | "vendas" }). Defaults to {}.
+          preferences: Json;
           last_login_at: string | null;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["users"]["Row"], "created_at" | "updated_at">;
+        Insert: Omit<Database["public"]["Tables"]["users"]["Row"], "created_at" | "updated_at" | "preferences"> & {
+          preferences?: Json;
+        };
         Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
+      };
+      activity_logs: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string | null;
+          action: string;
+          entity_type: string | null;
+          entity_id: string | null;
+          details: Json | null;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id?: string | null;
+          action: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          details?: Json | null;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["activity_logs"]["Insert"]>;
       };
       properties: {
         Row: {

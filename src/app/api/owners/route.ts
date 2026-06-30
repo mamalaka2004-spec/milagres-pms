@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { ownerSchema } from "@/lib/validations/owner";
 import { getOwners, createOwner } from "@/lib/db/queries/owners";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 
 export async function GET() {
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       notes: validation.data.notes || null,
       is_active: validation.data.is_active,
     });
+    await logActivity({ user, action: "owner.create", entityType: "owner", entityId: owner.id, details: { label: owner.full_name } });
     return apiSuccess(owner, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

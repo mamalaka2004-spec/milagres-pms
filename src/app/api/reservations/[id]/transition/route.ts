@@ -7,6 +7,7 @@ import {
 import { recomputeGuestStats } from "@/lib/db/queries/guests";
 import { ensureCheckoutCleaningTask } from "@/lib/db/queries/tasks";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -70,6 +71,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    await logActivity({
+      user,
+      action: "reservation.transition",
+      entityType: "reservation",
+      entityId: id,
+      details: { label: existing.booking_code, from: existing.status, to: status },
+    });
     return apiSuccess(updated);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

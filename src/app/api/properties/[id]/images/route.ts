@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { addPropertyImage, getPropertyById } from "@/lib/db/queries/properties";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { url, alt_text, is_cover } = await request.json();
     if (!url || typeof url !== "string") return apiError("URL required", 400);
     const image = await addPropertyImage(id, url, alt_text, is_cover);
+    await logActivity({ user, action: "property_image.create", entityType: "property_image", entityId: id, details: { label: property.name } });
     return apiSuccess(image, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

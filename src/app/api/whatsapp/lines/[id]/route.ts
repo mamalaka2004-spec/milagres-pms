@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -83,6 +84,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       .select()
       .single();
     if (error) throw error;
+    await logActivity({ user, action: "whatsapp_line.update", entityType: "whatsapp_line", entityId: id, details: { label: line.label } });
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -103,6 +105,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     // are wired with ON DELETE CASCADE, so a single delete tears down the tree.
     const { error } = await supabase.from("whatsapp_lines").delete().eq("id", id);
     if (error) throw error;
+    await logActivity({ user, action: "whatsapp_line.delete", entityType: "whatsapp_line", entityId: id, details: { label: line.label } });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

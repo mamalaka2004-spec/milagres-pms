@@ -6,6 +6,7 @@ import {
   deleteProperty,
 } from "@/lib/db/queries/properties";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -81,6 +82,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const property = await updateProperty(id, updateData);
+    await logActivity({ user, action: "property.update", entityType: "property", entityId: id, details: { label: property.name, code: property.code } });
     return apiSuccess(property);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -100,6 +102,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (existing.company_id !== user.company_id) return apiForbidden();
 
     await deleteProperty(id);
+    await logActivity({ user, action: "property.delete", entityType: "property", entityId: id, details: { label: existing.name, code: existing.code } });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

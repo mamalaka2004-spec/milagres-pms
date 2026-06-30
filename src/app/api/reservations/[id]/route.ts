@@ -10,6 +10,7 @@ import {
   deleteReservation,
 } from "@/lib/db/queries/reservations";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -130,6 +131,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const reservation = await updateReservation(id, update);
+    await logActivity({ user, action: "reservation.update", entityType: "reservation", entityId: id, details: { label: existing.booking_code } });
     return apiSuccess(reservation);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -151,6 +153,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (existing.company_id !== user.company_id) return apiForbidden();
 
     await deleteReservation(id);
+    await logActivity({ user, action: "reservation.delete", entityType: "reservation", entityId: id, details: { label: existing.booking_code } });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

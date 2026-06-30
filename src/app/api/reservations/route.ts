@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/queries/reservations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
     });
 
+    await logActivity({ user, action: "reservation.create", entityType: "reservation", entityId: reservation.id, details: { label: booking_code } });
     return apiSuccess(reservation, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

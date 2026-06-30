@@ -8,6 +8,7 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { createEntry } from "@/lib/db/queries/finance";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -78,6 +79,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     await syncReservationPaymentStatus(existing.reservation_id);
+    await logActivity({
+      user,
+      action: "payment.update",
+      entityType: "payment",
+      entityId: id,
+      details: { amount_cents: updated.amount_cents, status: updated.status },
+    });
     return apiSuccess(updated);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -114,6 +122,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     // Recompute the reservation's payment_status now that this payment is gone.
     await syncReservationPaymentStatus(existing.reservation_id);
 
+    await logActivity({ user, action: "payment.delete", entityType: "payment", entityId: id });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

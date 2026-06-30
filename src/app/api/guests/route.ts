@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { guestSchema } from "@/lib/validations/guest";
 import { createGuest, getGuests, findGuestByEmailOrPhone } from "@/lib/db/queries/guests";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       total_spent_cents: 0,
     });
 
+    await logActivity({ user, action: "guest.create", entityType: "guest", entityId: guest.id, details: { label: guest.full_name } });
     return apiSuccess(guest, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

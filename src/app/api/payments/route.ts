@@ -8,6 +8,7 @@ import {
 import { getReservationById } from "@/lib/db/queries/reservations";
 import { createEntry } from "@/lib/db/queries/finance";
 import { requireRole, requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -88,6 +89,13 @@ export async function POST(request: NextRequest) {
     // Recompute reservation.payment_status
     await syncReservationPaymentStatus(data.reservation_id);
 
+    await logActivity({
+      user,
+      action: "payment.create",
+      entityType: "payment",
+      entityId: payment.id,
+      details: { label: reservation.booking_code, amount_cents, method: data.method, status: data.status },
+    });
     return apiSuccess(payment, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

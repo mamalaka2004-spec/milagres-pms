@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { taskUpdateSchema } from "@/lib/validations/task";
 import { getTaskById, getTaskDetail, updateTask, deleteTask } from "@/lib/db/queries/tasks";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -77,6 +78,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const task = await updateTask(id, patch);
+    await logActivity({
+      user,
+      action: "task.update",
+      entityType: "task",
+      entityId: id,
+      details: { type: existing.type, ...(patch.status ? { to: patch.status } : {}) },
+    });
     return apiSuccess(task);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -97,6 +105,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (existing.company_id !== user.company_id) return apiForbidden();
 
     await deleteTask(id);
+    await logActivity({ user, action: "task.delete", entityType: "task", entityId: id, details: { type: existing.type } });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

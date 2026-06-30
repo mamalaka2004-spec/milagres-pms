@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { listLinesForUser } from "@/lib/db/queries/whatsapp";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { lineCreateSchema } from "@/lib/validations/whatsapp";
@@ -58,6 +59,13 @@ export async function POST(request: NextRequest) {
       .insert({ line_id: (created as { id: string }).id, user_id: user.id, can_send: true })
       .then(() => null, () => null); // ignore unique-violation if duplicate
 
+    await logActivity({
+      user,
+      action: "whatsapp_line.create",
+      entityType: "whatsapp_line",
+      entityId: (created as { id: string }).id,
+      details: { label: data.label, purpose: data.purpose },
+    });
     return apiSuccess(created, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

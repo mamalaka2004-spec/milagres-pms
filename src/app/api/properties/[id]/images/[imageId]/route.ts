@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPropertyById } from "@/lib/db/queries/properties";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -71,6 +72,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         .update({ cover_image_url: row.url })
         .eq("id", id);
     }
+    await logActivity({ user, action: "property_image.update", entityType: "property_image", entityId: id, details: { is_cover: !!is_cover } });
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -93,6 +95,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     const supabase = createAdminClient();
     const { error } = await supabase.from("property_images").delete().eq("id", imageId);
     if (error) throw error;
+    await logActivity({ user, action: "property_image.delete", entityType: "property_image", entityId: id });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

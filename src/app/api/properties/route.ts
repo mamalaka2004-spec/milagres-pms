@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { propertySchema } from "@/lib/validations/property";
 import { getProperties, createProperty } from "@/lib/db/queries/properties";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiServerError } from "@/lib/api/response";
 
 // ─── GET /api/properties ───
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
       booking_listing_url: data.booking_listing_url || null,
     });
 
+    await logActivity({ user, action: "property.create", entityType: "property", entityId: property.id, details: { label: property.name, code: property.code } });
     return apiSuccess(property, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

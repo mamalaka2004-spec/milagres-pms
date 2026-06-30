@@ -1,23 +1,27 @@
 "use client";
 
-import { Bell, Search, Menu } from "lucide-react";
-import { getInitials } from "@/lib/utils/format";
+import { Bell, Menu } from "lucide-react";
+import { ModeSwitcher } from "@/components/layout/mode-switcher";
+import { GlobalSearch } from "@/components/layout/global-search";
+import { UserMenu, type UserMenuUser } from "@/components/layout/user-menu";
+
+export type TopbarUser = UserMenuUser;
 
 interface TopbarProps {
   title: string;
   onMenuClick: () => void;
-  userName?: string;
-  userRole?: string;
+  user: TopbarUser;
 }
 
-export function Topbar({ title, onMenuClick, userName = "Admin", userRole = "admin" }: TopbarProps) {
+export function Topbar({ title, onMenuClick, user }: TopbarProps) {
   const todayLabel = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
+
   return (
-    <header className="h-16 lg:h-[76px] bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 gap-3 shrink-0">
+    <header className="h-16 lg:h-[76px] bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 gap-2 lg:gap-3 shrink-0">
       {/* Mobile menu */}
       <button
         onClick={onMenuClick}
@@ -28,26 +32,22 @@ export function Topbar({ title, onMenuClick, userName = "Admin", userRole = "adm
       </button>
 
       {/* Title + contextual date */}
-      <div className="flex-1 lg:flex-none min-w-0">
+      <div className="min-w-0">
         <h1 className="text-lg lg:text-xl font-bold text-gray-900 tracking-tight leading-tight truncate">
           {title}
         </h1>
-        <p className="hidden lg:block text-xs text-gray-400 capitalize leading-tight">
-          {todayLabel}
-        </p>
+        <p className="hidden lg:block text-xs text-gray-400 capitalize leading-tight">{todayLabel}</p>
       </div>
 
-      <div className="hidden lg:block flex-1" />
-
-      {/* Search — desktop */}
-      <div className="hidden md:block relative">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" aria-hidden="true" />
-        <input
-          placeholder="Buscar..."
-          aria-label="Buscar"
-          className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-body w-48 lg:w-56 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400 transition-colors duration-200"
-        />
+      {/* Mode selector (#8) */}
+      <div className="ml-1 lg:ml-3">
+        <ModeSwitcher />
       </div>
+
+      <div className="flex-1" />
+
+      {/* Global search (#21) */}
+      <GlobalSearch />
 
       {/* Notifications */}
       <button
@@ -58,16 +58,8 @@ export function Topbar({ title, onMenuClick, userName = "Admin", userRole = "adm
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
       </button>
 
-      {/* User */}
-      <div className="hidden md:flex items-center gap-2.5 ml-1">
-        <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">
-          {getInitials(userName)}
-        </div>
-        <div className="hidden lg:block">
-          <div className="text-sm font-semibold text-gray-900 leading-tight">{userName}</div>
-          <div className="text-[10px] text-gray-400 capitalize">{userRole}</div>
-        </div>
-      </div>
+      {/* User + management menu (#20) */}
+      <UserMenu user={user} />
     </header>
   );
 }

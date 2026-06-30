@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -82,6 +83,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     if (Object.keys(profilePatch).length === 0) {
       const { data: row } = await supabase.from("users").select(LIST_SELECT).eq("id", id).single();
+      if (data.password) {
+        await logActivity({ user: admin, action: "user.update", entityType: "user", entityId: id, details: { label: (row as { full_name?: string } | null)?.full_name ?? null, password_reset: true } });
+      }
       return apiSuccess(row);
     }
 
@@ -92,6 +96,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       .select(LIST_SELECT)
       .single();
     if (error) throw error;
+    await logActivity({ user: admin, action: "user.update", entityType: "user", entityId: id, details: { label: (row as { full_name?: string } | null)?.full_name ?? null } });
     return apiSuccess(row);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

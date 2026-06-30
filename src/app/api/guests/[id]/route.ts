@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { guestUpdateSchema } from "@/lib/validations/guest";
 import { getGuestById, updateGuest, deleteGuest } from "@/lib/db/queries/guests";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -52,6 +53,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const guest = await updateGuest(id, update);
+    await logActivity({ user, action: "guest.update", entityType: "guest", entityId: id, details: { label: guest.full_name } });
     return apiSuccess(guest);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -72,6 +74,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (existing.company_id !== user.company_id) return apiForbidden();
 
     await deleteGuest(id);
+    await logActivity({ user, action: "guest.delete", entityType: "guest", entityId: id, details: { label: existing.full_name } });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

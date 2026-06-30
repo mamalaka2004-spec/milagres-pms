@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -64,6 +65,7 @@ export async function PUT(request: NextRequest) {
       .eq("id", user.company_id);
     if (error) throw error;
 
+    await logActivity({ user, action: "ai_settings.update", entityType: "ai_settings", entityId: user.company_id, details: { ai_enabled: validation.data.ai_enabled } });
     return apiSuccess({ ai_enabled: validation.data.ai_enabled });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -114,6 +115,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       if (insErr) throw insErr;
     }
 
+    await logActivity({ user, action: "whatsapp_line.update", entityType: "whatsapp_line", entityId: lineId, details: { label: "Acessos", granted: user_ids.length } });
     return apiSuccess({ ok: true, granted: user_ids.length });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

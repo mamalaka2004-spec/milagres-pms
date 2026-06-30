@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import { getConversationById, updateConversation } from "@/lib/db/queries/whatsapp";
 import { conversationPatchSchema } from "@/lib/validations/whatsapp";
@@ -55,6 +56,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const updated = await updateConversation(id, patch);
+    await logActivity({ user, action: "conversation.update", entityType: "conversation", entityId: id, details: patch as Record<string, unknown> });
     return apiSuccess(updated);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

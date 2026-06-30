@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncReservationPaymentStatus, computePaymentStatusForReservation } from "@/lib/db/queries/payments";
 import * as asaas from "@/lib/asaas/client";
@@ -116,6 +117,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (insErr) return apiError(`Falha ao salvar cobrança: ${insErr.message}`, 500);
 
     await syncReservationPaymentStatus(r.id);
+    await logActivity({
+      user,
+      action: "reservation.charge",
+      entityType: "reservation",
+      entityId: r.id,
+      details: { label: r.booking_code, amount_cents: amountCents, billing_type: v.data.billing_type },
+    });
     return apiSuccess(payment, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

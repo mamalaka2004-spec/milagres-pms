@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       return apiError(`Falha ao criar perfil: ${insErr.message}`, 500);
     }
 
+    await logActivity({ user: admin, action: "user.create", entityType: "user", entityId: id, details: { label: full_name, role } });
     return apiSuccess(row, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

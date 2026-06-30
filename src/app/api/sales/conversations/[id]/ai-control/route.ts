@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import {
   getConversationById,
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
     }
 
+    await logActivity({ user, action: "conversation.update", entityType: "conversation", entityId: id, details: { label: action === "resume" ? "IA retomada" : "IA pausada", ai_active: aiActive } });
     return apiSuccess({ conversation: updated, n8n: n8nResult });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

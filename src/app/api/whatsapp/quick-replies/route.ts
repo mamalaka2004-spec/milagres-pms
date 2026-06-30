@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       .select("id, title, body, shortcut, category")
       .single();
     if (error) return apiError(error.message, 400);
+    await logActivity({ user, action: "quick_reply.create", entityType: "quick_reply", entityId: (data as { id?: string } | null)?.id ?? null, details: { label: title } });
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

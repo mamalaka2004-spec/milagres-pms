@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import { getConversationById } from "@/lib/db/queries/whatsapp";
 import { getLeadData, upsertLeadData } from "@/lib/db/queries/sales";
@@ -61,6 +62,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       marceloHandoffAt:
         data.lead_stage === "handoff" ? new Date().toISOString() : undefined,
     });
+    await logActivity({ user, action: "lead.update", entityType: "lead", entityId: id, details: { stage: data.lead_stage ?? null } });
     return apiSuccess(lead);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

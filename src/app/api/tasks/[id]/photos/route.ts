@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTaskById } from "@/lib/db/queries/tasks";
 import {
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       .single();
     if (insErr) return apiError(`Falha ao salvar foto: ${insErr.message}`, 500);
 
+    await logActivity({ user, action: "task_photo.create", entityType: "task_photo", entityId: id, details: { kind } });
     return apiSuccess(row, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
@@ -81,6 +83,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const { error } = await supabase.from("task_photos").delete().eq("id", photoId);
     if (error) throw error;
+    await logActivity({ user, action: "task_photo.delete", entityType: "task_photo", entityId: id });
     return apiSuccess({ deleted: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { taskSchema, TASK_TYPES, TASK_STATUSES } from "@/lib/validations/task";
 import { listTasks, createTask, type TaskFilters, type TaskStatus, type TaskType } from "@/lib/db/queries/tasks";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
       due_time: data.due_time || null,
       notes: data.notes || null,
     });
+    await logActivity({ user, action: "task.create", entityType: "task", entityId: task.id, details: { type: data.type } });
     return apiSuccess(task, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

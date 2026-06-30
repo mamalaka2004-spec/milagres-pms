@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { financialEntrySchema, ENTRY_TYPES } from "@/lib/validations/financial-entry";
 import { listEntries, createEntry, type EntryType } from "@/lib/db/queries/finance";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
   apiError,
@@ -48,6 +49,13 @@ export async function POST(request: NextRequest) {
       amount_cents: Math.round(data.amount * 100),
       date: data.date,
       created_by: user.id,
+    });
+    await logActivity({
+      user,
+      action: "financial_entry.create",
+      entityType: "financial_entry",
+      entityId: entry.id,
+      details: { label: data.description || data.type, type: data.type, amount_cents: Math.round(data.amount * 100) },
     });
     return apiSuccess(entry, 201);
   } catch (error) {
