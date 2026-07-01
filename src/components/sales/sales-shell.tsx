@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
-import { SalesKanban } from "./sales-kanban";
+import { FunnelBoard } from "@/components/funnel/funnel-board";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MediaContent } from "@/components/chat/media-content";
 import { api, formatTime } from "@/lib/chat/utils";
@@ -107,8 +107,13 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
       </div>
 
       {view === "funil" ? (
-        <div className="flex-1 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0">
-          <SalesKanban lineId={activeLine.id} onOpenLead={(id) => { setFocusLeadId(id); setView("conversas"); }} />
+        <div className="flex-1 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0 p-3 flex flex-col">
+          <FunnelBoard
+            type="vendas"
+            onOpenDeal={(deal) => {
+              if (deal.conversation_id) { setFocusLeadId(deal.conversation_id); setView("conversas"); }
+            }}
+          />
         </div>
       ) : (
         <div className="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0">

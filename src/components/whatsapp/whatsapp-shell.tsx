@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   MessageSquare, Loader2, Search, Pin, PinOff, Star, Bot, BotOff,
   Phone, AlertCircle, ChevronLeft, Play, Maximize2, Minimize2,
-  PanelRightClose, PanelRightOpen,
+  PanelRightClose, PanelRightOpen, LayoutGrid,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MediaContent } from "@/components/chat/media-content";
 import { ContactPanel } from "@/components/whatsapp/contact-panel";
+import { FunnelBoard } from "@/components/funnel/funnel-board";
 import { api, formatTime } from "@/lib/chat/utils";
 import { Avatar } from "@/components/chat/avatar";
 import { StatusIcon } from "@/components/chat/status-icon";
@@ -31,6 +32,8 @@ export function WhatsappShell() {
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const [loadingLines, setLoadingLines] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"conversas" | "funil">("conversas");
+  const [focusConvId, setFocusConvId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,8 +41,10 @@ export function WhatsappShell() {
       try {
         const data = await api<LineRow[]>("/api/whatsapp/lines");
         if (cancelled) return;
-        setLines(data);
-        if (data.length > 0) setActiveLineId(data[0].id);
+        // Chat Reservas fica fixo na(s) linha(s) de Locação (purpose 'booking').
+        const booking = data.filter((l) => l.purpose === "booking");
+        setLines(booking);
+        if (booking.length > 0) setActiveLineId(booking[0].id);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Falha ao carregar linhas");
       } finally {
@@ -63,12 +68,34 @@ export function WhatsappShell() {
 
   return (
     <div className={cn(SHELL_HEIGHT, "flex flex-col gap-3")}>
-      {lines.length > 1 && (
-        <LinePicker lines={lines} activeId={activeLine.id} onSelect={setActiveLineId} />
-      )}
-      <div className="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0">
-        <ChatWorkspace lineId={activeLine.id} />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
+          {([{ id: "conversas", label: "Conversas", icon: MessageSquare }, { id: "funil", label: "Funil", icon: LayoutGrid }] as const).map((v) => (
+            <button key={v.id} onClick={() => setView(v.id)} aria-pressed={view === v.id}
+              className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 flex items-center gap-1.5",
+                view === v.id ? "bg-white shadow-sm text-brand-600" : "text-gray-500 hover:text-gray-700")}>
+              <v.icon size={13} /> {v.label}
+            </button>
+          ))}
+        </div>
+        {lines.length > 1 && (
+          <LinePicker lines={lines} activeId={activeLine.id} onSelect={setActiveLineId} />
+        )}
       </div>
+      {view === "funil" ? (
+        <div className="flex-1 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0 p-3 flex flex-col">
+          <FunnelBoard
+            type="locacao"
+            onOpenDeal={(deal) => {
+              if (deal.conversation_id) { setFocusConvId(deal.conversation_id); setView("conversas"); }
+            }}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0">
+          <ChatWorkspace lineId={activeLine.id} focusConversationId={focusConvId} />
+        </div>
+      )}
     </div>
   );
 }
@@ -107,7 +134,7 @@ function LinePicker({ lines, activeId, onSelect }: { lines: LineRow[]; activeId:
 
 /* ─────────────────────── Workspace (3 panes) ─────────────────────── */
 
-function ChatWorkspace({ lineId }: { lineId: string }) {
+function ChatWorkspace({ lineId, focusConversationId }: { lineId: string; focusConversationId?: string | null }) {
   const [conversations, setConversations] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -150,6 +177,11 @@ function ChatWorkspace({ lineId }: { lineId: string }) {
       .subscribe();
     return () => { if (refetchTimer.current) clearTimeout(refetchTimer.current); supabase.removeChannel(channel); };
   }, [supabase, lineId, loadConversations]);
+
+  // Deep-link vindo do Funil: seleciona a conversa do card clicado.
+  useEffect(() => {
+    if (focusConversationId) { setSelectedId(focusConversationId); setMobileThread(true); }
+  }, [focusConversationId]);
 
   const selectedConv = conversations.find((c) => c.id === selectedId) || null;
   const totalUnread = conversations.reduce((a, c) => a + (c.unread_count || 0), 0);

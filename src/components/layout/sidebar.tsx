@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, Users, Home, DollarSign,
   ClipboardList, Sparkles, Settings, ChevronLeft, ChevronRight,
-  X, Leaf, Menu, UserCheck, MessageSquare, Target, TrendingUp,
+  X, Leaf, Menu, UserCheck, MessageSquare, Target, TrendingUp, Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
   { id: "guests", label: "Hóspedes", href: "/guests", icon: Users, modes: ["locacao"] },
   { id: "conversations", label: "Chat Reservas", href: "/conversations", icon: MessageSquare, modes: ["locacao"] },
   { id: "vendas", label: "Chat Vendas", href: "/vendas", icon: Target, modes: ["vendas"] },
+  { id: "campaigns", label: "Campanhas", href: "/campaigns", icon: Megaphone },
   { id: "properties", label: "Imóveis", href: "/properties", icon: Home },
   { id: "market", label: "Análise de Mercado", href: "/market", icon: TrendingUp, modes: ["locacao"] },
   { id: "owners", label: "Proprietários", href: "/owners", icon: UserCheck },
