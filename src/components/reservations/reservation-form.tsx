@@ -51,6 +51,10 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
     | { state: "available" }
     | { state: "unavailable"; reason: string }
   >({ state: "idle" });
+  const [quote, setQuote] = useState<{
+    min_nights_required: number | null;
+    hasRules: boolean;
+  } | null>(null);
 
   const {
     register,
@@ -108,13 +112,50 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
     setValue("cleaning_fee", selectedProperty.cleaning_fee_cents / 100);
   }, [selectedProperty, setValue]);
 
-  // Auto-suggest base amount = nightly × nights when property + dates set
+  // Auto-suggest base amount via pricing engine (base + temporada + dias da
+  // semana + feriado) — fallback: preço-base × noites. Sempre editável.
+  useEffect(() => {
+    if (!selectedProperty || nights === 0 || !checkIn || !checkOut) {
+      setQuote(null);
+      return;
+    }
+    let cancelled = false;
+    const fallback = () => {
+      if (cancelled) return;
+      setQuote(null);
+      setValue("base_amount", (selectedProperty.base_price_cents * nights) / 100);
+    };
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/pricing/quote?property_id=${selectedProperty.id}&check_in=${checkIn}&check_out=${checkOut}`
+        );
+        const json = await res.json();
+        if (!json.success) return fallback();
+        if (cancelled) return;
+        const q = json.data as {
+          total_cents: number;
+          min_nights_required: number | null;
+          nights: Array<{ applied: unknown[] }>;
+        };
+        setQuote({
+          min_nights_required: q.min_nights_required,
+          hasRules: q.nights.some((n) => n.applied.length > 0),
+        });
+        setValue("base_amount", q.total_cents / 100);
+      } catch {
+        fallback();
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [selectedProperty, checkIn, checkOut, nights, setValue]);
+
+  // Extra guest fee
   useEffect(() => {
     if (!selectedProperty || nights === 0) return;
-    const suggested = (selectedProperty.base_price_cents * nights) / 100;
-    setValue("base_amount", suggested);
-
-    // Extra guest fee
     if (selectedProperty.extra_guest_after > 0 && numGuests > selectedProperty.extra_guest_after) {
       const extra = numGuests - selectedProperty.extra_guest_after;
       const extraFee = (selectedProperty.extra_guest_fee_cents * extra * nights) / 100;
@@ -357,6 +398,19 @@ export function ReservationForm({ properties, initialGuest }: ReservationFormPro
               register={register("platform_fee", { valueAsNumber: true })}
             />
           </div>
+
+          {quote?.hasRules && (
+            <p className="mt-2 text-[11px] text-brand-600">
+              Valor base pré-calculado pelas regras de precificação (temporada/fim de
+              semana/feriado) — edite se precisar.
+            </p>
+          )}
+          {quote?.min_nights_required != null && nights > 0 && nights < quote.min_nights_required && (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600">
+              <AlertTriangle size={12} aria-hidden="true" />
+              As regras deste período pedem mínimo de {quote.min_nights_required} noites.
+            </p>
+          )}
 
           <div className="mt-4">
             <FinancialBreakdown

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Users, BedDouble, Bath, MapPin, Clock } from "lucide-react";
+import { ArrowLeft, Edit, Users, BedDouble, Bath, MapPin, Clock, BadgeDollarSign, UserCheck } from "lucide-react";
 import { getPropertyById } from "@/lib/db/queries/properties";
+import { getPropertyPricingContext } from "@/lib/db/queries/pricing";
 import { requireAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils/format";
+import { RULE_KIND_LABELS } from "@/types/pricing";
 import { PhotoGallery } from "@/components/properties/photo-gallery";
 import { AmenitySelector } from "@/components/properties/amenity-selector";
 import { ChannelSyncPanel } from "@/components/properties/channel-sync-panel";
@@ -29,6 +31,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   if (!property || property.company_id !== user.company_id) {
     notFound();
   }
+
+  const pricing = await getPropertyPricingContext(user.company_id, id);
+  const owners = (property.property_ownership || []).filter((o) => o.owner && o.is_active);
 
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
@@ -107,6 +112,90 @@ export default async function PropertyDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Pricing rules (#9 — Fase 4) */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Regras de precificação</h2>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700"
+          >
+            <BadgeDollarSign size={13} aria-hidden="true" /> Gerenciar
+          </Link>
+        </div>
+        {pricing.groups.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-xs text-gray-400">Grupos:</span>
+            {pricing.groups.map((g) => (
+              <span
+                key={g.id}
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+              >
+                <span className="h-2 w-2 rounded-full" style={{ background: g.color }} aria-hidden="true" />
+                {g.name}
+              </span>
+            ))}
+          </div>
+        )}
+        {pricing.rules.length === 0 ? (
+          <p className="text-sm text-gray-400">
+            Nenhuma regra afeta este imóvel — vale o preço base de {formatCurrency(property.base_price_cents)}/noite.
+          </p>
+        ) : (
+          <ul className="divide-y divide-gray-50">
+            {pricing.rules.map((rule) => (
+              <li key={rule.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {RULE_KIND_LABELS[rule.kind]}
+                </span>
+                <span className="flex-1 truncate text-gray-800">{rule.name}</span>
+                <span className="font-mono text-xs text-gray-600">
+                  {rule.adjustment_type === "set"
+                    ? `${formatCurrency(rule.price_cents ?? 0)}/noite`
+                    : `${Number(rule.percent ?? 0) > 0 ? "+" : ""}${Number(rule.percent ?? 0)}%`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Owners (#9 — vínculo via property_ownership) */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Proprietários</h2>
+          <Link
+            href="/owners"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700"
+          >
+            <UserCheck size={13} aria-hidden="true" /> Ver todos
+          </Link>
+        </div>
+        {owners.length === 0 ? (
+          <p className="text-sm text-gray-400">Nenhum proprietário vinculado a este imóvel.</p>
+        ) : (
+          <ul className="divide-y divide-gray-50">
+            {owners.map((o) => (
+              <li key={o.id} className="flex items-center gap-3 py-2.5 text-sm">
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/owners/${o.owner!.id}`}
+                    className="font-medium text-gray-900 hover:text-brand-600 truncate block"
+                  >
+                    {o.owner!.full_name}
+                  </Link>
+                  {o.owner!.email && <div className="text-xs text-gray-400 truncate">{o.owner!.email}</div>}
+                </div>
+                <div className="text-right text-xs text-gray-500">
+                  <div>Participação: <strong className="font-mono">{o.share_percentage}%</strong></div>
+                  <div>Comissão: <strong className="font-mono">{o.commission_percentage}%</strong></div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Location */}
