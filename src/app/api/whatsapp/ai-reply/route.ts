@@ -6,6 +6,9 @@ import { getOpenAI, DEFAULT_MODEL } from "@/lib/ai/client";
 import { getToolsForMode, dispatchTool } from "@/lib/ai/tools";
 import { appendMessage, getConversationById } from "@/lib/db/queries/whatsapp";
 import { buildWhatsappAutoReplyPrompt, describeBusinessHours } from "@/lib/whatsapp/ai-prompt";
+import { resolveAgentForLine } from "@/lib/db/queries/ai-agents";
+import { assembleSystemPrompt, leadFacingTools } from "@/lib/ai/agent-runtime";
+import { EXECUTED_PROVIDERS } from "@/types/ai-agent";
 import { apiSuccess, apiError, apiServerError } from "@/lib/api/response";
 import type {
   Database,
@@ -71,22 +74,52 @@ export async function POST(request: NextRequest) {
     if (company?.ai_enabled !== true) return apiError("AI disabled system-wide", 409);
     const companyName = company?.name || "Milagres Hospedagens";
 
+    // ── Fase 3: a config vem do AGENTE vinculado a esta linha (DB-driven). Sem
+    // agente ativo vinculado, cai no comportamento hardcoded (parity + segurança).
+    const agent = await resolveAgentForLine(line.company_id, line.id);
+
+    // Agente executado no n8n: esta rota NÃO gera. O n8n lê a config via
+    // /api/ai/agents/resolve e responde por conta própria.
+    if (agent && agent.execution === "n8n") {
+      return apiError("Agent delegated to n8n", 409);
+    }
+
+    const businessHoursLine = describeBusinessHours(
+      (agent?.business_hours || (line.business_hours as WaBusinessHours | null)) as never
+    );
+
+    // Só OpenAI executa nesta fase; um provider futuro (ex.: Claude) cai no modelo
+    // default do OpenAI até a fiação do SDK correspondente.
+    const model = agent && EXECUTED_PROVIDERS.includes(agent.provider) ? agent.model : DEFAULT_MODEL;
+    const temperature = agent ? agent.temperature : 0.4;
+    const historyLimit = agent ? agent.history_limit : HISTORY_LIMIT;
+    // Clamp defensivo: 0 loops desativaria a geração (nenhuma chamada ao LLM → resposta vazia).
+    const maxToolLoops = agent ? Math.max(1, agent.max_tool_loops) : MAX_TOOL_LOOPS;
+    const maxTokens = agent?.max_tokens ?? undefined;
+
     // Build chat history (oldest first); keep small for token budget
     const { data: histRows } = await supabase
       .from("whatsapp_messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
-      .limit(HISTORY_LIMIT);
+      .limit(historyLimit);
     const history = ((histRows as MsgRow[]) || []).reverse();
 
-    const systemPrompt = buildWhatsappAutoReplyPrompt({
-      companyName,
-      todayISO: new Date().toISOString().slice(0, 10),
-      language: "pt-BR",
-      businessHoursLine: describeBusinessHours(line.business_hours as WaBusinessHours | null),
-      contactName: conv.contact_name,
-    });
+    const systemPrompt = agent
+      ? assembleSystemPrompt(agent, {
+          companyName,
+          todayISO: new Date().toISOString().slice(0, 10),
+          contactName: conv.contact_name,
+          businessHoursLine,
+        })
+      : buildWhatsappAutoReplyPrompt({
+          companyName,
+          todayISO: new Date().toISOString().slice(0, 10),
+          language: "pt-BR",
+          businessHoursLine,
+          contactName: conv.contact_name,
+        });
 
     const messages: ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
@@ -102,21 +135,27 @@ export async function POST(request: NextRequest) {
       }),
     ];
 
-    // Use the same `guest` mode tools (list_properties + check_availability) so the model
-    // has data without exposing operational/management tools.
-    const tools = getToolsForMode("guest");
+    // Ferramentas SEMPRE restritas ao whitelist lead-safe (mode 'guest'), mesmo com
+    // agente — defesa em profundidade contra exposição de tools internas a leads.
+    // Com agente, respeita a seleção dele (interseção via leadFacingTools).
+    const allGuestTools = getToolsForMode("guest");
+    const effectiveToolNames = agent ? leadFacingTools(agent) : null;
+    const tools = effectiveToolNames
+      ? allGuestTools.filter((t) => effectiveToolNames.includes(t.function.name))
+      : allGuestTools;
     const openai = getOpenAI();
 
     let assistantText = "";
     let totalTokens = 0;
 
-    for (let loop = 0; loop < MAX_TOOL_LOOPS; loop++) {
+    for (let loop = 0; loop < maxToolLoops; loop++) {
       const completion = await openai.chat.completions.create({
-        model: DEFAULT_MODEL,
+        model,
         messages,
         tools: tools.length > 0 ? tools : undefined,
         tool_choice: tools.length > 0 ? "auto" : undefined,
-        temperature: 0.4,
+        temperature,
+        max_tokens: maxTokens,
       });
       totalTokens += completion.usage?.total_tokens || 0;
       const choice = completion.choices[0];
@@ -161,7 +200,7 @@ export async function POST(request: NextRequest) {
       text: assistantText,
       messageType: "text",
       status: "pending", // will become 'sent' once n8n confirms Evolution accepted
-      metadata: { auto_reply: true, tokens_used: totalTokens } as never,
+      metadata: { auto_reply: true, tokens_used: totalTokens, agent_id: agent?.id ?? null, model } as never,
     });
 
     return apiSuccess({
