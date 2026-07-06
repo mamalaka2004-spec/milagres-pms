@@ -63,30 +63,32 @@ export interface CreditPackage {
 }
 
 /**
- * PLACEHOLDER — valores de exemplo. Confirmar com o usuário antes de ir a
- * produção (quantos pacotes, quantos créditos por pacote e o preço de cada um).
+ * Pacotes confirmados pelo usuário. Preços iguais aos originais; só a quantidade
+ * de créditos foi reduzida 10× (percepção do usuário). Com TOKENS_PER_CREDIT =
+ * 10.000, o poder de compra em tokens e o preço são idênticos ao esquema anterior
+ * (1000/5000/20000 créditos): 100 cr = 1M tokens = R$ 49,00, etc.
  */
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
-    id: "credits_1k",
-    credits: 1_000,
-    priceCents: 4_900, // TODO: confirmar preço com o usuário (placeholder R$ 49,00)
-    label: "1.000 créditos",
-    description: "Pacote inicial de créditos de IA",
+    id: "credits_100",
+    credits: 100,
+    priceCents: 4_900, // R$ 49,00 — ~1.000.000 tokens
+    label: "100 créditos",
+    description: "Pacote inicial de créditos de IA (~1 milhão de tokens)",
   },
   {
-    id: "credits_5k",
-    credits: 5_000,
-    priceCents: 19_900, // TODO: confirmar preço com o usuário (placeholder R$ 199,00)
-    label: "5.000 créditos",
-    description: "Pacote intermediário de créditos de IA",
+    id: "credits_500",
+    credits: 500,
+    priceCents: 19_900, // R$ 199,00 — ~5.000.000 tokens
+    label: "500 créditos",
+    description: "Pacote intermediário de créditos de IA (~5 milhões de tokens)",
   },
   {
-    id: "credits_20k",
-    credits: 20_000,
-    priceCents: 69_900, // TODO: confirmar preço com o usuário (placeholder R$ 699,00)
-    label: "20.000 créditos",
-    description: "Pacote avançado de créditos de IA",
+    id: "credits_2k",
+    credits: 2_000,
+    priceCents: 69_900, // R$ 699,00 — ~20.000.000 tokens
+    label: "2.000 créditos",
+    description: "Pacote avançado de créditos de IA (~20 milhões de tokens)",
   },
 ];
 

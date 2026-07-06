@@ -53,19 +53,10 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname === "/login" ||
     request.nextUrl.pathname === "/forgot-password";
 
-  const isDashboardPage =
-    request.nextUrl.pathname === "/dashboard" ||
-    request.nextUrl.pathname.startsWith("/reservations") ||
-    request.nextUrl.pathname.startsWith("/calendar") ||
-    request.nextUrl.pathname.startsWith("/guests") ||
-    request.nextUrl.pathname.startsWith("/properties") ||
-    request.nextUrl.pathname.startsWith("/owners") ||
-    request.nextUrl.pathname.startsWith("/conversations") ||
-    request.nextUrl.pathname.startsWith("/vendas") ||
-    request.nextUrl.pathname === "/finance" ||
-    request.nextUrl.pathname === "/operations" ||
-    request.nextUrl.pathname === "/ai-assistant" ||
-    request.nextUrl.pathname === "/settings";
+  // APIs resolvem a própria autenticação e devolvem 401 JSON — nunca as
+  // redirecionamos para a página de login (as públicas /api/booking e
+  // /api/webhooks já saíram no fast-path isPublicPage acima).
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
 
   // Auth pages: redirect to dashboard if already logged in
   if (isAuthPage && user) {
@@ -74,8 +65,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Dashboard pages: redirect to login if not authenticated
-  if (isDashboardPage && !user) {
+  // Default-deny: TODA página não-pública e não-auth exige login. As páginas
+  // públicas já retornaram no fast-path (isPublicPage) lá em cima. Antes havia
+  // uma allowlist fixa de rotas (isDashboardPage) que ficava desatualizada a
+  // cada fase nova — trocado por negação padrão, que cobre rotas futuras sozinho.
+  if (!user && !isAuthPage && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     // Only allow safe relative paths in redirectTo to avoid open-redirect attacks

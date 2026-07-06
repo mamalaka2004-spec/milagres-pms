@@ -25,11 +25,13 @@ import type {
 } from "@/types/ai-credits";
 
 /**
- * Conversão tokens → créditos. 1 crédito = 1000 tokens (arredonda p/ cima, mas
+ * Conversão tokens → créditos. 1 crédito = 10.000 tokens (arredonda p/ cima, mas
  * nunca cobra 0 de uma chamada que consumiu tokens). Constante única para toda
- * a app; um plano/pricing real pode multiplicar por um fator de modelo depois.
+ * a app. Escolhida para que os pacotes 100/500/2000 créditos representem
+ * 1M/5M/20M tokens (mesmo poder de compra e preço do esquema anterior de
+ * 1000/5000/20000 créditos, só com números menores na percepção do usuário).
  */
-export const TOKENS_PER_CREDIT = 1000;
+export const TOKENS_PER_CREDIT = 10_000;
 
 export function tokensToCredits(tokens: number): number {
   if (!Number.isFinite(tokens) || tokens <= 0) return 0;
