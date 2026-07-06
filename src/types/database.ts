@@ -227,6 +227,8 @@ export interface Database {
           short_description: string | null;
           house_rules: string | null;
           cancellation_policy: string | null;
+          cancellation_policy_type: "flexible" | "moderate" | "strict" | "non_refundable" | "custom";
+          cancellation_cutoff_days: number;
           check_in_time: string;
           check_out_time: string;
           min_nights: number;
@@ -634,6 +636,36 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["whatsapp_contacts"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["whatsapp_contacts"]["Insert"]>;
+      };
+      notifications: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          type: "whatsapp.message" | "reservation.created" | "reservation.canceled";
+          title: string;
+          body: string | null;
+          entity_type: string | null;
+          entity_id: string | null;
+          link: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["notifications"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+      };
+      notification_preferences: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          type: "whatsapp.message" | "reservation.created" | "reservation.canceled";
+          in_app: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["notification_preferences"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["notification_preferences"]["Insert"]>;
       };
     };
   };

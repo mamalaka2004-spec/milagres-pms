@@ -11,8 +11,10 @@ import {
 } from "@/lib/db/queries/reservations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureReservationTask } from "@/lib/db/queries/tasks";
+import { getQuote } from "@/lib/db/queries/pricing";
 import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
+import { createNotification } from "@/lib/notifications/create";
 import {
   apiSuccess,
   apiError,
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
     const { data: propRow } = await supabase
       .from("properties")
-      .select("id, company_id, max_guests, check_in_time, check_out_time, deleted_at")
+      .select("id, company_id, max_guests, min_nights, max_nights, check_in_time, check_out_time, deleted_at")
       .eq("id", data.property_id)
       .is("deleted_at", null)
       .maybeSingle();
@@ -67,6 +69,8 @@ export async function POST(request: NextRequest) {
       id: string;
       company_id: string;
       max_guests: number;
+      min_nights: number;
+      max_nights: number;
       check_in_time: string | null;
       check_out_time: string | null;
     } | null;
@@ -77,6 +81,31 @@ export async function POST(request: NextRequest) {
         `Esta propriedade aceita até ${property.max_guests} hóspedes.`,
         400
       );
+    }
+
+    // Políticas de reserva (#19): min/max noites. O min efetivo integra o motor de
+    // preços (regras de temporada/feriado podem exigir estadia maior) — não duplica.
+    const nights = Math.max(
+      1,
+      Math.round(
+        (new Date(data.check_out_date).getTime() - new Date(data.check_in_date).getTime()) /
+          86_400_000
+      )
+    );
+    let effectiveMin = property.min_nights;
+    try {
+      const quote = await getQuote(user.company_id, data.property_id, data.check_in_date, data.check_out_date);
+      if (quote?.min_nights_required != null) {
+        effectiveMin = Math.max(effectiveMin, quote.min_nights_required);
+      }
+    } catch {
+      // Se a cotação falhar, valida só pela política do imóvel — nunca bloqueia por erro.
+    }
+    if (nights < effectiveMin) {
+      return apiError(`Estadia mínima de ${effectiveMin} noites para este período.`, 400);
+    }
+    if (property.max_nights > 0 && nights > property.max_nights) {
+      return apiError(`Estadia máxima de ${property.max_nights} noites para este imóvel.`, 400);
     }
 
     // Availability gate
@@ -155,6 +184,19 @@ export async function POST(request: NextRequest) {
     }
 
     await logActivity({ user, action: "reservation.create", entityType: "reservation", entityId: reservation.id, details: { label: booking_code } });
+
+    // Notificação in-app (#18) — avisa a equipe (menos quem criou). Fire-and-forget.
+    await createNotification({
+      companyId: user.company_id,
+      type: "reservation.created",
+      title: `Nova reserva ${booking_code}`,
+      body: `Check-in ${data.check_in_date} · ${nights} noite${nights > 1 ? "s" : ""}`,
+      entityType: "reservation",
+      entityId: reservation.id,
+      link: `/reservations/${reservation.id}`,
+      excludeUserId: user.id,
+    });
+
     return apiSuccess(reservation, 201);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

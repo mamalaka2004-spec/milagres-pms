@@ -3,7 +3,9 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPropertyBySlug } from "@/lib/db/queries/properties";
 import { checkAvailability, getNextBookingSequence } from "@/lib/db/queries/reservations";
+import { getQuote } from "@/lib/db/queries/pricing";
 import { calculateReservationTotals } from "@/lib/validations/reservation";
+import { createNotification } from "@/lib/notifications/create";
 import { apiSuccess, apiError, apiServerError } from "@/lib/api/response";
 
 const bodySchema = z.object({
@@ -76,8 +78,22 @@ export async function POST(request: NextRequest) {
     const ms = new Date(data.check_out_date).getTime() - new Date(data.check_in_date).getTime();
     const nights = Math.max(1, Math.round(ms / (24 * 60 * 60 * 1000)));
 
-    if (nights < property.min_nights) {
-      return apiError(`Estadia mínima de ${property.min_nights} noites.`, 400);
+    // Políticas de reserva (#19): min/max noites. O min efetivo integra o motor de
+    // preços (regras de temporada/feriado podem exigir estadia maior).
+    let effectiveMin = property.min_nights;
+    try {
+      const quote = await getQuote(property.company_id, property.id, data.check_in_date, data.check_out_date);
+      if (quote?.min_nights_required != null) {
+        effectiveMin = Math.max(effectiveMin, quote.min_nights_required);
+      }
+    } catch {
+      // Cotação indisponível → valida só pela política do imóvel.
+    }
+    if (nights < effectiveMin) {
+      return apiError(`Estadia mínima de ${effectiveMin} noites.`, 400);
+    }
+    if (property.max_nights > 0 && nights > property.max_nights) {
+      return apiError(`Estadia máxima de ${property.max_nights} noites.`, 400);
     }
 
     const base_amount_cents = property.base_price_cents * nights;
@@ -185,6 +201,17 @@ export async function POST(request: NextRequest) {
       }
       throw resErr;
     }
+
+    // Notificação in-app (#18) — reserva vinda do site é evento-chave. Fire-and-forget.
+    await createNotification({
+      companyId: property.company_id,
+      type: "reservation.created",
+      title: `Nova reserva pelo site — ${property.name}`,
+      body: `${data.guest_full_name} · check-in ${data.check_in_date} · ${nights} noite${nights > 1 ? "s" : ""}`,
+      entityType: "reservation",
+      entityId: (reservation as { id: string }).id,
+      link: `/reservations/${(reservation as { id: string }).id}`,
+    });
 
     return apiSuccess({
       booking_code: (reservation as { booking_code: string }).booking_code,

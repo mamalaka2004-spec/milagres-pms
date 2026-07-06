@@ -44,6 +44,8 @@ export default async function EditPropertyPage({ params }: PageProps) {
     description: property.description || undefined,
     house_rules: property.house_rules || undefined,
     cancellation_policy: property.cancellation_policy || undefined,
+    cancellation_policy_type: property.cancellation_policy_type,
+    cancellation_cutoff_days: property.cancellation_cutoff_days,
     check_in_time: property.check_in_time.substring(0, 5),
     check_out_time: property.check_out_time.substring(0, 5),
     min_nights: property.min_nights,

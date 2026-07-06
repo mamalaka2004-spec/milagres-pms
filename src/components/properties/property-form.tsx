@@ -45,6 +45,8 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       description: initialData?.description || "",
       house_rules: initialData?.house_rules || "",
       cancellation_policy: initialData?.cancellation_policy || "",
+      cancellation_policy_type: initialData?.cancellation_policy_type || "flexible",
+      cancellation_cutoff_days: initialData?.cancellation_cutoff_days ?? 0,
       check_in_time: initialData?.check_in_time || "15:00",
       check_out_time: initialData?.check_out_time || "11:00",
       min_nights: initialData?.min_nights || 2,
@@ -240,19 +242,36 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           <Field label="Horário de check-out">
             <input {...register("check_out_time")} className="form-input" placeholder="11:00" />
           </Field>
-          <Field label="Mín. de noites">
+          <Field label="Mín. de noites" error={errors.min_nights?.message}>
             <input type="number" {...register("min_nights")} className="form-input" />
           </Field>
-          <Field label="Máx. de noites">
+          <Field label="Máx. de noites" error={errors.max_nights?.message}>
             <input type="number" {...register("max_nights")} className="form-input" />
+          </Field>
+        </div>
+        <p className="text-[11px] text-gray-400 mb-4 -mt-1">
+          Mín./máx. de noites são aplicados na criação de reservas (site e manual).
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Field label="Política de cancelamento">
+            <select {...register("cancellation_policy_type")} className="form-input cursor-pointer">
+              <option value="flexible">Flexível</option>
+              <option value="moderate">Moderada</option>
+              <option value="strict">Rígida</option>
+              <option value="non_refundable">Não reembolsável</option>
+              <option value="custom">Personalizada</option>
+            </select>
+          </Field>
+          <Field label="Cancelamento gratuito até (dias antes)" error={errors.cancellation_cutoff_days?.message}>
+            <input type="number" {...register("cancellation_cutoff_days")} className="form-input" placeholder="0" />
           </Field>
         </div>
         <div className="space-y-4">
           <Field label="Regras da casa">
             <textarea {...register("house_rules")} rows={4} className="form-input resize-y" />
           </Field>
-          <Field label="Política de cancelamento">
-            <textarea {...register("cancellation_policy")} rows={3} className="form-input resize-y" />
+          <Field label="Detalhes da política de cancelamento">
+            <textarea {...register("cancellation_policy")} rows={3} className="form-input resize-y" placeholder="Descreva as condições de reembolso mostradas ao hóspede." />
           </Field>
         </div>
       </section>

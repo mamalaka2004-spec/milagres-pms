@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { ModeSwitcher } from "@/components/layout/mode-switcher";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu, type UserMenuUser } from "@/components/layout/user-menu";
 
 export type TopbarUser = UserMenuUser;
@@ -53,14 +54,8 @@ export function Topbar({ title, onMenuClick, user }: TopbarProps) {
       {/* Global search (#21) */}
       {!isCamareira && <GlobalSearch />}
 
-      {/* Notifications */}
-      <button
-        aria-label="Notificações"
-        className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-      >
-        <Bell size={18} aria-hidden="true" />
-        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
-      </button>
+      {/* Notifications (#18) — camareira tem UI enxuta e não recebe alertas comerciais */}
+      {!isCamareira && <NotificationBell />}
 
       {/* User + management menu (#20) */}
       <UserMenu user={user} />
