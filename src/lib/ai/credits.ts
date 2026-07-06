@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ===========================================================================
 // Créditos / tokens de IA — camada de serviço (Fase 9, #27, migration 030)
-// PROVIDER-AGNOSTIC. Não há gateway de pagamento aqui: o provedor de billing
-// (Stripe? Asaas? interno) é DECISÃO PENDENTE do usuário.
 //
-// Fluxo hoje:
+// Fluxo:
 //   - Consumo: cada chamada de IA debita créditos (debitAiCredits).
-//   - Recarga: ação administrativa manual interna (topUpAiCredits) — só p/ teste.
+//   - Recarga manual: ação administrativa interna (topUpAiCredits) — suporte/teste.
+//   - Recarga por PAGAMENTO (#27): compra de créditos via Stripe. O webhook
+//     checkout.session.completed chama topUpAiCredits(source='gateway',
+//     stripeSessionId) de forma IDEMPOTENTE. Ver src/lib/billing/stripe.ts e
+//     src/app/api/webhooks/stripe/route.ts.
 //   - Leitura: getCreditOverview alimenta a tela Ajustes → Créditos de IA.
 //
-// TODO(billing): quando o gateway for escolhido, o webhook de pagamento
-// confirmado deve chamar `topUpAiCredits(...)` com source='gateway' e o
-// reference do pagamento. NENHUM segredo de gateway deve viver neste arquivo.
+// IMPORTANTE: Stripe aqui é SÓ para créditos de IA. Cobranças de RESERVAS usam
+// Asaas (migration 017). NENHUM segredo de gateway vive neste arquivo — as chaves
+// Stripe ficam só em src/lib/billing/stripe.ts, lidas de env.
 // ===========================================================================
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
@@ -79,6 +81,13 @@ interface ApplyEntryInput {
   description?: string | null;
   createdBy?: string | null;
   metadata?: Record<string, unknown> | null;
+  /**
+   * Idempotência de pagamento (#27, Stripe, migration 032). Quando presente, a
+   * função verifica se já existe uma linha no ledger com este stripe_session_id
+   * e, se existir, NÃO credita de novo (retorna a linha existente). Evita
+   * creditar 2× em retry de webhook. Grava o valor na coluna stripe_session_id.
+   */
+  stripeSessionId?: string | null;
 }
 
 /**
@@ -86,27 +95,50 @@ interface ApplyEntryInput {
  * materializado. Não é uma transação SQL única (o admin client não expõe TX),
  * mas grava balance_after coerente com o saldo lido; suficiente para o volume
  * atual. Um RPC/edge-function pode endurecer isso depois.
+ *
+ * Idempotente por stripe_session_id: se `stripeSessionId` já existir no ledger,
+ * retorna a linha existente sem creditar de novo (webhook seguro contra retry).
  */
 async function applyEntry(input: ApplyEntryInput): Promise<AiCreditLedgerEntry> {
-  const account = await ensureCreditAccount(input.companyId);
-  const newBalance = account.balance_credits + input.credits;
   const client = db();
 
+  // Idempotência: se já processamos esta Checkout Session, devolve a linha
+  // existente e NÃO credita de novo. O índice único parcial (migration 032) é a
+  // trava final; este SELECT evita o erro de índice no caminho feliz do retry.
+  if (input.stripeSessionId) {
+    const { data: existing } = await (client.from("ai_credit_ledger") as any)
+      .select("*")
+      .eq("stripe_session_id", input.stripeSessionId)
+      .limit(1)
+      .maybeSingle();
+    if (existing) return existing as AiCreditLedgerEntry;
+  }
+
+  const account = await ensureCreditAccount(input.companyId);
+  const newBalance = account.balance_credits + input.credits;
+
+  const ledgerRow: Record<string, unknown> = {
+    company_id: input.companyId,
+    account_id: account.id,
+    entry_type: input.entryType,
+    credits: input.credits,
+    tokens_used: input.tokensUsed ?? null,
+    balance_after: newBalance,
+    source: input.source ?? null,
+    reference_type: input.referenceType ?? null,
+    reference_id: input.referenceId ?? null,
+    description: input.description ?? null,
+    created_by: input.createdBy ?? null,
+    metadata: input.metadata ?? null,
+  };
+  // Só inclui a coluna quando há valor: mantém o top-up manual/consumo
+  // funcionando mesmo antes da migration 032 ser aplicada.
+  if (input.stripeSessionId) {
+    ledgerRow.stripe_session_id = input.stripeSessionId;
+  }
+
   const { data: entry, error: ledgerErr } = await (client.from("ai_credit_ledger") as any)
-    .insert({
-      company_id: input.companyId,
-      account_id: account.id,
-      entry_type: input.entryType,
-      credits: input.credits,
-      tokens_used: input.tokensUsed ?? null,
-      balance_after: newBalance,
-      source: input.source ?? null,
-      reference_type: input.referenceType ?? null,
-      reference_id: input.referenceId ?? null,
-      description: input.description ?? null,
-      created_by: input.createdBy ?? null,
-      metadata: input.metadata ?? null,
-    })
+    .insert(ledgerRow)
     .select("*")
     .single();
   if (ledgerErr) throw ledgerErr;
@@ -156,18 +188,26 @@ export async function debitAiCredits(input: {
 }
 
 /**
- * Top-up manual interno (ação administrativa). Só para testes enquanto o gateway
- * não está definido. TODO(billing): o webhook do gateway confirmado deve chamar
- * esta mesma função com source='gateway'.
+ * Recarrega créditos. Dois usos:
+ *   - Manual interno (admin, source='manual_topup') — ação de suporte/teste.
+ *   - Pagamento Stripe confirmado (#27): o webhook checkout.session.completed
+ *     chama com source='gateway' + stripeSessionId (idempotente por sessão).
+ *     Ver src/app/api/webhooks/stripe/route.ts.
+ *
+ * `createdBy` é opcional: o crédito por pagamento não tem usuário logado (vem do
+ * webhook), então o ledger grava created_by = NULL nesse caso.
  */
 export async function topUpAiCredits(input: {
   companyId: string;
   credits: number;
-  createdBy: string;
+  createdBy?: string | null;
   description?: string | null;
   source?: string;
   referenceType?: string | null;
   referenceId?: string | null;
+  /** Idempotência de pagamento Stripe (migration 032). */
+  stripeSessionId?: string | null;
+  metadata?: Record<string, unknown> | null;
 }): Promise<AiCreditLedgerEntry> {
   if (!Number.isInteger(input.credits) || input.credits <= 0) {
     throw new Error("credits deve ser um inteiro positivo");
@@ -180,7 +220,9 @@ export async function topUpAiCredits(input: {
     referenceType: input.referenceType ?? null,
     referenceId: input.referenceId ?? null,
     description: input.description ?? "Recarga manual (admin)",
-    createdBy: input.createdBy,
+    createdBy: input.createdBy ?? null,
+    stripeSessionId: input.stripeSessionId ?? null,
+    metadata: input.metadata ?? null,
   });
 }
 
