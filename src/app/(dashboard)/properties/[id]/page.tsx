@@ -285,23 +285,23 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         />
       </div>
 
-      {/* Apresentação do imóvel — gancho para a Fase 10 (não implementado aqui) */}
-      <div className="bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-5 lg:p-6">
+      {/* Apresentação do imóvel (#30 — Fase 10) */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Apresentação do imóvel</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Página de apresentação pronta para enviar a proprietários e hóspedes.
+              Página bem diagramada, pronta para enviar a proprietários e hóspedes ou salvar em PDF.
             </p>
           </div>
-          <button
-            type="button"
-            disabled
-            title="Disponível na Fase 10"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-400"
+          <Link
+            href={`/apresentacao/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           >
-            <FileText size={15} aria-hidden="true" /> Em breve
-          </button>
+            <FileText size={15} aria-hidden="true" /> Gerar apresentação
+          </Link>
         </div>
       </div>
 
