@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { taskSchema, TASK_TYPES, TASK_STATUSES } from "@/lib/validations/task";
 import { listTasks, createTask, type TaskFilters, type TaskStatus, type TaskType } from "@/lib/db/queries/tasks";
+import { resolveChecklistForTask } from "@/lib/db/queries/checklists";
 import { requireAuth, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
@@ -32,6 +33,12 @@ export async function GET(request: NextRequest) {
     if (searchParams.get("to")) filters.to = searchParams.get("to")!;
     if (searchParams.get("overdue_before")) filters.overdue_before = searchParams.get("overdue_before")!;
 
+    // Campo (staff/camareira): só as próprias tarefas ou as sem responsável.
+    if (user.role === "staff" || user.role === "camareira") {
+      delete filters.assigned_to;
+      filters.assigned_or_unassigned = user.id;
+    }
+
     const tasks = await listTasks(user.company_id, filters);
     return apiSuccess(tasks);
   } catch (error) {
@@ -42,13 +49,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireRole(["admin", "manager", "staff"]);
+    const user = await requireRole(["admin", "manager", "staff", "camareira"]);
     const body = await request.json();
     const validation = taskSchema.safeParse(body);
     if (!validation.success) {
       return apiError("Validation failed", 400, validation.error.flatten());
     }
     const data = validation.data;
+    // Semeia o checklist a partir do template ativo do contexto (tipo × unidade).
+    const checklist =
+      (await resolveChecklistForTask(user.company_id, data.type, data.property_id)) ?? [];
     const task = await createTask({
       company_id: user.company_id,
       property_id: data.property_id,
@@ -60,6 +70,7 @@ export async function POST(request: NextRequest) {
       due_date: data.due_date || null,
       due_time: data.due_time || null,
       notes: data.notes || null,
+      checklist,
     });
     await logActivity({ user, action: "task.create", entityType: "task", entityId: task.id, details: { type: data.type } });
     return apiSuccess(task, 201);

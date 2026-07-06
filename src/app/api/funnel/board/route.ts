@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { apiSuccess, apiError, apiUnauthorized, apiServerError } from "@/lib/api/response";
+import { requireFullAccess } from "@/lib/auth";
+import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { getBoard } from "@/lib/db/queries/funnel";
 import type { FunnelType, BoardData } from "@/types/funnel";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const typeParam = req.nextUrl.searchParams.get("type") as FunnelType | null;
     if (typeParam !== "locacao" && typeParam !== "vendas") return apiError("type inválido (locacao|vendas)", 400);
     const pipelineId = req.nextUrl.searchParams.get("pipeline_id") || undefined;
@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
     return apiSuccess(board);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     // Sem tabelas ainda — devolve board vazio pra UI degradar.
     const empty: BoardData = { pipeline: null, pipelines: [], stages: [], deals: [] };
     if (error instanceof Error && /relation|does not exist|schema cache/i.test(error.message)) return apiSuccess(empty);

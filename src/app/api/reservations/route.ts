@@ -10,7 +10,8 @@ import {
   getNextBookingSequence,
 } from "@/lib/db/queries/reservations";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { ensureReservationTask } from "@/lib/db/queries/tasks";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -24,7 +25,7 @@ const BOOKING_PREFIX = "MIL";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
     const reservations = await getReservations(user.company_id, {
       status: searchParams.get("status") || undefined,
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
     return apiSuccess(reservations);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }
@@ -57,11 +59,17 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
     const { data: propRow } = await supabase
       .from("properties")
-      .select("id, company_id, max_guests, deleted_at")
+      .select("id, company_id, max_guests, check_in_time, check_out_time, deleted_at")
       .eq("id", data.property_id)
       .is("deleted_at", null)
       .maybeSingle();
-    const property = propRow as { id: string; company_id: string; max_guests: number } | null;
+    const property = propRow as {
+      id: string;
+      company_id: string;
+      max_guests: number;
+      check_in_time: string | null;
+      check_out_time: string | null;
+    } | null;
     if (!property) return apiError("Property not found", 404);
     if (property.company_id !== user.company_id) return apiForbidden();
     if (data.num_guests > property.max_guests) {
@@ -127,6 +135,24 @@ export async function POST(request: NextRequest) {
       internal_notes: data.internal_notes || null,
       created_by: user.id,
     });
+
+    // Auto-agendamento (Fase 6): reserva já confirmada agenda o preparo pré-check-in.
+    if (data.status === "confirmed" || data.status === "checked_in") {
+      await ensureReservationTask(
+        {
+          id: reservation.id,
+          company_id: user.company_id,
+          property_id: data.property_id,
+          check_in_date: data.check_in_date,
+          check_out_date: data.check_out_date,
+          property: {
+            check_in_time: property.check_in_time,
+            check_out_time: property.check_out_time,
+          },
+        },
+        "checkin_prep"
+      ).catch(() => null);
+    }
 
     await logActivity({ user, action: "reservation.create", entityType: "reservation", entityId: reservation.id, details: { label: booking_code } });
     return apiSuccess(reservation, 201);

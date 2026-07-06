@@ -9,7 +9,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "admin" | "manager" | "staff";
+export type UserRole = "admin" | "manager" | "staff" | "camareira";
 export type PropertyStatus = "active" | "inactive" | "maintenance";
 export type PropertyType = "apartment" | "house" | "studio" | "villa" | "cabin" | "room" | "other";
 export type ReservationStatus = "inquiry" | "pending" | "confirmed" | "checked_in" | "checked_out" | "canceled" | "no_show";
@@ -21,6 +21,7 @@ export type TaskType = "checkout_clean" | "checkin_prep" | "deep_clean" | "inspe
 export type Priority = "low" | "normal" | "high" | "urgent";
 export type ChecklistItem = { id: string; label: string; done: boolean };
 export type TaskPhotoKind = "before" | "after" | "worker";
+export type TaskMediaType = "image" | "video";
 export type AiMode = "guest" | "operations" | "management";
 export type BlockedDateReason = "owner_use" | "maintenance" | "cleaning" | "seasonal" | "other";
 export type WaLinePurpose = "booking" | "sales" | "other";
@@ -380,11 +381,45 @@ export interface Database {
           task_id: string;
           kind: TaskPhotoKind;
           url: string;
+          media_type: TaskMediaType;
+          storage_bucket: string | null;
+          storage_path: string | null;
           uploaded_by: string | null;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["task_photos"]["Row"], "id" | "created_at">;
+        Insert: Omit<Database["public"]["Tables"]["task_photos"]["Row"], "id" | "created_at" | "media_type" | "storage_bucket" | "storage_path"> & {
+          media_type?: TaskMediaType;
+          storage_bucket?: string | null;
+          storage_path?: string | null;
+        };
         Update: Partial<Database["public"]["Tables"]["task_photos"]["Insert"]>;
+      };
+      checklist_templates: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          task_type: TaskType;
+          // [{id, label}] — o "done" vive na cópia do checklist da tarefa
+          items: { id: string; label: string }[];
+          property_ids: string[];
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["checklist_templates"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["checklist_templates"]["Insert"]>;
+      };
+      settings: {
+        Row: {
+          id: string;
+          company_id: string;
+          key: string;
+          value: Json;
+          category: string | null;
+        };
+        Insert: Omit<Database["public"]["Tables"]["settings"]["Row"], "id"> & { id?: string };
+        Update: Partial<Database["public"]["Tables"]["settings"]["Insert"]>;
       };
       blocked_dates: {
         Row: {

@@ -9,7 +9,8 @@ import {
   checkAvailability,
   deleteReservation,
 } from "@/lib/db/queries/reservations";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
+import { rescheduleReservationTasks } from "@/lib/db/queries/tasks";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -26,7 +27,7 @@ interface RouteParams {
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const reservation = await getReservationById(id);
     if (!reservation) return apiNotFound("Reservation");
@@ -34,6 +35,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return apiSuccess(reservation);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }
@@ -131,6 +133,28 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const reservation = await updateReservation(id, update);
+
+    // Auto-agendamento (Fase 6): datas mudaram → reagenda tarefas pendentes de
+    // limpeza/preparo desta reserva (non-fatal).
+    if (update.check_in_date !== undefined || update.check_out_date !== undefined) {
+      const fresh = await getReservationById(id).catch(() => null);
+      if (fresh) {
+        await rescheduleReservationTasks({
+          id: fresh.id,
+          company_id: fresh.company_id,
+          property_id: fresh.property_id,
+          check_in_date: fresh.check_in_date,
+          check_out_date: fresh.check_out_date,
+          property: fresh.property
+            ? {
+                check_in_time: fresh.property.check_in_time,
+                check_out_time: fresh.property.check_out_time,
+              }
+            : null,
+        }).catch(() => null);
+      }
+    }
+
     await logActivity({ user, action: "reservation.update", entityType: "reservation", entityId: id, details: { label: existing.booking_code } });
     return apiSuccess(reservation);
   } catch (error) {

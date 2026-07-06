@@ -1,12 +1,12 @@
 import { TrendingUp } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import MarketOverview, { type MarketProperty } from "@/components/market/market-overview";
 
 export const dynamic = "force-dynamic";
 
 export default async function MarketPage() {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("properties")

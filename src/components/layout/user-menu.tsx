@@ -21,6 +21,7 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
   manager: "Gerente",
   staff: "Equipe",
+  camareira: "Camareira",
 };
 
 export interface UserMenuUser {
@@ -50,6 +51,8 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const canManage = user.role === "admin" || user.role === "manager";
+  // Camareira não tem tela de gestão — o menu vira só conta + sair.
+  const manageLinks = user.role === "camareira" ? [] : MANAGE_LINKS.filter((l) => !l.managerOnly || canManage);
 
   async function handleLogout() {
     if (signingOut) return;
@@ -89,8 +92,8 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
           {user.email && <div className="truncate text-xs text-gray-400">{user.email}</div>}
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Gestão</DropdownMenuLabel>
-        {MANAGE_LINKS.filter((l) => !l.managerOnly || canManage).map((l) => (
+        {manageLinks.length > 0 && <DropdownMenuLabel>Gestão</DropdownMenuLabel>}
+        {manageLinks.map((l) => (
           <DropdownMenuItem key={l.href} asChild>
             <Link href={l.href} className="cursor-pointer">
               <l.icon size={15} className="text-gray-400" aria-hidden="true" />
@@ -98,7 +101,7 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
             </Link>
           </DropdownMenuItem>
         ))}
-        <DropdownMenuSeparator />
+        {manageLinks.length > 0 && <DropdownMenuSeparator />}
         <DropdownMenuItem destructive onSelect={(e) => { e.preventDefault(); handleLogout(); }}>
           <LogOut size={15} aria-hidden="true" />
           <span>{signingOut ? "Saindo…" : "Sair"}</span>

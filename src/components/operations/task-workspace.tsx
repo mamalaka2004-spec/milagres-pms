@@ -27,11 +27,39 @@ function fmt(dt: string | null): string {
   return new Date(dt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-const PHOTO_SECTIONS: { kind: TaskPhotoKind; label: string; capture: "environment" | "user" }[] = [
-  { kind: "before", label: "Antes", capture: "environment" },
-  { kind: "after", label: "Depois", capture: "environment" },
-  { kind: "worker", label: "Profissional", capture: "user" },
+const PHOTO_SECTIONS: {
+  kind: TaskPhotoKind;
+  label: string;
+  capture: "environment" | "user";
+  accept: string;
+}[] = [
+  { kind: "before", label: "Antes", capture: "environment", accept: "image/*,video/*" },
+  { kind: "after", label: "Depois", capture: "environment", accept: "image/*,video/*" },
+  { kind: "worker", label: "Profissional", capture: "user", accept: "image/*" },
 ];
+
+/** Upload direto ao storage via signed URL (vídeos passam do limite de body da Vercel). */
+async function uploadTaskMedia(taskId: string, kind: TaskPhotoKind, file: File): Promise<TaskPhoto> {
+  const sign = await api<{ upload_url: string; path: string; media_type: string }>(
+    `/api/tasks/${taskId}/media`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, content_type: file.type, size: file.size }),
+    }
+  );
+  const put = await fetch(sign.upload_url, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!put.ok) throw new Error("Falha ao enviar o arquivo ao storage");
+  return api<TaskPhoto>(`/api/tasks/${taskId}/media`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind, path: sign.path }),
+  });
+}
 
 export function TaskWorkspace({ task }: { task: TaskDetail }) {
   const [status, setStatus] = useState(task.status);
@@ -42,6 +70,10 @@ export function TaskWorkspace({ task }: { task: TaskDetail }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [newItem, setNewItem] = useState("");
+  // Reagendamento (a camareira pode alterar data/hora da tarefa auto-agendada).
+  const [dueDate, setDueDate] = useState(task.due_date || "");
+  const [dueTime, setDueTime] = useState(task.due_time ? task.due_time.slice(0, 5) : "");
+  const [rescheduling, setRescheduling] = useState(false);
 
   const propName = task.property?.name || "Imóvel";
   const doneCount = checklist.filter((c) => c.done).length;
@@ -108,6 +140,15 @@ export function TaskWorkspace({ task }: { task: TaskDetail }) {
     try { await patch({ checklist: next }); } catch { /* ignore */ }
   };
 
+  const saveSchedule = async () => {
+    setBusy(true); setErr(null);
+    try {
+      await patch({ due_date: dueDate || "", due_time: dueTime || "" });
+      setRescheduling(false);
+    } catch (e) { setErr(e instanceof Error ? e.message : "Falha"); }
+    finally { setBusy(false); }
+  };
+
   const editing = status === "in_progress";
 
   return (
@@ -128,7 +169,30 @@ export function TaskWorkspace({ task }: { task: TaskDetail }) {
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 space-y-2 text-sm">
         <Row icon={Home} label="Imóvel" value={`${propName}${task.property?.code ? ` · ${task.property.code}` : ""}`} />
         {task.reservation && <Row icon={ClipboardList} label="Reserva" value={`${task.reservation.booking_code}${task.reservation.guest?.full_name ? ` · ${task.reservation.guest.full_name}` : ""}`} />}
-        {(task.due_date || task.due_time) && <Row icon={CalendarClock} label="Prazo" value={`${task.due_date ? new Date(task.due_date + "T00:00:00").toLocaleDateString("pt-BR") : ""}${task.due_time ? ` ${task.due_time.slice(0, 5)}` : ""}`} />}
+        <div className="flex items-center gap-2.5">
+          <CalendarClock size={15} className="text-gray-400 shrink-0" aria-hidden="true" />
+          <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold w-16 shrink-0">Prazo</span>
+          {rescheduling ? (
+            <span className="flex items-center gap-1.5 flex-wrap">
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40" />
+              <input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} className="rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40" />
+              <button onClick={saveSchedule} disabled={busy} className="text-xs font-semibold text-brand-600 hover:text-brand-700 px-1">Salvar</button>
+              <button onClick={() => { setRescheduling(false); setDueDate(task.due_date || ""); setDueTime(task.due_time ? task.due_time.slice(0, 5) : ""); }} className="text-xs text-gray-400 hover:text-gray-600 px-1">Cancelar</button>
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="text-gray-800 truncate">
+                {dueDate ? new Date(dueDate + "T00:00:00").toLocaleDateString("pt-BR") : "Sem prazo"}
+                {dueTime ? ` ${dueTime}` : ""}
+              </span>
+              {status !== "completed" && (
+                <button onClick={() => setRescheduling(true)} className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 shrink-0">
+                  Reagendar
+                </button>
+              )}
+            </span>
+          )}
+        </div>
         {task.notes && <div className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 whitespace-pre-wrap">{task.notes}</div>}
         {(startedAt || completedAt) && (
           <div className="flex items-center gap-4 pt-1 text-[11px] text-gray-400">
@@ -187,6 +251,7 @@ export function TaskWorkspace({ task }: { task: TaskDetail }) {
               kind={sec.kind}
               label={sec.label}
               capture={sec.capture}
+              accept={sec.accept}
               editable={editing}
               photos={photos.filter((p) => p.kind === sec.kind)}
               onAdded={(p) => setPhotos((prev) => [p, ...prev])}
@@ -213,10 +278,10 @@ export function TaskWorkspace({ task }: { task: TaskDetail }) {
 }
 
 function PhotoSection({
-  taskId, kind, label, capture, editable, photos, onAdded, onRemoved,
+  taskId, kind, label, capture, accept, editable, photos, onAdded, onRemoved,
 }: {
   taskId: string; kind: TaskPhotoKind; label: string; capture: "environment" | "user";
-  editable: boolean; photos: TaskPhoto[];
+  accept: string; editable: boolean; photos: TaskPhoto[];
   onAdded: (p: TaskPhoto) => void; onRemoved: (id: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -226,10 +291,7 @@ function PhotoSection({
   const upload = async (file: File) => {
     setBusy(true); setErr(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("kind", kind);
-      const p = await api<TaskPhoto>(`/api/tasks/${taskId}/photos`, { method: "POST", body: fd });
+      const p = await uploadTaskMedia(taskId, kind, file);
       onAdded(p);
     } catch (e) { setErr(e instanceof Error ? e.message : "Falha"); }
     finally { setBusy(false); }
@@ -250,9 +312,16 @@ function PhotoSection({
         {photos.map((p) => (
           <div key={p.id} className="relative aspect-square rounded-lg overflow-hidden group">
             <a href={p.url} target="_blank" rel="noopener noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={label} loading="lazy" className="w-full h-full object-cover" />
+              {p.media_type === "video" ? (
+                <video src={p.url} preload="metadata" muted playsInline className="w-full h-full object-cover bg-black" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.url} alt={label} loading="lazy" className="w-full h-full object-cover" />
+              )}
             </a>
+            {p.media_type === "video" && (
+              <span className="absolute bottom-0.5 left-0.5 bg-black/60 text-white rounded px-1 text-[9px] font-bold uppercase pointer-events-none">vídeo</span>
+            )}
             {editable && (
               <button onClick={() => remove(p.id)} aria-label="Remover foto" className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} aria-hidden="true" /></button>
             )}
@@ -265,7 +334,7 @@ function PhotoSection({
         )}
       </div>
       {err && <div className="text-[10px] text-red-500 mt-1">{err}</div>}
-      <input ref={inputRef} type="file" accept="image/*" capture={capture} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); if (inputRef.current) inputRef.current.value = ""; }} />
+      <input ref={inputRef} type="file" accept={accept} capture={capture} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); if (inputRef.current) inputRef.current.value = ""; }} />
     </div>
   );
 }

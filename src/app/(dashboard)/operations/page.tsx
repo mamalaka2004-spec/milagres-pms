@@ -23,8 +23,12 @@ export default async function OperationsPage() {
   const today = todayISO();
   const completedFrom = plusDays(today, -14);
 
-  // Staff (camareiras/prestadores) see only the tasks assigned to them.
-  const mine = user.role === "staff" ? { assigned_to: user.id } : {};
+  // Campo (staff/camareira): vê as tarefas atribuídas a si OU sem responsável
+  // (as auto-agendadas nascem sem responsável e ficam "disponíveis").
+  const mine =
+    user.role === "staff" || user.role === "camareira"
+      ? { assigned_or_unassigned: user.id }
+      : {};
 
   const [allActive, completed, overdue, propsRaw] = await Promise.all([
     listTasks(user.company_id, { status: "all", ...mine }),

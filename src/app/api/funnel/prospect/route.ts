@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { getPipeline, getStage } from "@/lib/db/queries/funnel";
@@ -10,7 +10,7 @@ import { prospectSchema } from "@/lib/validations/campaign";
  *  funil (cria um negócio por contato). Base da prospecção/campanha. */
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const parsed = prospectSchema.safeParse(await req.json());
     if (!parsed.success) return apiError("Dados inválidos", 400, parsed.error.flatten());
 

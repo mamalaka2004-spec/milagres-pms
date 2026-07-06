@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import { listConversations } from "@/lib/db/queries/whatsapp";
 import {
@@ -13,7 +13,7 @@ import type { WaConversationStatus } from "@/types/database";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
     const lineId = searchParams.get("line_id");
     if (!lineId) return apiError("line_id is required", 400);

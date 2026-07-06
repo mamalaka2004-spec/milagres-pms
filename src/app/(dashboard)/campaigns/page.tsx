@@ -1,11 +1,11 @@
 import { Megaphone } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { CampaignsShell } from "@/components/campaigns/campaigns-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function CampaignsPage() {
-  await requireAuth();
+  await requirePageAuth();
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center gap-3">

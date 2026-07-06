@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Edit, Users, BedDouble, Bath, MapPin, Clock, BadgeDollarSign, UserCheck, FileText } from "lucide-react";
 import { getPropertyById } from "@/lib/db/queries/properties";
 import { getPropertyPricingContext } from "@/lib/db/queries/pricing";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils/format";
 import { RULE_KIND_LABELS } from "@/types/pricing";
 import { PhotoGallery } from "@/components/properties/photo-gallery";
@@ -19,7 +19,7 @@ interface PageProps {
 }
 
 export default async function PropertyDetailPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let property;

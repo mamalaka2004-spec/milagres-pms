@@ -43,6 +43,9 @@ function visibleInMode(item: NavItem, mode: Mode): boolean {
   return !item.modes || item.modes.includes(mode);
 }
 
+// Camareira (#13): enxerga só Agenda + Operações — nada de valores/financeiro.
+const CAMAREIRA_NAV = new Set(["calendar", "operations"]);
+
 const bottomItems = [
   { id: "ai", label: "Assistente IA", href: "/ai-assistant", icon: Sparkles, highlight: true },
   { id: "settings", label: "Ajustes", href: "/settings", icon: Settings },
@@ -51,14 +54,19 @@ const bottomItems = [
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  role?: string;
 }
 
-export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ mobileOpen, onMobileClose, role }: SidebarProps) {
   const pathname = usePathname();
   const { mode } = useMode();
   const [collapsed, setCollapsed] = useState(false);
 
-  const visibleNav = navItems.filter((item) => visibleInMode(item, mode));
+  const isCamareira = role === "camareira";
+  const visibleNav = isCamareira
+    ? navItems.filter((item) => CAMAREIRA_NAV.has(item.id))
+    : navItems.filter((item) => visibleInMode(item, mode));
+  const visibleBottom = isCamareira ? [] : bottomItems;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -122,7 +130,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
       {/* Bottom */}
       <div className="border-t border-gray-100 py-2 px-2 space-y-0.5 shrink-0">
-        {bottomItems.map((item) => {
+        {visibleBottom.map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -188,13 +196,18 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 }
 
 // ─── Mobile Bottom Navigation ───
-export function BottomNav() {
+export function BottomNav({ role }: { role?: string }) {
   const pathname = usePathname();
   const { mode } = useMode();
 
   // Middle items flip with the mode; Início / Imóveis / IA stay constant.
   const items =
-    mode === "vendas"
+    role === "camareira"
+      ? [
+          { href: "/calendar", icon: CalendarDays, label: "Agenda" },
+          { href: "/operations", icon: ClipboardList, label: "Operações" },
+        ]
+      : mode === "vendas"
       ? [
           { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
           { href: "/vendas", icon: Target, label: "Vendas" },

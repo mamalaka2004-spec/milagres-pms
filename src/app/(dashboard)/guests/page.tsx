@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, Users, Star } from "lucide-react";
 import { getGuests } from "@/lib/db/queries/guests";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatPhone } from "@/lib/utils/format";
 
@@ -12,7 +12,7 @@ interface PageProps {
 }
 
 export default async function GuestsPage({ searchParams }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const params = await searchParams;
   const guests = await getGuests(user.company_id, {
     search: params.search,

@@ -1,17 +1,18 @@
 import { NextRequest } from "next/server";
 import { availabilityCheckSchema } from "@/lib/validations/reservation";
 import { checkAvailability } from "@/lib/db/queries/reservations";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import {
   apiSuccess,
   apiError,
   apiUnauthorized,
+  apiForbidden,
   apiServerError,
 } from "@/lib/api/response";
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth();
+    await requireFullAccess();
     const body = await request.json();
     const validation = availabilityCheckSchema.safeParse(body);
     if (!validation.success) {
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess(result);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

@@ -5,7 +5,10 @@ import {
   transitionReservationStatus,
 } from "@/lib/db/queries/reservations";
 import { recomputeGuestStats } from "@/lib/db/queries/guests";
-import { ensureCheckoutCleaningTask } from "@/lib/db/queries/tasks";
+import {
+  ensureReservationTask,
+  cancelPendingReservationTasks,
+} from "@/lib/db/queries/tasks";
 import { requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
@@ -54,21 +57,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // When a guest checks out, queue a cleaning task if one doesn't exist yet.
+    // Auto-agendamento (Fase 6): confirmou → preparo pré-check-in; checkout →
+    // limpeza; cancelou → remove tarefas automáticas pendentes. Sempre non-fatal.
+    const autoReservation = {
+      id: existing.id,
+      company_id: existing.company_id,
+      property_id: existing.property_id,
+      check_in_date: existing.check_in_date,
+      check_out_date: existing.check_out_date,
+      property: existing.property
+        ? {
+            check_in_time: existing.property.check_in_time,
+            check_out_time: existing.property.check_out_time,
+          }
+        : null,
+    };
+    if (status === "confirmed") {
+      await ensureReservationTask(autoReservation, "checkin_prep").catch(() => null);
+    }
     if (status === "checked_out") {
-      try {
-        await ensureCheckoutCleaningTask({
-          id: existing.id,
-          company_id: existing.company_id,
-          property_id: existing.property_id,
-          check_out_date: existing.check_out_date,
-          property: existing.property
-            ? { check_out_time: existing.property.check_out_time }
-            : null,
-        });
-      } catch {
-        // non-fatal: cleaning task can be created manually
-      }
+      await ensureReservationTask(autoReservation, "checkout_clean").catch(() => null);
+    }
+    if (status === "canceled") {
+      await cancelPendingReservationTasks(existing.id).catch(() => null);
     }
 
     await logActivity({

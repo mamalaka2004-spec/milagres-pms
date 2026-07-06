@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { GuestForm } from "@/components/guests/guest-form";
 import { getGuestById } from "@/lib/db/queries/guests";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import type { GuestInput } from "@/lib/validations/guest";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function EditGuestPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let guest;

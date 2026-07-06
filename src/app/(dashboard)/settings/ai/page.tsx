@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft, Bot } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import AiSettingsShell from "@/components/settings/ai-settings-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsAiPage() {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   return (
     <div className="space-y-4 lg:space-y-6">
       <Link href="/settings" className="text-xs text-gray-500 hover:text-gray-800 inline-flex items-center gap-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 rounded">

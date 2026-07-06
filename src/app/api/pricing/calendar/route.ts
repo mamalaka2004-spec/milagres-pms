@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { apiSuccess, apiError, apiUnauthorized, apiNotFound, apiServerError } from "@/lib/api/response";
+import { requireFullAccess } from "@/lib/auth";
+import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 import { getQuote } from "@/lib/db/queries/pricing";
 import { calendarQuerySchema } from "@/lib/validations/pricing";
 
@@ -8,7 +8,7 @@ import { calendarQuerySchema } from "@/lib/validations/pricing";
 // Simulador: preço resolvido de cada dia do mês (reusa o quote no intervalo do mês).
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const parsed = calendarQuerySchema.safeParse({
       property_id: req.nextUrl.searchParams.get("property_id"),
       month: req.nextUrl.searchParams.get("month"),
@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

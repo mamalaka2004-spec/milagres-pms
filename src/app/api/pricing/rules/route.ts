@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { listRules, createRule } from "@/lib/db/queries/pricing";
@@ -8,11 +8,12 @@ import { ruleInputToRow } from "@/lib/pricing/mappers";
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const data = await listRules(user.company_id);
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     // Tabela ainda não existe (migration 026 não rodada) — degrada.
     return apiSuccess([]);
   }

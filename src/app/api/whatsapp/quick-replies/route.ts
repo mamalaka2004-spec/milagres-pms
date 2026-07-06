@@ -1,17 +1,18 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   apiSuccess,
   apiError,
   apiUnauthorized,
+  apiForbidden,
   apiServerError,
 } from "@/lib/api/response";
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const supabase = createAdminClient();
     const { data, error } = await (supabase.from("whatsapp_quick_replies") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .select("id, title, body, shortcut, category")
@@ -23,13 +24,14 @@ export async function GET() {
     return apiSuccess(data || []);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const body = await req.json();
     const title = String(body?.title || "").trim();
     const text = String(body?.body || "").trim();
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

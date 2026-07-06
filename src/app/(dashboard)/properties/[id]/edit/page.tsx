@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPropertyById } from "@/lib/db/queries/properties";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { PropertyForm } from "@/components/properties/property-form";
 
 interface PageProps {
@@ -8,7 +8,7 @@ interface PageProps {
 }
 
 export default async function EditPropertyPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let property;

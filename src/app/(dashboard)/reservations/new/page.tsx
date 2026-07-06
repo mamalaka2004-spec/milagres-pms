@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { getProperties } from "@/lib/db/queries/properties";
 import { getGuestById } from "@/lib/db/queries/guests";
 import { ReservationForm } from "@/components/reservations/reservation-form";
@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function NewReservationPage({ searchParams }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const params = await searchParams;
 
   const properties = (await getProperties(user.company_id, { status: "active" })) as unknown as Array<{

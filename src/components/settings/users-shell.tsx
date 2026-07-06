@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   Plus, Loader2, AlertCircle, X, Shield, UserCog, User as UserIcon,
-  Check, Pencil, KeyRound, RefreshCw, Mail,
+  Check, Pencil, KeyRound, RefreshCw, Mail, Brush,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-type Role = "admin" | "manager" | "staff";
+type Role = "admin" | "manager" | "staff" | "camareira";
 
 interface UserItem {
   id: string;
@@ -32,6 +32,7 @@ const ROLE_META: Record<Role, { label: string; desc: string; icon: typeof Shield
   admin: { label: "Administrador", desc: "Acesso total + gerencia usuários e ajustes.", icon: Shield, cls: "bg-rose-50 text-rose-700 border-rose-200" },
   manager: { label: "Gerente", desc: "Reservas, imóveis, hóspedes, financeiro e WhatsApp.", icon: UserCog, cls: "bg-brand-500/10 text-brand-700 border-brand-200" },
   staff: { label: "Equipe", desc: "Operação (tarefas) + linhas de WhatsApp atribuídas.", icon: UserIcon, cls: "bg-gray-100 text-gray-600 border-gray-200" },
+  camareira: { label: "Camareira", desc: "Só Agenda e Operações, sem valores. Vê tarefas dela ou sem responsável.", icon: Brush, cls: "bg-sky-50 text-sky-700 border-sky-200" },
 };
 
 function genPassword(): string {
@@ -61,7 +62,7 @@ export function UsersShell({ canManage, currentUserId }: { canManage: boolean; c
   return (
     <div className="space-y-4">
       {/* Roles legend */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {(Object.keys(ROLE_META) as Role[]).map((r) => {
           const m = ROLE_META[r];
           return (
@@ -215,6 +216,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
         <Field label="Papel">
           <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="input">
             <option value="staff">Equipe (operação)</option>
+            <option value="camareira">Camareira (sem valores)</option>
             <option value="manager">Gerente</option>
             <option value="admin">Administrador</option>
           </select>
@@ -282,6 +284,7 @@ function EditUserModal({ user, isSelf, onClose, onSaved }: { user: UserItem; isS
         <Field label="Papel" hint={isSelf ? "Você não pode rebaixar a própria conta." : undefined}>
           <select value={role} onChange={(e) => setRole(e.target.value as Role)} disabled={isSelf} className="input disabled:bg-gray-50 disabled:text-gray-400">
             <option value="staff">Equipe (operação)</option>
+            <option value="camareira">Camareira (sem valores)</option>
             <option value="manager">Gerente</option>
             <option value="admin">Administrador</option>
           </select>

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
@@ -18,7 +18,7 @@ async function conversationCompany(id: string): Promise<string | null> {
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const company = await conversationCompany(id);
     if (!company) return apiNotFound("Conversa");
@@ -27,13 +27,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return apiSuccess(map[id] || []);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiSuccess([]);
   }
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const company = await conversationCompany(id);
     if (!company) return apiNotFound("Conversa");

@@ -8,7 +8,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getReservationById } from "@/lib/db/queries/reservations";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import {
   formatCurrency,
   formatDate,
@@ -36,7 +36,7 @@ interface PageProps {
 }
 
 export default async function ReservationDetailPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let r;

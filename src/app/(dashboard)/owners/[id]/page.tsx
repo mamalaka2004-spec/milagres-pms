@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getOwnerById } from "@/lib/db/queries/owners";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { OwnerDetail } from "./owner-detail";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default async function OwnerDetailPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let owner;

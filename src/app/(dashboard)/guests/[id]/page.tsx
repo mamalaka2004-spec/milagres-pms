@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Mail, Phone, Globe, Star, Pencil } from "lucide-react";
 import { getGuestById } from "@/lib/db/queries/guests";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { formatCurrency, formatPhone, formatDate } from "@/lib/utils/format";
 import {
   ReservationStatusBadge,
@@ -17,7 +17,7 @@ interface PageProps {
 }
 
 export default async function GuestDetailPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let guest;

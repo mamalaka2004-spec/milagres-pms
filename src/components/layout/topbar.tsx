@@ -19,6 +19,8 @@ export function Topbar({ title, onMenuClick, user }: TopbarProps) {
     day: "numeric",
     month: "long",
   });
+  // Camareira não alterna modo nem busca dados globais (reservas/hóspedes/valores).
+  const isCamareira = user.role === "camareira";
 
   return (
     <header className="h-16 lg:h-[76px] bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 gap-2 lg:gap-3 shrink-0">
@@ -40,14 +42,16 @@ export function Topbar({ title, onMenuClick, user }: TopbarProps) {
       </div>
 
       {/* Mode selector (#8) */}
-      <div className="ml-1 lg:ml-3">
-        <ModeSwitcher />
-      </div>
+      {!isCamareira && (
+        <div className="ml-1 lg:ml-3">
+          <ModeSwitcher />
+        </div>
+      )}
 
       <div className="flex-1" />
 
       {/* Global search (#21) */}
-      <GlobalSearch />
+      {!isCamareira && <GlobalSearch />}
 
       {/* Notifications */}
       <button
