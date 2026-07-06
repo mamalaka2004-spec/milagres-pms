@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarDays, Users, Home, DollarSign,
   ClipboardList, Sparkles, Settings, ChevronLeft, ChevronRight,
   X, Leaf, Menu, UserCheck, MessageSquare, Target, TrendingUp, Megaphone,
-  BadgeDollarSign,
+  BadgeDollarSign, Globe, BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -48,6 +48,8 @@ const CAMAREIRA_NAV = new Set(["calendar", "operations"]);
 
 const bottomItems = [
   { id: "ai", label: "Assistente IA", href: "/ai-assistant", icon: Sparkles, highlight: true },
+  { id: "site", label: "Site", href: "/site", icon: Globe },
+  { id: "docs", label: "Documentação", href: "/docs", icon: BookOpen },
   { id: "settings", label: "Ajustes", href: "/settings", icon: Settings },
 ];
 

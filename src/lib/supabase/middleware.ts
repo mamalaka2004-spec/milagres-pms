@@ -7,6 +7,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicPage =
     pathname === "/" ||
     pathname.startsWith("/p/") ||
+    pathname.startsWith("/apresentacao/") ||
     pathname.startsWith("/book/") ||
     pathname === "/booking-success" ||
     pathname === "/faq" ||
