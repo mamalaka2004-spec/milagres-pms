@@ -10,6 +10,7 @@ import {
   updateConversationTitle,
 } from "@/lib/ai/conversations";
 import { requireAuth } from "@/lib/auth";
+import { debitAiCredits } from "@/lib/ai/credits";
 import {
   apiSuccess,
   apiError,
@@ -163,11 +164,23 @@ export async function POST(request: NextRequest) {
       await updateConversationTitle(conversation.id, title);
     }
 
+    // Debita créditos de IA pela chamada (#27). Fire-and-forget: nunca lança —
+    // uma falha de billing não pode derrubar a resposta da IA.
+    const credits_charged = await debitAiCredits({
+      companyId: user.company_id,
+      tokens: totalTokens,
+      source: "ai_chat",
+      referenceType: "ai_conversation",
+      referenceId: conversation.id,
+      description: `Assistente IA (${conversation.mode})`,
+    });
+
     return apiSuccess({
       conversation_id: conversation.id,
       mode: conversation.mode,
       message: assistantContent,
       tokens_used: totalTokens,
+      credits_charged,
     });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();

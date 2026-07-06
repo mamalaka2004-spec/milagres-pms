@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, ChevronRight, Settings as SettingsIcon, Users, Bot, ScrollText, KanbanSquare, Sparkles, BookOpen } from "lucide-react";
+import { MessageSquare, ChevronRight, Settings as SettingsIcon, Users, Bot, ScrollText, KanbanSquare, Sparkles, BookOpen, Coins, CalendarClock } from "lucide-react";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,44 @@ export default async function SettingsPage() {
             </p>
           </div>
         </Link>
+
+        <Link
+          href="/settings/ai-credits"
+          className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center shrink-0">
+            <Coins className="text-brand-600" size={18} aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm text-gray-900 flex items-center gap-1">
+              Créditos de IA
+              <ChevronRight size={14} className="text-gray-300 group-hover:text-brand-500 transition-colors duration-200" aria-hidden="true" />
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Saldo e consumo de créditos/tokens da IA, com histórico e recarga manual.
+            </p>
+          </div>
+        </Link>
+
+        {canManageTeam && (
+          <Link
+            href="/settings/google-calendar"
+            className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40 group flex items-start gap-3"
+          >
+            <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center shrink-0">
+              <CalendarClock className="text-brand-600" size={18} aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm text-gray-900 flex items-center gap-1">
+                Google Calendar
+                <ChevronRight size={14} className="text-gray-300 group-hover:text-brand-500 transition-colors duration-200" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Sincronização bidirecional por anúncio (requer credenciais Google OAuth).
+              </p>
+            </div>
+          </Link>
+        )}
 
         {canManageTeam && (
           <Link
