@@ -20,6 +20,7 @@ const pageTitles: Record<string, string> = {
   "/operations": "Operações",
   "/ai-assistant": "Assistente IA",
   "/settings/logs": "Atividade",
+  "/settings/operations": "Operações & Camareira",
   "/settings": "Ajustes",
 };
 
@@ -44,7 +45,7 @@ export function DashboardShell({
 
   return (
     <div className="flex h-screen bg-cream overflow-hidden">
-      <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
+      <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} role={user.role} />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} user={user} />
@@ -54,7 +55,7 @@ export function DashboardShell({
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav role={user.role} />
       <Toaster />
     </div>
   );

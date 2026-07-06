@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { ownerSchema } from "@/lib/validations/owner";
 import { getOwnerById, updateOwner, deleteOwner } from "@/lib/db/queries/owners";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 
@@ -9,7 +9,7 @@ interface Params { params: Promise<{ id: string }> }
 
 export async function GET(_: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const owner = await getOwnerById(id);
     if (!owner) return apiNotFound("Owner");
@@ -17,6 +17,7 @@ export async function GET(_: NextRequest, { params }: Params) {
     return apiSuccess(owner);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

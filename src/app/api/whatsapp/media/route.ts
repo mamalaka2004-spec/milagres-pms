@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import {
   apiSuccess,
   apiError,
   apiUnauthorized,
+  apiForbidden,
   apiServerError,
 } from "@/lib/api/response";
 
@@ -41,7 +42,7 @@ function extFor(name: string, mime: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth();
+    await requireFullAccess();
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess({ url: publicUrl, mime, name: file.name || `arquivo.${ext}` });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

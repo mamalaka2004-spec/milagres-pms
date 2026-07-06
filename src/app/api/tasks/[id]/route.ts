@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireRole(["admin", "manager", "staff"]);
+    const user = await requireRole(["admin", "manager", "staff", "camareira"]);
     const { id } = await params;
 
     const existing = await getTaskDetail(id);

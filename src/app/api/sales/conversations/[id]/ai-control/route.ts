@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import {
@@ -32,7 +32,7 @@ interface Params {
  */
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
 
     const body = await req.json();

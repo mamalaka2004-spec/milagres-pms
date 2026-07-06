@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { apiSuccess, apiUnauthorized } from "@/lib/api/response";
+import { requireFullAccess } from "@/lib/auth";
+import { apiSuccess, apiUnauthorized, apiForbidden } from "@/lib/api/response";
 import { searchContacts } from "@/lib/db/queries/contacts";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const sp = req.nextUrl.searchParams;
     const data = await searchContacts(user.company_id, {
       q: sp.get("q") || undefined,
@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiSuccess([]);
   }
 }

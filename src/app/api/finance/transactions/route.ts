@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { createFinTransaction, listFinTransactions, type FinTransactionFilters } from "@/lib/db/queries/fin";
@@ -7,7 +7,7 @@ import { finTransactionSchema, toTransactionRow } from "@/lib/validations/financ
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const sp = req.nextUrl.searchParams;
     const pick = (key: string) => sp.get(key) || undefined;
     const filters: FinTransactionFilters = {
@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

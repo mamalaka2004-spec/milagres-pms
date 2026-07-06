@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/queries/payments";
 import { getReservationById } from "@/lib/db/queries/reservations";
 import { createEntry } from "@/lib/db/queries/finance";
-import { requireRole, requireAuth } from "@/lib/auth";
+import { requireRole, requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -19,7 +19,7 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
     const data = await listPaymentsForCompany(user.company_id, {
       from: searchParams.get("from") || undefined,
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

@@ -18,7 +18,7 @@ type UserRow = Database["public"]["Tables"]["users"]["Row"];
 const patchSchema = z.object({
   full_name: z.string().min(2).max(80).optional(),
   phone: z.string().max(30).nullable().optional(),
-  role: z.enum(["admin", "manager", "staff"]).optional(),
+  role: z.enum(["admin", "manager", "staff", "camareira"]).optional(),
   is_active: z.boolean().optional(),
   password: z.string().min(8).max(72).optional(),
 });

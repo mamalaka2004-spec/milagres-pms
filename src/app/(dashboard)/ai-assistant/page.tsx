@@ -1,11 +1,11 @@
 import { Sparkles } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { ChatWindow } from "@/components/ai/chat-window";
 
 export const dynamic = "force-dynamic";
 
 export default async function AiAssistantPage() {
-  await requireAuth();
+  await requirePageAuth();
 
   return (
     <div className="space-y-4 lg:space-y-6">

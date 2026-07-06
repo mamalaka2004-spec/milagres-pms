@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, CalendarDays, Star } from "lucide-react";
 import { getReservations } from "@/lib/db/queries/reservations";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader, Button, Input, Select, StatusBadge, EntityAvatar } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -21,7 +21,7 @@ interface PageProps {
 }
 
 export default async function ReservationsPage({ searchParams }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const params = await searchParams;
   const reservations = await getReservations(user.company_id, {
     status: params.status,

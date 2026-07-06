@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 import { getDeal, setDealTags } from "@/lib/db/queries/funnel";
@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const deal = await getDeal(id);
     if (!deal) return apiNotFound("Negócio");

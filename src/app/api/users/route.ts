@@ -17,7 +17,7 @@ type UserRow = Database["public"]["Tables"]["users"]["Row"];
 const createSchema = z.object({
   email: z.string().email().max(160),
   full_name: z.string().min(2).max(80),
-  role: z.enum(["admin", "manager", "staff"]),
+  role: z.enum(["admin", "manager", "staff", "camareira"]),
   phone: z.string().max(30).optional().nullable(),
   password: z.string().min(8).max(72),
 });

@@ -5,7 +5,7 @@ import {
   updateProperty,
   deleteProperty,
 } from "@/lib/db/queries/properties";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -23,7 +23,7 @@ interface RouteParams {
 // ─── GET /api/properties/[id] ───
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
 
     const property = await getPropertyById(id);
@@ -34,6 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return apiSuccess(property);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

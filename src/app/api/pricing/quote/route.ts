@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { apiSuccess, apiError, apiUnauthorized, apiNotFound, apiServerError } from "@/lib/api/response";
+import { requireFullAccess } from "@/lib/auth";
+import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 import { getQuote } from "@/lib/db/queries/pricing";
 import { quoteQuerySchema } from "@/lib/validations/pricing";
 
@@ -8,7 +8,7 @@ import { quoteQuerySchema } from "@/lib/validations/pricing";
 // Usado pelo formulário de reserva para pré-preencher o valor base.
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const parsed = quoteQuerySchema.safeParse({
       property_id: req.nextUrl.searchParams.get("property_id"),
       check_in: req.nextUrl.searchParams.get("check_in"),
@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     return apiSuccess(quote);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

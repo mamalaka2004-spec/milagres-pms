@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { listPipelines, createPipeline } from "@/lib/db/queries/funnel";
@@ -8,13 +8,14 @@ import type { FunnelType } from "@/types/funnel";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const typeParam = req.nextUrl.searchParams.get("type") as FunnelType | null;
     const type = typeParam === "locacao" || typeParam === "vendas" ? typeParam : undefined;
     const data = await listPipelines(user.company_id, type);
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     // Tabela ainda não existe (migration 023 não rodada) — degrada.
     return apiSuccess([]);
   }

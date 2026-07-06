@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { getFinanceSummary } from "@/lib/db/queries/finance";
-import { requireAuth } from "@/lib/auth";
-import { apiSuccess, apiUnauthorized, apiServerError } from "@/lib/api/response";
+import { requireFullAccess } from "@/lib/auth";
+import { apiSuccess, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
 
     const today = new Date();
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     return apiSuccess(summary);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

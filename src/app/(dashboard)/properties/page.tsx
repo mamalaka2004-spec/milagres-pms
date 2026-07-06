@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, Home } from "lucide-react";
 import { getProperties } from "@/lib/db/queries/properties";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { PropertyCard } from "@/components/properties/property-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ImportAirbnbButton } from "@/components/properties/import-airbnb-button";
@@ -13,7 +13,7 @@ interface PageProps {
 }
 
 export default async function PropertiesPage({ searchParams }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const params = await searchParams;
 
   const properties = await getProperties(user.company_id, {

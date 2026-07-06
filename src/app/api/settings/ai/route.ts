@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -23,7 +23,7 @@ const updateSchema = z.object({
  */
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const supabase = createAdminClient();
 
     const { data: companyRow, error: cErr } = await supabase

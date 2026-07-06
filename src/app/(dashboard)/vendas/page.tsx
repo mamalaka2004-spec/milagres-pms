@@ -1,11 +1,11 @@
 import { Target } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { SalesShell } from "@/components/sales/sales-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function VendasPage() {
-  await requireAuth();
+  await requirePageAuth();
 
   return (
     <div className="space-y-3">

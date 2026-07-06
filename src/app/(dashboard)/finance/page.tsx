@@ -1,5 +1,5 @@
 import { DollarSign } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { FinanceShell } from "@/components/finance/finance-shell";
 import { ReservationsOverview } from "@/components/finance/reservations-overview";
 
@@ -21,7 +21,7 @@ function defaultRange() {
 }
 
 export default async function FinancePage({ searchParams }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const params = await searchParams;
   const range = {
     from: params.from || defaultRange().from,

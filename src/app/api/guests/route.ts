@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { guestSchema } from "@/lib/validations/guest";
 import { createGuest, getGuests, findGuestByEmailOrPhone } from "@/lib/db/queries/guests";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -13,7 +13,7 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
     const guests = await getGuests(user.company_id, {
       search: searchParams.get("search") || undefined,
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return apiUnauthorized();
+    }
+    if (error instanceof Error && error.message === "Forbidden") {
+      return apiForbidden();
     }
     return apiServerError(error);
   }

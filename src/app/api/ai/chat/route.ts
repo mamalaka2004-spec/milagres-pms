@@ -9,11 +9,12 @@ import {
   listMessages,
   updateConversationTitle,
 } from "@/lib/ai/conversations";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import {
   apiSuccess,
   apiError,
   apiUnauthorized,
+  apiForbidden,
   apiServerError,
 } from "@/lib/api/response";
 import type { AiMode } from "@/types/database";
@@ -33,7 +34,7 @@ const MAX_TOOL_LOOPS = 4;
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const body = await request.json();
     const validation = bodySchema.safeParse(body);
     if (!validation.success) {
@@ -171,6 +172,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

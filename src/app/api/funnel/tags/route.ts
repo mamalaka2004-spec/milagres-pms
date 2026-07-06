@@ -1,20 +1,21 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
-import { apiSuccess, apiError, apiUnauthorized, apiServerError } from "@/lib/api/response";
+import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { listTags, createTag } from "@/lib/db/queries/funnel";
 import { tagCreateSchema } from "@/lib/validations/funnel";
 import type { FunnelType } from "@/types/funnel";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const typeParam = req.nextUrl.searchParams.get("type") as FunnelType | null;
     const type = typeParam === "locacao" || typeParam === "vendas" ? typeParam : undefined;
     const data = await listTags(user.company_id, type);
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiSuccess([]);
   }
 }
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
 // Criação liberada a qualquer usuário autenticado (tag picker inline no chat).
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const parsed = tagCreateSchema.safeParse(await req.json());
     if (!parsed.success) return apiError("Dados inválidos", 400, parsed.error.flatten());
     try {
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

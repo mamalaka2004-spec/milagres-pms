@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireFullAccess } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { requireLineAccess } from "@/lib/whatsapp/auth";
 import { getConversationById, updateConversation } from "@/lib/db/queries/whatsapp";
@@ -20,7 +20,7 @@ interface Params {
 
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const conv = await getConversationById(id);
     if (!conv) return apiNotFound("Conversation");
@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const conv = await getConversationById(id);
     if (!conv) return apiNotFound("Conversation");

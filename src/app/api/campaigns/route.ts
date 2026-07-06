@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
 import { listCampaigns, createCampaign } from "@/lib/db/queries/campaign";
@@ -7,10 +7,11 @@ import { campaignCreateSchema } from "@/lib/validations/campaign";
 
 export async function GET() {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     return apiSuccess(await listCampaigns(user.company_id));
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiSuccess([]);
   }
 }

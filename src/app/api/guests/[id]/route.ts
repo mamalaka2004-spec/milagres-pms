@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { guestUpdateSchema } from "@/lib/validations/guest";
 import { getGuestById, updateGuest, deleteGuest } from "@/lib/db/queries/guests";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -18,7 +18,7 @@ interface RouteParams {
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const guest = await getGuestById(id);
     if (!guest) return apiNotFound("Guest");
@@ -26,6 +26,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return apiSuccess(guest);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

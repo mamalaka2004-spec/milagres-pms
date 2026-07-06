@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getReservationById } from "@/lib/db/queries/reservations";
 import { getProperties } from "@/lib/db/queries/properties";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import {
   ReservationEditForm,
   type ReservationEditInitial,
@@ -15,7 +15,7 @@ interface PageProps {
 }
 
 export default async function EditReservationPage({ params }: PageProps) {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const { id } = await params;
 
   let r;

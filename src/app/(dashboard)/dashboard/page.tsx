@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BedDouble, DollarSign, CalendarDays, CreditCard, Star } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { getDashboardData } from "@/lib/db/queries/dashboard";
 import {
   formatCurrency,
@@ -24,7 +24,7 @@ function StatusDot({ status }: { status: string }) {
 }
 
 export default async function DashboardPage() {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const data = await getDashboardData(user.company_id);
   const s = data.stats;
 

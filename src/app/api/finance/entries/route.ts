@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { financialEntrySchema, ENTRY_TYPES } from "@/lib/validations/financial-entry";
 import { listEntries, createEntry, type EntryType } from "@/lib/db/queries/finance";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import {
   apiSuccess,
@@ -13,7 +13,7 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { searchParams } = new URL(request.url);
     const typeParam = searchParams.get("type");
     const validType = typeParam && (ENTRY_TYPES as readonly string[]).includes(typeParam) ? typeParam : undefined;
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     return apiSuccess(data);
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

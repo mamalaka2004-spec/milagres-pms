@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import { getOwners } from "@/lib/db/queries/owners";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/shared/empty-state";
 
 export const dynamic = "force-dynamic";
 
 export default async function OwnersPage() {
-  const user = await requireAuth();
+  const user = await requirePageAuth();
   const owners = await getOwners(user.company_id);
 
   return (

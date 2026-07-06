@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 import { getCampaign, updateCampaign, deleteCampaign, listRecipients } from "@/lib/db/queries/campaign";
@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const campaign = await getCampaign(id);
     if (!campaign) return apiNotFound("Campanha");
@@ -18,6 +18,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return apiSuccess({ ...campaign, recipients });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiServerError(error);
   }
 }

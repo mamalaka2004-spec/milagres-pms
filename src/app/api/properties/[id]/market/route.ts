@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { collectMarketForProperty } from "@/lib/market/collect";
 import { GeckoApiError } from "@/lib/gecko/client";
@@ -51,7 +51,7 @@ const COMP_SELECT =
  */
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const own = await assertOwnership(id, user.company_id);
     if (own === "notfound") return apiNotFound("Property");

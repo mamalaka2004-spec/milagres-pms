@@ -1,11 +1,11 @@
 import { MessageSquare } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requirePageAuth } from "@/lib/auth";
 import { WhatsappShell } from "@/components/whatsapp/whatsapp-shell";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConversationsPage() {
-  await requireAuth();
+  await requirePageAuth();
 
   return (
     <div className="space-y-3">

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireFullAccess, requireRole } from "@/lib/auth";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiNotFound, apiServerError } from "@/lib/api/response";
 import {
   getCampaign,
@@ -23,7 +23,7 @@ async function ownCampaign(id: string, companyId: string) {
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const user = await requireAuth();
+    const user = await requireFullAccess();
     const { id } = await params;
     const owned = await ownCampaign(id, user.company_id);
     if (owned.error === "notfound") return apiNotFound("Campanha");
@@ -31,6 +31,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return apiSuccess(await listRecipients(id));
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
+    if (error instanceof Error && error.message === "Forbidden") return apiForbidden();
     return apiSuccess([]);
   }
 }
