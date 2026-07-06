@@ -24,5 +24,7 @@ export default async function OwnerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <OwnerDetail owner={owner} />;
+  const canManage = user.role === "admin" || user.role === "manager";
+
+  return <OwnerDetail owner={owner} canManage={canManage} />;
 }

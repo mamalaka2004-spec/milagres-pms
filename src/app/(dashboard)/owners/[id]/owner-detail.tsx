@@ -5,9 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Save, Trash2, X, Mail, Phone, FileText, Home } from "lucide-react";
+import { ArrowLeft, Edit, Save, Trash2, X, Mail, Phone, FileText } from "lucide-react";
 import { ownerSchema, type OwnerInput } from "@/lib/validations/owner";
 import { Button, Card, CardContent, Input, Label, Select, Textarea } from "@/components/ui";
+import { OwnershipManager, type OwnershipLink } from "@/components/properties/ownership-manager";
 import type { OwnerWithProperties } from "@/lib/db/queries/owners";
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
@@ -17,7 +18,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   other: "Outro",
 };
 
-export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
+export function OwnerDetail({ owner, canManage }: { owner: OwnerWithProperties; canManage: boolean }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -74,7 +75,14 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
     }
   };
 
-  const ownerships = (owner.property_ownership || []).filter((o) => o.property);
+  const ownershipLinks: OwnershipLink[] = (owner.property_ownership || [])
+    .filter((o) => o.property)
+    .map((o) => ({
+      id: o.id,
+      share_percentage: o.share_percentage,
+      commission_percentage: o.commission_percentage,
+      counterpart: { id: o.property!.id, name: o.property!.name, sublabel: o.property!.code },
+    }));
 
   return (
     <div className="space-y-4 lg:space-y-6 max-w-3xl mx-auto">
@@ -196,29 +204,14 @@ export function OwnerDetail({ owner }: { owner: OwnerWithProperties }) {
 
           <Card>
             <CardContent>
-              <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Imóveis</h2>
-              {ownerships.length === 0 ? (
-                <p className="text-sm text-gray-400">Nenhuma participação em imóvel atribuída.</p>
-              ) : (
-                <div className="space-y-2">
-                  {ownerships.map((o) => (
-                    <Link
-                      key={o.id}
-                      href={`/properties/${o.property!.id}`}
-                      className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-                    >
-                      <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                        <Home size={14} aria-hidden="true" className="text-brand-500" />
-                        {o.property!.name}
-                        <span className="text-xs text-gray-400 font-mono">{o.property!.code}</span>
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {o.share_percentage}% participação · {o.commission_percentage}% comissão
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <h2 className="text-sm font-bold text-gray-900 mb-1 uppercase tracking-wider">Imóveis e repasses</h2>
+              <p className="text-xs text-gray-400 mb-4">Participação na propriedade e comissão de repasse por imóvel.</p>
+              <OwnershipManager
+                mode="owner"
+                anchorId={owner.id}
+                initialLinks={ownershipLinks}
+                canManage={canManage}
+              />
             </CardContent>
           </Card>
 

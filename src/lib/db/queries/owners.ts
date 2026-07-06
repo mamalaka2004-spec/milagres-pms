@@ -116,6 +116,24 @@ export async function assignOwnerToProperty(params: {
   return data;
 }
 
+export async function updateOwnership(
+  ownershipId: string,
+  data: {
+    share_percentage?: number;
+    commission_percentage?: number;
+    is_active?: boolean;
+  }
+) {
+  const supabase = createAdminClient();
+  const { data: row, error } = await (supabase.from("property_ownership") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .update(data)
+    .eq("id", ownershipId)
+    .select()
+    .single();
+  if (error) throw error;
+  return row;
+}
+
 export async function removeOwnership(ownershipId: string) {
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -124,4 +142,30 @@ export async function removeOwnership(ownershipId: string) {
     .eq("id", ownershipId);
   if (error) throw error;
   return { success: true };
+}
+
+// ─── Ownership scope helper ───
+// Resolves an ownership row up to its property/owner (with company_id) so API
+// routes can enforce tenant isolation and log meaningful labels.
+export type OwnershipScope = {
+  id: string;
+  property_id: string;
+  owner_id: string;
+  property: { id: string; name: string; code: string; company_id: string } | null;
+  owner: { id: string; full_name: string; company_id: string } | null;
+};
+
+export async function getOwnershipScope(ownershipId: string): Promise<OwnershipScope | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("property_ownership")
+    .select(`
+      id, property_id, owner_id,
+      property:properties (id, name, code, company_id),
+      owner:owners (id, full_name, company_id)
+    `)
+    .eq("id", ownershipId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as unknown as OwnershipScope | null) || null;
 }

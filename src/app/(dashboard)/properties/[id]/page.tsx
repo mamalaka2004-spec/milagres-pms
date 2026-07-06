@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Users, BedDouble, Bath, MapPin, Clock, BadgeDollarSign, UserCheck } from "lucide-react";
+import { ArrowLeft, Edit, Users, BedDouble, Bath, MapPin, Clock, BadgeDollarSign, UserCheck, FileText } from "lucide-react";
 import { getPropertyById } from "@/lib/db/queries/properties";
 import { getPropertyPricingContext } from "@/lib/db/queries/pricing";
 import { requireAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import { PhotoGallery } from "@/components/properties/photo-gallery";
 import { AmenitySelector } from "@/components/properties/amenity-selector";
 import { ChannelSyncPanel } from "@/components/properties/channel-sync-panel";
 import MarketPanel from "@/components/properties/market-panel";
+import { OwnershipManager, type OwnershipLink } from "@/components/properties/ownership-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,15 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   }
 
   const pricing = await getPropertyPricingContext(user.company_id, id);
-  const owners = (property.property_ownership || []).filter((o) => o.owner && o.is_active);
+  const canManage = user.role === "admin" || user.role === "manager";
+  const ownershipLinks: OwnershipLink[] = (property.property_ownership || [])
+    .filter((o) => o.owner)
+    .map((o) => ({
+      id: o.id,
+      share_percentage: o.share_percentage,
+      commission_percentage: o.commission_percentage,
+      counterpart: { id: o.owner!.id, name: o.owner!.full_name, sublabel: o.owner!.email },
+    }));
 
   return (
     <div className="space-y-4 lg:space-y-6 max-w-5xl mx-auto">
@@ -162,7 +171,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         )}
       </div>
 
-      {/* Owners (#9 — vínculo via property_ownership) */}
+      {/* Owners (#11 — vínculo via property_ownership: participação + comissão/repasse) */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:p-6">
         <div className="flex items-center justify-between gap-2 mb-4">
           <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Proprietários</h2>
@@ -173,29 +182,12 @@ export default async function PropertyDetailPage({ params }: PageProps) {
             <UserCheck size={13} aria-hidden="true" /> Ver todos
           </Link>
         </div>
-        {owners.length === 0 ? (
-          <p className="text-sm text-gray-400">Nenhum proprietário vinculado a este imóvel.</p>
-        ) : (
-          <ul className="divide-y divide-gray-50">
-            {owners.map((o) => (
-              <li key={o.id} className="flex items-center gap-3 py-2.5 text-sm">
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/owners/${o.owner!.id}`}
-                    className="font-medium text-gray-900 hover:text-brand-600 truncate block"
-                  >
-                    {o.owner!.full_name}
-                  </Link>
-                  {o.owner!.email && <div className="text-xs text-gray-400 truncate">{o.owner!.email}</div>}
-                </div>
-                <div className="text-right text-xs text-gray-500">
-                  <div>Participação: <strong className="font-mono">{o.share_percentage}%</strong></div>
-                  <div>Comissão: <strong className="font-mono">{o.commission_percentage}%</strong></div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <OwnershipManager
+          mode="property"
+          anchorId={property.id}
+          initialLinks={ownershipLinks}
+          canManage={canManage}
+        />
       </div>
 
       {/* Location */}
@@ -291,6 +283,26 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           propertyLng={property.longitude}
           propertyBedrooms={property.bedrooms}
         />
+      </div>
+
+      {/* Apresentação do imóvel — gancho para a Fase 10 (não implementado aqui) */}
+      <div className="bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-5 lg:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Apresentação do imóvel</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Página de apresentação pronta para enviar a proprietários e hóspedes.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled
+            title="Disponível na Fase 10"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-400"
+          >
+            <FileText size={15} aria-hidden="true" /> Em breve
+          </button>
+        </div>
       </div>
 
       {/* Settings */}
