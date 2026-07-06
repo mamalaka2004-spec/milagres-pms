@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
       short_description: data.short_description || null,
       house_rules: data.house_rules || null,
       cancellation_policy: data.cancellation_policy || null,
+      cancellation_policy_type: data.cancellation_policy_type,
+      cancellation_cutoff_days: data.cancellation_cutoff_days,
       check_in_time: data.check_in_time,
       check_out_time: data.check_out_time,
       min_nights: data.min_nights,

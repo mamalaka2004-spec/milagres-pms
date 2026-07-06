@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/queries/tasks";
 import { requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
+import { createNotification } from "@/lib/notifications/create";
 import {
   apiSuccess,
   apiError,
@@ -80,6 +81,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     if (status === "canceled") {
       await cancelPendingReservationTasks(existing.id).catch(() => null);
+      // Notificação in-app (#18) — cancelamento é evento-chave. Fire-and-forget.
+      await createNotification({
+        companyId: existing.company_id,
+        type: "reservation.canceled",
+        title: `Reserva cancelada ${existing.booking_code}`,
+        body: cancellation_reason?.trim() || null,
+        entityType: "reservation",
+        entityId: existing.id,
+        link: `/reservations/${existing.id}`,
+        excludeUserId: user.id,
+      });
     }
 
     await logActivity({

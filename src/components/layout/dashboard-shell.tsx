@@ -19,6 +19,8 @@ const pageTitles: Record<string, string> = {
   "/finance": "Financeiro",
   "/operations": "Operações",
   "/ai-assistant": "Assistente IA",
+  "/notifications": "Notificações",
+  "/settings/notifications": "Notificações",
   "/settings/logs": "Atividade",
   "/settings/operations": "Operações & Camareira",
   "/settings": "Ajustes",

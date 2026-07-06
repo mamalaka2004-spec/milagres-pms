@@ -5,6 +5,7 @@ import {
   findOrCreateConversation,
 } from "@/lib/db/queries/whatsapp";
 import { isOutsideBusinessHours } from "@/lib/whatsapp/auth";
+import { createNotification } from "@/lib/notifications/create";
 import { rehostInboundMedia } from "@/lib/whatsapp/media";
 import { inboundWebhookSchema } from "@/lib/validations/whatsapp";
 import {
@@ -111,6 +112,24 @@ export async function POST(request: NextRequest) {
       status: fromMe ? "sent" : undefined,
       bumpUnread: !fromMe,
     });
+
+    // In-app notification (#18): alerta a equipe sobre nova mensagem recebida.
+    // Fire-and-forget — nunca deve derrubar o webhook.
+    if (!fromMe) {
+      const who = payload.contact_name?.trim() || contactPhone;
+      const preview =
+        payload.text?.trim() ||
+        (isMedia ? `[${payload.message_type}]` : "Nova mensagem");
+      await createNotification({
+        companyId: line.company_id,
+        type: "whatsapp.message",
+        title: `Nova mensagem de ${who}`,
+        body: preview.length > 120 ? `${preview.slice(0, 117)}…` : preview,
+        entityType: "whatsapp_conversation",
+        entityId: conv.id,
+        link: "/conversations",
+      });
+    }
 
     // Decide whether the AI should auto-reply (n8n calls /api/whatsapp/ai-reply if true).
     // Never auto-reply to our own outgoing messages.

@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export const propertySchema = z.object({
+export const CANCELLATION_POLICY_TYPES = [
+  "flexible",
+  "moderate",
+  "strict",
+  "non_refundable",
+  "custom",
+] as const;
+
+// Base object (sem refine) — permite derivar o schema de update com `.partial()`.
+const propertyBaseSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
   code: z.string().min(2, "Code is required").max(20).regex(/^[A-Z0-9-]+$/, "Code must be uppercase letters, numbers, and hyphens"),
   slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
@@ -29,9 +38,11 @@ export const propertySchema = z.object({
   description: z.string().max(5000).optional(),
   short_description: z.string().max(500).optional(),
 
-  // Rules
+  // Rules & políticas de reserva (#19)
   house_rules: z.string().max(2000).optional(),
   cancellation_policy: z.string().max(2000).optional(),
+  cancellation_policy_type: z.enum(CANCELLATION_POLICY_TYPES).default("flexible"),
+  cancellation_cutoff_days: z.coerce.number().int().min(0).max(365).default(0),
   check_in_time: z.string().regex(/^\d{2}:\d{2}$/, "Format must be HH:MM").default("15:00"),
   check_out_time: z.string().regex(/^\d{2}:\d{2}$/, "Format must be HH:MM").default("11:00"),
   min_nights: z.coerce.number().int().min(1).max(365).default(1),
@@ -58,7 +69,14 @@ export const propertySchema = z.object({
   booking_listing_url: z.string().url("Invalid URL").optional().or(z.literal("")),
 });
 
+// Schema de criação: base + validação cruzada (máx. de noites ≥ mín. de noites).
+export const propertySchema = propertyBaseSchema.refine(
+  (d) => d.max_nights >= d.min_nights,
+  { message: "Máx. de noites deve ser ≥ mín. de noites", path: ["max_nights"] }
+);
+
 export type PropertyInput = z.infer<typeof propertySchema>;
 
-export const propertyUpdateSchema = propertySchema.partial();
+// Update parcial deriva do base (ZodObject), sem o refine cruzado.
+export const propertyUpdateSchema = propertyBaseSchema.partial();
 export type PropertyUpdateInput = z.infer<typeof propertyUpdateSchema>;
