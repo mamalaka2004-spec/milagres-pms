@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SwRegister } from "@/components/pwa/sw-register";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 export const metadata: Metadata = {
   title: "Milagres PMS",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-screen">
         {children}
         <SwRegister />
+        <InstallPrompt />
       </body>
     </html>
   );
