@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarDays, Users, Home, DollarSign,
   ClipboardList, Sparkles, Settings, ChevronLeft, ChevronRight,
   X, Leaf, Menu, UserCheck, MessageSquare, Target, TrendingUp, Megaphone,
-  BadgeDollarSign, Globe, BookOpen,
+  BadgeDollarSign, Globe, BookOpen, BedDouble,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -25,7 +25,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { id: "reservations", label: "Reservas", href: "/reservations", icon: CalendarDays, modes: ["locacao"] },
+  { id: "reservations", label: "Reservas", href: "/reservations", icon: BedDouble, modes: ["locacao"] },
   { id: "calendar", label: "Agenda", href: "/calendar", icon: CalendarDays, modes: ["locacao"] },
   { id: "guests", label: "Hóspedes", href: "/guests", icon: Users, modes: ["locacao"] },
   { id: "conversations", label: "Chat Reservas", href: "/conversations", icon: MessageSquare, modes: ["locacao"] },
@@ -219,7 +219,7 @@ export function BottomNav({ role }: { role?: string }) {
         ]
       : [
           { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
-          { href: "/reservations", icon: CalendarDays, label: "Reservas" },
+          { href: "/reservations", icon: BedDouble, label: "Reservas" },
           { href: "/calendar", icon: CalendarDays, label: "Agenda" },
           { href: "/properties", icon: Home, label: "Imóveis" },
           { href: "/ai-assistant", icon: Sparkles, label: "IA" },
