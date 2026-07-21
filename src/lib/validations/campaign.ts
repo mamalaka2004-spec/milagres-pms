@@ -42,5 +42,24 @@ export const prospectSchema = z.object({
   contact_ids: z.array(z.string().uuid()).min(1, "Selecione ao menos 1 contato"),
 });
 
+// ─── Listas de contatos (036) ──────────────────────────────────────────────
+export const contactListCreateSchema = z.object({
+  name: z.string().min(2, "Nome obrigatório").max(120),
+  description: z.string().max(500).nullable().optional(),
+});
+
+export const contactListUpdateSchema = contactListCreateSchema.partial();
+
+/** Adicionar/remover membros em lote. */
+export const contactListMembersSchema = z.object({
+  contact_ids: z.array(z.string().uuid()).min(1, "Selecione ao menos 1 contato"),
+});
+
+/** Marcar/desmarcar "não contatar" (opt-out manual, LGPD). */
+export const contactDoNotContactSchema = z.object({
+  do_not_contact: z.boolean(),
+});
+
 export type CampaignCreate = z.infer<typeof campaignCreateSchema>;
 export type AddRecipients = z.infer<typeof addRecipientsSchema>;
+export type ContactListCreate = z.infer<typeof contactListCreateSchema>;

@@ -127,8 +127,15 @@ export function ContactPicker({
                       {sel && <Check size={13} />}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-gray-900">
-                        {c.display_name || c.phone_e164 || c.phone_canonical}
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-medium text-gray-900">
+                          {c.display_name || c.phone_e164 || c.phone_canonical}
+                        </span>
+                        {c.do_not_contact && (
+                          <span className="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">
+                            Não contatar
+                          </span>
+                        )}
                       </div>
                       <div className="truncate text-[11px] text-gray-400">
                         {c.phone_e164 || c.phone_canonical}

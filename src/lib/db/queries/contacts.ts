@@ -5,7 +5,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ContactLite } from "@/types/campaign";
 
-const COLS = "id, display_name, phone_e164, phone_canonical, category, unit_hint, line_id";
+const COLS =
+  "id, display_name, phone_e164, phone_canonical, category, unit_hint, line_id, do_not_contact";
 
 export async function searchContacts(
   companyId: string,

@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui";
 import { ContactPicker } from "./contact-picker";
+import { ContactListsTab } from "./contact-lists-tab";
 import { FunnelTargetSelect } from "./funnel-target-select";
 import { CAMPAIGN_STATUS_META, type Campaign, type ContactLite } from "@/types/campaign";
 
@@ -18,12 +19,13 @@ interface LineLite {
 }
 
 export function CampaignsShell() {
-  const [tab, setTab] = useState<"campanhas" | "prospeccao">("campanhas");
+  const [tab, setTab] = useState<"campanhas" | "listas" | "prospeccao">("campanhas");
   return (
     <div className="space-y-5">
       <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
         {([
           { id: "campanhas", label: "Campanhas", icon: Megaphone },
+          { id: "listas", label: "Listas", icon: ListChecks },
           { id: "prospeccao", label: "Prospecção", icon: Target },
         ] as const).map((t) => (
           <button
@@ -39,7 +41,9 @@ export function CampaignsShell() {
           </button>
         ))}
       </div>
-      {tab === "campanhas" ? <CampaignsTab /> : <ProspectTab />}
+      {tab === "campanhas" && <CampaignsTab />}
+      {tab === "listas" && <ContactListsTab />}
+      {tab === "prospeccao" && <ProspectTab />}
     </div>
   );
 }
