@@ -24,6 +24,12 @@ export const addRecipientsSchema = z.object({
 
 export const sendCampaignSchema = z.object({
   scheduled_at: z.string().nullable().optional(), // presente = agenda; ausente/null = envia agora
+  list_ids: z.array(z.string().uuid()).optional(), // listas salvas como audiência extra
+});
+
+/** Pausar/retomar/cancelar uma campanha. */
+export const campaignControlSchema = z.object({
+  action: z.enum(["pause", "resume", "cancel"]),
 });
 
 /** Callback do n8n (autenticado por header x-webhook-secret). */

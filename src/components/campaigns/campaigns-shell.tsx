@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks } from "lucide-react";
+import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
@@ -258,19 +258,42 @@ function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: (
   const meta = CAMPAIGN_STATUS_META[campaign.status];
   const done = campaign.sent_count + campaign.failed_count;
   const pct = campaign.total_count > 0 ? Math.round((done / campaign.total_count) * 100) : 0;
-  const canSend = campaign.status === "draft" || campaign.status === "scheduled";
+  const canSend = campaign.status === "draft";
+  const canPause = campaign.status === "sending" || campaign.status === "scheduled";
+  const canResume = campaign.status === "paused";
+
+  async function control(action: "pause" | "resume") {
+    setBusy(true);
+    try {
+      await api(`/api/campaigns/${campaign.id}/control`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      toast({ title: action === "pause" ? "Campanha pausada" : "Campanha retomada", variant: "success" });
+      onChanged();
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "", variant: "error" });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function send() {
     setBusy(true);
     try {
       const body = scheduledAt ? { scheduled_at: new Date(scheduledAt).toISOString() } : {};
-      const res = await api<{ status: string }>(`/api/campaigns/${campaign.id}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await api<{ queued: number; skipped: number; scheduled_at: string | null }>(
+        `/api/campaigns/${campaign.id}/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
       toast({
-        title: res.status === "scheduled" ? "Campanha agendada" : "Disparo iniciado",
+        title: res.scheduled_at ? "Campanha agendada" : "Disparo iniciado",
+        description: `${res.queued} na fila${res.skipped ? ` · ${res.skipped} pulados (opt-out/conversa ativa)` : ""}`,
         variant: "success",
       });
       onChanged();
@@ -327,6 +350,24 @@ function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: (
               className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50"
             >
               <Send size={13} /> Disparar
+            </button>
+          )}
+          {canPause && (
+            <button
+              onClick={() => control("pause")}
+              disabled={busy}
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Pause size={13} /> Pausar
+            </button>
+          )}
+          {canResume && (
+            <button
+              onClick={() => control("resume")}
+              disabled={busy}
+              className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+            >
+              <Play size={13} /> Retomar
             </button>
           )}
           {campaign.status !== "sending" && (

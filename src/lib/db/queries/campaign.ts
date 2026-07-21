@@ -1,13 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ===========================================================================
-// Campanhas + destinatários — query layer (Fase 2 / Etapa B)
-// Disparo orquestrado pelo n8n; aqui só persistimos estado + contadores.
+// Campanhas + destinatários — query layer
+// Disparo pelo worker campaign-tick (edge function + pg_cron); aqui vive o
+// enqueue (fila + scheduled_for), steps de cadência e progresso/contadores.
 // ===========================================================================
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalBR } from "@/lib/whatsapp/phone";
 import { createDeal } from "@/lib/db/queries/funnel";
 import { getContactsByIds } from "@/lib/db/queries/contacts";
-import type { Campaign, CampaignRecipient, CampaignStatus, RecipientStatus, ContactLite } from "@/types/campaign";
+import { listMemberContactIds } from "@/lib/db/queries/contact-lists";
+import { nextSlot, randInt } from "@/lib/campaigns/schedule";
+import type {
+  Campaign,
+  CampaignRecipient,
+  CampaignStatus,
+  CampaignStep,
+  RecipientStatus,
+  ContactLite,
+} from "@/types/campaign";
 
 function db() {
   return createAdminClient();
@@ -158,23 +168,7 @@ export async function setCampaignStatus(
   await (db().from("campaigns") as any).update({ status, ...extra }).eq("id", id);
 }
 
-/** Callback do n8n: atualiza um destinatário e reprocessa contadores/estado. */
-export async function updateRecipientStatus(
-  campaignId: string,
-  recipientId: string,
-  status: RecipientStatus,
-  extra: { external_id?: string | null; error?: string | null } = {}
-): Promise<void> {
-  const patch: Record<string, unknown> = { status };
-  if (extra.external_id !== undefined) patch.external_id = extra.external_id;
-  if (extra.error !== undefined) patch.error = extra.error;
-  if (status === "sent" || status === "delivered") patch.sent_at = new Date().toISOString();
-  await (db().from("campaign_recipients") as any).update(patch).eq("id", recipientId).eq("campaign_id", campaignId);
-  await refreshCampaignProgress(campaignId);
-}
-
-/** Recalcula sent/failed e finaliza a campanha quando não há mais pendentes.
- *  Usa contagens (head) — o n8n chama isto uma vez por destinatário. */
+/** Recalcula sent/failed e finaliza a campanha quando não há mais pendentes. */
 export async function refreshCampaignProgress(campaignId: string): Promise<void> {
   const client = db();
   const countBy = async (statuses: RecipientStatus[]): Promise<number> => {
@@ -184,18 +178,157 @@ export async function refreshCampaignProgress(campaignId: string): Promise<void>
       .in("status", statuses);
     return count ?? 0;
   };
-  const [sent, failed, pending, total] = await Promise.all([
-    countBy(["sent", "delivered"]),
+  const [sent, failed, active, total] = await Promise.all([
+    countBy(["sent", "delivered", "replied"]),
     countBy(["failed"]),
     countBy(["pending", "sending"]),
-    countBy(["pending", "sending", "sent", "delivered", "failed", "skipped"]),
+    countBy(["pending", "sending", "sent", "delivered", "failed", "skipped", "replied", "opted_out"]),
   ]);
   const patch: Record<string, unknown> = { sent_count: sent, failed_count: failed };
-  if (pending === 0 && total > 0) {
-    patch.status = failed === total ? "failed" : "sent";
+  if (active === 0 && total > 0 && sent + failed > 0) {
+    patch.status = failed === sent + failed ? "failed" : "sent";
     patch.finished_at = new Date().toISOString();
   }
   await (client.from("campaigns") as any).update(patch).eq("id", campaignId);
+}
+
+// ─── Steps (cadência) ──────────────────────────────────────────────────────
+export async function listSteps(campaignId: string): Promise<CampaignStep[]> {
+  const { data, error } = await (db().from("campaign_steps") as any)
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .order("order_index", { ascending: true });
+  if (error) throw error;
+  return (data as CampaignStep[]) || [];
+}
+
+/** Compat 024: campanhas criadas só com message_template ganham o passo 0. */
+export async function ensureStepFromTemplate(campaign: Campaign): Promise<CampaignStep[]> {
+  const steps = await listSteps(campaign.id);
+  if (steps.length > 0) return steps;
+  if (!campaign.message_template && !campaign.media_url) return [];
+  const { error } = await (db().from("campaign_steps") as any).insert({
+    campaign_id: campaign.id,
+    order_index: 0,
+    kind: "template",
+    body: campaign.message_template || null,
+    media_url: campaign.media_url,
+    media_mime_type: campaign.media_mime_type,
+  });
+  if (error) throw error;
+  return listSteps(campaign.id);
+}
+
+// ─── Enqueue (substitui o disparo via n8n) ─────────────────────────────────
+// Prepara a fila para o worker campaign-tick (edge function + pg_cron):
+// resolve audiência de listas, filtra opt-out e conversas ativas, preenche
+// variáveis e distribui scheduled_for com gap randômico dentro da janela.
+export async function enqueueCampaign(
+  campaign: Campaign,
+  opts: { scheduledAt?: string | null; listIds?: string[] } = {}
+): Promise<{ queued: number; skipped: number }> {
+  const client = db();
+
+  // Audiência extra vinda de listas salvas.
+  if (opts.listIds?.length) {
+    const contactIds = await listMemberContactIds(opts.listIds);
+    const contacts = await getContactsByIds(campaign.company_id, contactIds);
+    await addRecipientsFromContacts(campaign.id, contacts);
+  }
+
+  const recipients = (await listRecipients(campaign.id)).filter((r) => r.status === "pending");
+  if (recipients.length === 0) return { queued: 0, skipped: 0 };
+
+  // Opt-out (LGPD): nunca enviar para do_not_contact.
+  const canonicals = [...new Set(recipients.map((r) => r.phone_canonical).filter(Boolean))];
+  const optedOut = new Set<string>();
+  for (let i = 0; i < canonicals.length; i += 200) {
+    const { data } = await (client.from("whatsapp_contacts") as any)
+      .select("phone_canonical")
+      .eq("company_id", campaign.company_id)
+      .eq("do_not_contact", true)
+      .in("phone_canonical", canonicals.slice(i, i + 200));
+    for (const row of (data as { phone_canonical: string }[]) || []) optedOut.add(row.phone_canonical);
+  }
+
+  // Conversas ativas (proxy: aberta com movimento nos últimos 7 dias) — não
+  // atropelar atendimento/negociação em andamento.
+  const activePhones = new Set<string>();
+  if (campaign.skip_active_conversations && campaign.line_id) {
+    const phones = [...new Set(recipients.map((r) => (r.phone_e164.startsWith("+") ? r.phone_e164 : `+${r.phone_e164}`)))];
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString();
+    for (let i = 0; i < phones.length; i += 200) {
+      const { data } = await (client.from("whatsapp_conversations") as any)
+        .select("contact_phone")
+        .eq("line_id", campaign.line_id)
+        .eq("status", "open")
+        .gte("last_message_at", since)
+        .in("contact_phone", phones.slice(i, i + 200));
+      for (const row of (data as { contact_phone: string }[]) || []) activePhones.add(row.contact_phone);
+    }
+  }
+
+  // Distribuição de scheduled_for: gap randômico dentro da janela.
+  const schedule = campaign.schedule;
+  const startAt = opts.scheduledAt ? new Date(opts.scheduledAt) : new Date();
+  let cursor = nextSlot(startAt.getTime() > Date.now() ? startAt : new Date(), schedule);
+
+  let queued = 0;
+  let skipped = 0;
+  const updates: Promise<unknown>[] = [];
+  for (const r of recipients) {
+    const phonePlus = r.phone_e164.startsWith("+") ? r.phone_e164 : `+${r.phone_e164}`;
+    const isOptOut = !!r.phone_canonical && optedOut.has(r.phone_canonical);
+    const isActive = activePhones.has(phonePlus);
+    if (isOptOut || isActive) {
+      skipped++;
+      updates.push(
+        (client.from("campaign_recipients") as any)
+          .update({
+            status: "skipped",
+            error: isOptOut ? "opt-out (não contatar)" : "conversa ativa nos últimos 7 dias",
+          })
+          .eq("id", r.id)
+      );
+      continue;
+    }
+    const nome = (r.name || "").trim();
+    updates.push(
+      (client.from("campaign_recipients") as any)
+        .update({
+          scheduled_for: cursor.toISOString(),
+          current_step: 0,
+          attempts: 0,
+          error: null,
+          variables: {
+            nome: nome || "",
+            primeiro_nome: nome.split(/\s+/)[0] || "",
+            telefone: phonePlus,
+          },
+        })
+        .eq("id", r.id)
+    );
+    queued++;
+    cursor = nextSlot(
+      new Date(
+        cursor.getTime() +
+          randInt(campaign.min_interval_seconds || 30, campaign.max_interval_seconds || 90) * 1000
+      ),
+      schedule
+    );
+  }
+  // Em lotes para não abrir centenas de conexões simultâneas.
+  for (let i = 0; i < updates.length; i += 20) {
+    await Promise.all(updates.slice(i, i + 20));
+  }
+
+  await setCampaignStatus(campaign.id, "scheduled", {
+    scheduled_at: opts.scheduledAt ?? null,
+    audience: opts.listIds?.length ? { list_ids: opts.listIds } : campaign.audience,
+    finished_at: null,
+  });
+  await recomputeTotal(campaign.id);
+  return { queued, skipped };
 }
 
 // ─── Prospecção cross-base: contatos → etapa de funil (cria deals) ─────────

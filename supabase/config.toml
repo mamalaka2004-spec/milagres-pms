@@ -1,0 +1,6 @@
+project_id = "xmmuenaaodlqubfotwzr"
+
+# Worker de campanhas: chamado pelo pg_cron via net.http_post com header
+# x-cron-secret (ver supabase/campaign_cron.sql). Sem JWT — auth própria.
+[functions.campaign-tick]
+verify_jwt = false

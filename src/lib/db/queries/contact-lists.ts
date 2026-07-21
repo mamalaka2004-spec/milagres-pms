@@ -108,6 +108,16 @@ export async function removeMembers(listId: string, contactIds: string[]): Promi
   return countMembers(listId);
 }
 
+/** IDs de contato (dedup) de um conjunto de listas — audiência de campanha. */
+export async function listMemberContactIds(listIds: string[]): Promise<string[]> {
+  if (!listIds.length) return [];
+  const { data, error } = await (db().from("contact_list_members") as any)
+    .select("contact_id")
+    .in("list_id", listIds);
+  if (error) throw error;
+  return [...new Set(((data as { contact_id: string }[]) || []).map((r) => r.contact_id))];
+}
+
 export async function countMembers(listId: string): Promise<number> {
   const { count } = await (db().from("contact_list_members") as any)
     .select("contact_id", { count: "exact", head: true })
