@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Target, Loader2, Search, Bot, BotOff, AlertCircle, Phone, Sparkles,
   LayoutGrid, MessageSquare, ChevronLeft, Maximize2, Minimize2,
-  PanelRightClose, PanelRightOpen,
+  PanelRightClose, PanelRightOpen, List,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { FunnelBoard } from "@/components/funnel/funnel-board";
+import { FunnelList } from "@/components/funnel/funnel-list";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MediaContent } from "@/components/chat/media-content";
 import { api, formatTime } from "@/lib/chat/utils";
@@ -79,6 +80,7 @@ export function SalesShell() {
 
 function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[]; activeLine: LineRow; onSwitchLine: (id: string) => void; }) {
   const [view, setView] = useState<"conversas" | "funil">("conversas");
+  const [funnelView, setFunnelView] = useState<"kanban" | "lista">("kanban");
   const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
 
   return (
@@ -93,6 +95,17 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
             </button>
           ))}
         </div>
+        {view === "funil" && (
+          <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
+            {([{ id: "kanban", label: "Kanban", icon: LayoutGrid }, { id: "lista", label: "Lista", icon: List }] as const).map((v) => (
+              <button key={v.id} onClick={() => setFunnelView(v.id)} aria-pressed={funnelView === v.id}
+                className={cn("px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center gap-1.5",
+                  funnelView === v.id ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700")}>
+                <v.icon size={12} /> {v.label}
+              </button>
+            ))}
+          </div>
+        )}
         {lines.length > 1 && (
           <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
             {lines.map((l) => (
@@ -108,12 +121,21 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
 
       {view === "funil" ? (
         <div className="flex-1 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0 p-3 flex flex-col">
-          <FunnelBoard
-            type="vendas"
-            onOpenDeal={(deal) => {
-              if (deal.conversation_id) { setFocusLeadId(deal.conversation_id); setView("conversas"); }
-            }}
-          />
+          {funnelView === "lista" ? (
+            <FunnelList
+              type="vendas"
+              onOpenDeal={(deal) => {
+                if (deal.conversation_id) { setFocusLeadId(deal.conversation_id); setView("conversas"); }
+              }}
+            />
+          ) : (
+            <FunnelBoard
+              type="vendas"
+              onOpenDeal={(deal) => {
+                if (deal.conversation_id) { setFocusLeadId(deal.conversation_id); setView("conversas"); }
+              }}
+            />
+          )}
         </div>
       ) : (
         <div className="flex-1 flex border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0">

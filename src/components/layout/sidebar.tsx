@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarDays, Users, Home, DollarSign,
   ClipboardList, Sparkles, Settings, ChevronLeft, ChevronRight,
   X, Leaf, Menu, UserCheck, MessageSquare, Target, TrendingUp, Megaphone,
-  BadgeDollarSign, Globe, BookOpen, BedDouble,
+  BadgeDollarSign, Globe, BookOpen, BedDouble, BookUser,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
   { id: "conversations", label: "Chat Reservas", href: "/conversations", icon: MessageSquare, modes: ["locacao"] },
   { id: "vendas", label: "Chat Vendas", href: "/vendas", icon: Target, modes: ["vendas"] },
   { id: "campaigns", label: "Campanhas", href: "/campaigns", icon: Megaphone },
+  { id: "contacts", label: "Contatos", href: "/contacts", icon: BookUser },
   { id: "properties", label: "Imóveis", href: "/properties", icon: Home },
   { id: "market", label: "Análise de Mercado", href: "/market", icon: TrendingUp, modes: ["locacao"] },
   { id: "pricing", label: "Precificação", href: "/pricing", icon: BadgeDollarSign, modes: ["locacao"] },

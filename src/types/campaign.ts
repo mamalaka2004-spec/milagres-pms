@@ -155,6 +155,11 @@ export interface ContactLite {
   unit_hint: string | null;
   line_id: string | null;
   do_not_contact?: boolean;
+  tags?: string[];
+  rating?: number | null;
+  notes?: string | null;
+  source?: string | null;
+  created_at?: string;
 }
 
 export const CONTACT_CATEGORY_LABELS: Record<string, string> = {
