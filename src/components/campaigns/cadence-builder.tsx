@@ -1,7 +1,16 @@
 "use client";
 
-import { MessageSquareText, Sparkles, Plus, Trash2, Clock } from "lucide-react";
+import { useState } from "react";
+import { MessageSquareText, Sparkles, Plus, Trash2, Clock, Eye, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { expandSpintax, substituteVars } from "@/lib/campaigns/template";
+
+/** Dados de exemplo do preview — mesmas chaves que o worker injeta no envio. */
+const SAMPLE_VARS = {
+  nome: "Marina Costa",
+  primeiro_nome: "Marina",
+  telefone: "+55 82 99999-9999",
+};
 
 /** Passo em edição no compose (vira campaign_steps no PUT /steps). */
 export interface CadenceStepDraft {
@@ -111,6 +120,7 @@ export function CadenceBuilder({
                 <code className="rounded bg-gray-100 px-1">{"{{primeiro_nome}}"}</code> · Variação (antiban):{" "}
                 <code className="rounded bg-gray-100 px-1">{"{Olá|Oi|E aí}"}</code> sorteia uma opção por envio
               </p>
+              <StepPreview body={s.body} />
             </>
           ) : (
             <>
@@ -137,6 +147,48 @@ export function CadenceBuilder({
         >
           <Plus size={13} /> Adicionar follow-up (se não responder)
         </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Prévia do que o contato recebe: spintax sorteado + variáveis substituídas.
+ * Como o spintax varia a cada envio, o botão regenera outra combinação.
+ */
+function StepPreview({ body }: { body: string }) {
+  const [open, setOpen] = useState(false);
+  const [seed, setSeed] = useState(0);
+  if (!body.trim()) return null;
+
+  const rendered = substituteVars(expandSpintax(body), SAMPLE_VARS);
+  void seed; // recomputa a cada clique em "outra variação"
+
+  return (
+    <div className="mt-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-brand-600"
+      >
+        <Eye size={11} /> {open ? "Ocultar prévia" : "Ver prévia"}
+      </button>
+      {open && (
+        <div className="mt-1 rounded-lg bg-[#e7f7d8] px-3 py-2">
+          <p className="whitespace-pre-wrap text-sm text-gray-800">{rendered}</p>
+          <div className="mt-1.5 flex items-center justify-between">
+            <span className="text-[10px] text-gray-500">exemplo: {SAMPLE_VARS.nome}</span>
+            {/[{][^{}]*\|[^{}]*[}]/.test(body) && (
+              <button
+                type="button"
+                onClick={() => setSeed((s) => s + 1)}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-600 hover:text-brand-600"
+              >
+                <RefreshCw size={10} /> outra variação
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks, Pause, Play } from "lucide-react";
+import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks, Pause, Play, Pencil, Copy } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
@@ -19,6 +19,7 @@ import {
 import {
   CAMPAIGN_STATUS_META,
   type Campaign,
+  type CampaignStep,
   type ContactLite,
   type ContactList,
 } from "@/types/campaign";
@@ -67,6 +68,7 @@ function CampaignsTab() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
+  const [editing, setEditing] = useState<Campaign | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -108,7 +110,7 @@ function CampaignsTab() {
 
   return (
     <div className="space-y-4">
-      {!composing && (
+      {!composing && !editing && (
         <button
           onClick={() => setComposing(true)}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
@@ -116,11 +118,16 @@ function CampaignsTab() {
           <Plus size={16} /> Nova campanha
         </button>
       )}
-      {composing && (
+      {(composing || editing) && (
         <ComposeCampaign
-          onClose={() => setComposing(false)}
+          campaign={editing}
+          onClose={() => {
+            setComposing(false);
+            setEditing(null);
+          }}
           onSaved={() => {
             setComposing(false);
+            setEditing(null);
             load();
           }}
         />
@@ -132,7 +139,7 @@ function CampaignsTab() {
       ) : (
         <ul className="space-y-2">
           {campaigns.map((c) => (
-            <CampaignRow key={c.id} campaign={c} onChanged={load} />
+            <CampaignRow key={c.id} campaign={c} onChanged={load} onEdit={() => setEditing(c)} />
           ))}
         </ul>
       )}
@@ -140,27 +147,71 @@ function CampaignsTab() {
   );
 }
 
-function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState("");
+function ComposeCampaign({
+  campaign,
+  onClose,
+  onSaved,
+}: {
+  /** Presente = edição; ausente = criação. */
+  campaign?: Campaign | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = !!campaign;
+  const [name, setName] = useState(campaign?.name ?? "");
   const [lines, setLines] = useState<LineLite[]>([]);
-  const [lineId, setLineId] = useState<string>("");
+  const [lineId, setLineId] = useState<string>(campaign?.line_id ?? "");
   const [steps, setSteps] = useState<CadenceStepDraft[]>([{ ...EMPTY_STEP, wait_hours: 0 }]);
-  const [antiban, setAntiban] = useState<AntibanConfig>(ANTIBAN_DEFAULTS);
+  const [antiban, setAntiban] = useState<AntibanConfig>(
+    campaign
+      ? {
+          min_interval_seconds: campaign.min_interval_seconds,
+          max_interval_seconds: campaign.max_interval_seconds,
+          daily_limit: campaign.daily_limit,
+          hourly_limit: campaign.hourly_limit,
+          schedule: campaign.schedule,
+          simulate_typing: campaign.simulate_typing,
+          opt_out_keywords: campaign.opt_out_keywords ?? ANTIBAN_DEFAULTS.opt_out_keywords,
+          skip_active_conversations: campaign.skip_active_conversations,
+        }
+      : ANTIBAN_DEFAULTS
+  );
   const [lists, setLists] = useState<ContactList[]>([]);
-  const [listIds, setListIds] = useState<string[]>([]);
+  const [listIds, setListIds] = useState<string[]>(campaign?.audience?.list_ids ?? []);
   const [recipients, setRecipients] = useState<ContactLite[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loadingSteps, setLoadingSteps] = useState(isEdit);
 
   useEffect(() => {
     api<LineLite[]>(`/api/whatsapp/lines`)
       .then((ls) => {
         setLines(ls);
         // Campanhas são de Vendas por padrão — pré-seleciona a linha sales.
-        setLineId(ls.find((l) => l.purpose === "sales")?.id ?? ls[0]?.id ?? "");
+        setLineId((cur) => cur || ls.find((l) => l.purpose === "sales")?.id || ls[0]?.id || "");
       })
       .catch(() => setLines([]));
     api<ContactList[]>(`/api/contact-lists`).then(setLists).catch(() => setLists([]));
   }, []);
+
+  // Edição: carrega os passos salvos da cadência.
+  useEffect(() => {
+    if (!campaign) return;
+    api<CampaignStep[]>(`/api/campaigns/${campaign.id}/steps`)
+      .then((ss) => {
+        if (ss.length) {
+          setSteps(
+            ss.map((s) => ({
+              kind: s.kind,
+              body: s.body ?? "",
+              ai_prompt: s.ai_prompt ?? "",
+              wait_hours: Number(s.wait_hours) || 0,
+            }))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSteps(false));
+  }, [campaign]);
 
   const line = lines.find((l) => l.id === lineId) ?? null;
   const firstStep = steps[0];
@@ -187,19 +238,26 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
     if (!name.trim() || !stepsValid || saving) return;
     setSaving(true);
     try {
-      const campaign = await api<Campaign>(`/api/campaigns`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          line_id: lineId || null,
-          message_template:
-            firstStep.kind === "template" ? firstStep.body.trim() : "(mensagem gerada por IA)",
-          ...antiban,
-          audience: listIds.length ? { list_ids: listIds } : null,
-        }),
-      });
-      await api(`/api/campaigns/${campaign.id}/steps`, {
+      const payload = {
+        name: name.trim(),
+        line_id: lineId || null,
+        message_template:
+          firstStep.kind === "template" ? firstStep.body.trim() : "(mensagem gerada por IA)",
+        ...antiban,
+        audience: listIds.length ? { list_ids: listIds } : null,
+      };
+      const saved = isEdit
+        ? await api<Campaign>(`/api/campaigns/${campaign!.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await api<Campaign>(`/api/campaigns`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+      await api(`/api/campaigns/${saved.id}/steps`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -212,15 +270,15 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
         }),
       });
       if (recipients.length > 0) {
-        await api(`/api/campaigns/${campaign.id}/recipients`, {
+        await api(`/api/campaigns/${saved.id}/recipients`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contact_ids: recipients.map((r) => r.id) }),
         });
       }
       toast({
-        title: "Campanha criada",
-        description: `${steps.length} passo(s) · ${listIds.length} lista(s) · ${recipients.length} contato(s) avulso(s)`,
+        title: isEdit ? "Campanha atualizada" : "Campanha criada",
+        description: `${steps.length} passo(s) · ${listIds.length} lista(s)${recipients.length ? ` · ${recipients.length} avulso(s)` : ""}`,
         variant: "success",
       });
       onSaved();
@@ -231,8 +289,22 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
     }
   }
 
+  if (loadingSteps) {
+    return (
+      <div className="flex justify-center rounded-xl border border-gray-200 bg-white py-12 text-gray-400">
+        <Loader2 className="animate-spin" size={20} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+      {isEdit && (
+        <div className="flex items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">
+          <Pencil size={13} /> Editando <b>{campaign!.name}</b>
+          {campaign!.status !== "draft" && " — as mudanças valem para os próximos envios."}
+        </div>
+      )}
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-600">Nome da campanha</label>
@@ -323,14 +395,23 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
           title={!windowOk ? "Corrija a janela de envio em Proteção antiban" : undefined}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
-          {saving && <Loader2 size={15} className="animate-spin" />} Salvar rascunho
+          {saving && <Loader2 size={15} className="animate-spin" />}
+          {isEdit ? "Salvar alterações" : "Salvar rascunho"}
         </button>
       </div>
     </div>
   );
 }
 
-function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: () => void }) {
+function CampaignRow({
+  campaign,
+  onChanged,
+  onEdit,
+}: {
+  campaign: Campaign;
+  onChanged: () => void;
+  onEdit: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [confirmSend, setConfirmSend] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -394,6 +475,19 @@ function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: (
     }
   }
 
+  async function clone() {
+    setBusy(true);
+    try {
+      const copy = await api<Campaign>(`/api/campaigns/${campaign.id}/clone`, { method: "POST" });
+      toast({ title: "Campanha duplicada", description: copy.name, variant: "success" });
+      onChanged();
+    } catch (e) {
+      toast({ title: "Erro ao duplicar", description: e instanceof Error ? e.message : "", variant: "error" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-3">
       <div className="flex items-start justify-between gap-3">
@@ -453,7 +547,15 @@ function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: (
             </button>
           )}
           {campaign.status !== "sending" && (
-            <button onClick={() => setConfirmDelete(true)} className="rounded-lg p-1.5 text-gray-300 hover:text-red-500">
+            <button onClick={onEdit} disabled={busy} className="rounded-lg p-1.5 text-gray-300 hover:text-gray-600 disabled:opacity-50" title="Editar campanha">
+              <Pencil size={15} />
+            </button>
+          )}
+          <button onClick={clone} disabled={busy} className="rounded-lg p-1.5 text-gray-300 hover:text-gray-600 disabled:opacity-50" title="Duplicar campanha">
+            <Copy size={15} />
+          </button>
+          {campaign.status !== "sending" && (
+            <button onClick={() => setConfirmDelete(true)} className="rounded-lg p-1.5 text-gray-300 hover:text-red-500" title="Remover">
               <Trash2 size={15} />
             </button>
           )}

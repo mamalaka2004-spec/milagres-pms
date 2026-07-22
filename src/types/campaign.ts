@@ -160,6 +160,11 @@ export interface ContactLite {
   notes?: string | null;
   source?: string | null;
   created_at?: string;
+  /** Nome estruturado (migration 040) — base de {{primeiro_nome}}. */
+  first_name?: string | null;
+  last_name?: string | null;
+  social_name?: string | null;
+  name_reviewed_at?: string | null;
 }
 
 export const CONTACT_CATEGORY_LABELS: Record<string, string> = {

@@ -10,6 +10,7 @@ import { createDeal } from "@/lib/db/queries/funnel";
 import { getContactsByIds } from "@/lib/db/queries/contacts";
 import { listMemberContactIds } from "@/lib/db/queries/contact-lists";
 import { nextSlot, randInt, windowIsValid, describeWindow } from "@/lib/campaigns/schedule";
+import { preferredFirstName, preferredFullName } from "@/lib/contacts/name";
 import type {
   Campaign,
   CampaignRecipient,
@@ -22,6 +23,14 @@ import type {
 function db() {
   return createAdminClient();
 }
+
+/** Campos de nome lidos do fonebook para montar {{nome}}/{{primeiro_nome}}. */
+type NameSource = {
+  first_name?: string | null;
+  last_name?: string | null;
+  social_name?: string | null;
+  display_name?: string | null;
+};
 
 // ─── Campaigns CRUD ────────────────────────────────────────────────────────
 export async function listCampaigns(companyId: string): Promise<Campaign[]> {
@@ -235,6 +244,50 @@ export async function ensureStepFromTemplate(campaign: Campaign): Promise<Campai
   return listSteps(campaign.id);
 }
 
+/** Duplica campanha + passos como novo rascunho (sem destinatários). */
+export async function cloneCampaign(original: Campaign, createdBy: string | null): Promise<Campaign> {
+  const client = db();
+  const row: Record<string, unknown> = {
+    company_id: original.company_id,
+    name: `${original.name} (cópia)`.slice(0, 120),
+    line_id: original.line_id,
+    message_template: original.message_template,
+    media_url: original.media_url,
+    media_mime_type: original.media_mime_type,
+    target_pipeline_id: original.target_pipeline_id,
+    target_stage_id: original.target_stage_id,
+    audience: original.audience,
+    status: "draft",
+    created_by: createdBy,
+  };
+  for (const f of ANTIBAN_FIELDS) {
+    const v = (original as unknown as Record<string, unknown>)[f];
+    if (v !== undefined) row[f] = v;
+  }
+  const { data, error } = await (client.from("campaigns") as any).insert(row).select("*").single();
+  if (error) throw error;
+  const copy = data as Campaign;
+
+  const steps = await listSteps(original.id);
+  if (steps.length) {
+    const { error: stepErr } = await (client.from("campaign_steps") as any).insert(
+      steps.map((s) => ({
+        campaign_id: copy.id,
+        order_index: s.order_index,
+        kind: s.kind,
+        body: s.body,
+        ai_prompt: s.ai_prompt,
+        media_url: s.media_url,
+        media_mime_type: s.media_mime_type,
+        wait_hours: s.wait_hours,
+        variant: s.variant,
+      }))
+    );
+    if (stepErr) throw stepErr;
+  }
+  return copy;
+}
+
 /** Substitui todos os passos da campanha (replace-all, ordem = índice). */
 export async function replaceSteps(
   campaignId: string,
@@ -292,16 +345,19 @@ export async function enqueueCampaign(
   const recipients = (await listRecipients(campaign.id)).filter((r) => r.status === "pending");
   if (recipients.length === 0) return { queued: 0, skipped: 0 };
 
-  // Opt-out (LGPD): nunca enviar para do_not_contact.
+  // Opt-out (LGPD) + nomes tratados: uma leitura só do fonebook.
   const canonicals = [...new Set(recipients.map((r) => r.phone_canonical).filter(Boolean))];
   const optedOut = new Set<string>();
+  const nameByCanonical = new Map<string, NameSource>();
   for (let i = 0; i < canonicals.length; i += 200) {
     const { data } = await (client.from("whatsapp_contacts") as any)
-      .select("phone_canonical")
+      .select("phone_canonical, do_not_contact, first_name, last_name, social_name, display_name")
       .eq("company_id", campaign.company_id)
-      .eq("do_not_contact", true)
       .in("phone_canonical", canonicals.slice(i, i + 200));
-    for (const row of (data as { phone_canonical: string }[]) || []) optedOut.add(row.phone_canonical);
+    for (const row of (data as (NameSource & { phone_canonical: string; do_not_contact: boolean })[]) || []) {
+      if (row.do_not_contact) optedOut.add(row.phone_canonical);
+      nameByCanonical.set(row.phone_canonical, row);
+    }
   }
 
   // Conversas ativas (proxy: aberta com movimento nos últimos 7 dias) — não
@@ -350,7 +406,12 @@ export async function enqueueCampaign(
       );
       continue;
     }
-    const nome = (r.name || "").trim();
+    // Nome tratado do fonebook (social → first_name → limpeza do display_name).
+    // Sem isto, um contato salvo como "@joao.silva" viraria "Olá @joao.silva!".
+    const fromBook = r.phone_canonical ? nameByCanonical.get(r.phone_canonical) : undefined;
+    const source: NameSource = fromBook ?? { display_name: r.name };
+    const primeiro = preferredFirstName(source) ?? "";
+    const completo = preferredFullName(source) ?? primeiro;
     updates.push(
       (client.from("campaign_recipients") as any)
         .update({
@@ -359,8 +420,8 @@ export async function enqueueCampaign(
           attempts: 0,
           error: null,
           variables: {
-            nome: nome || "",
-            primeiro_nome: nome.split(/\s+/)[0] || "",
+            nome: completo,
+            primeiro_nome: primeiro,
             telefone: phonePlus,
           },
         })
