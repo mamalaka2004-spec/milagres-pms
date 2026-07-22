@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageSquareText, Sparkles, Plus, Trash2, Clock, Eye, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { expandSpintax, substituteVars } from "@/lib/campaigns/template";
+import { formatWait } from "@/lib/campaigns/format";
 
 /** Dados de exemplo do preview — mesmas chaves que o worker injeta no envio. */
 const SAMPLE_VARS = {
@@ -54,7 +55,9 @@ export function CadenceBuilder({
             <span className="text-xs font-semibold text-gray-700">
               {i === 0 ? "Mensagem inicial" : `Follow-up ${i}`}
             </span>
-            {i > 0 && (
+            {i === 0 ? (
+              <span className="text-[11px] text-gray-400">sai no disparo</span>
+            ) : (
               <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
                 <Clock size={11} /> esperar
                 <input
@@ -65,7 +68,8 @@ export function CadenceBuilder({
                   onChange={(e) => patch(i, { wait_hours: Math.max(1, Number(e.target.value) || 1) })}
                   className="w-16 rounded-md border border-gray-200 bg-white px-1.5 py-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
                 />
-                horas sem resposta
+                horas <b className="font-semibold">sem resposta</b>
+                <span className="text-gray-400">({formatWait(s.wait_hours)} após a anterior)</span>
               </span>
             )}
             <div className="ml-auto flex items-center gap-1">

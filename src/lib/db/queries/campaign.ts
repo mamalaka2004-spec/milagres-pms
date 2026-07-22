@@ -33,13 +33,37 @@ type NameSource = {
 };
 
 // ─── Campaigns CRUD ────────────────────────────────────────────────────────
+/**
+ * Lista as campanhas já com `next_send_at` (próximo envio agendado) das que
+ * estão ativas — é a informação que o painel escondia: sem ela a campanha
+ * parece "parada" mesmo estando só aguardando a janela/intervalo.
+ */
 export async function listCampaigns(companyId: string): Promise<Campaign[]> {
-  const { data, error } = await (db().from("campaigns") as any)
+  const client = db();
+  const { data, error } = await (client.from("campaigns") as any)
     .select("*")
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as Campaign[]) || [];
+  const campaigns = (data as Campaign[]) || [];
+
+  const activeIds = campaigns
+    .filter((c) => c.status === "sending" || c.status === "scheduled")
+    .map((c) => c.id);
+  if (activeIds.length === 0) return campaigns;
+
+  const { data: pend } = await (client.from("campaign_recipients") as any)
+    .select("campaign_id, scheduled_for")
+    .in("campaign_id", activeIds)
+    .eq("status", "pending")
+    .not("scheduled_for", "is", null)
+    .order("scheduled_for", { ascending: true })
+    .limit(2000);
+  const nextByCampaign = new Map<string, string>();
+  for (const row of (pend as { campaign_id: string; scheduled_for: string }[]) || []) {
+    if (!nextByCampaign.has(row.campaign_id)) nextByCampaign.set(row.campaign_id, row.scheduled_for);
+  }
+  return campaigns.map((c) => ({ ...c, next_send_at: nextByCampaign.get(c.id) ?? null }));
 }
 
 export async function getCampaign(id: string): Promise<Campaign | null> {
@@ -548,6 +572,88 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
   });
 
   return { totals, rates, daily, steps: stepRows };
+}
+
+// ─── Acompanhamento ao vivo (drawer de envios) ─────────────────────────────
+export interface CampaignLiveStep {
+  step_id: string;
+  order_index: number;
+  label: string;
+  kind: string;
+  wait_hours: number;
+  /** Aguardando este passo (status pending com current_step = order_index). */
+  waiting: number;
+  /** Quando sai o próximo envio DESTE passo. */
+  next_send_at: string | null;
+  /** Já enviados deste passo. */
+  sent: number;
+}
+
+export interface CampaignLive {
+  campaign: Campaign;
+  steps: CampaignLiveStep[];
+  /** Próximo envio da campanha como um todo. */
+  next_send_at: string | null;
+  counts: Record<string, number>;
+  recipients: (CampaignRecipient & { step_label: string })[];
+}
+
+export async function getCampaignLive(campaignId: string): Promise<CampaignLive | null> {
+  const client = db();
+  const campaign = await getCampaign(campaignId);
+  if (!campaign) return null;
+
+  const [steps, { data: recData }, { data: msgData }] = await Promise.all([
+    listSteps(campaignId),
+    (client.from("campaign_recipients") as any)
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("scheduled_for", { ascending: true, nullsFirst: false })
+      .limit(500),
+    (client.from("campaign_messages") as any)
+      .select("step_id")
+      .eq("campaign_id", campaignId)
+      .limit(5000),
+  ]);
+  const recipients = (recData as CampaignRecipient[]) || [];
+  const msgs = (msgData as { step_id: string | null }[]) || [];
+
+  const labelFor = (i: number) => (i === 0 ? "Mensagem inicial" : `Follow-up ${i}`);
+  const counts: Record<string, number> = {};
+  for (const r of recipients) counts[r.status] = (counts[r.status] ?? 0) + 1;
+
+  const liveSteps: CampaignLiveStep[] = steps.map((s, i) => {
+    const waitingList = recipients.filter(
+      (r) => r.status === "pending" && (r.current_step ?? 0) === i && r.scheduled_for
+    );
+    const next = waitingList
+      .map((r) => r.scheduled_for!)
+      .sort((a, b) => a.localeCompare(b))[0] ?? null;
+    return {
+      step_id: s.id,
+      order_index: i,
+      label: labelFor(i),
+      kind: s.kind,
+      wait_hours: Number(s.wait_hours) || 0,
+      waiting: waitingList.length,
+      next_send_at: next,
+      sent: msgs.filter((m) => m.step_id === s.id).length,
+    };
+  });
+
+  const nextSend =
+    recipients
+      .filter((r) => r.status === "pending" && r.scheduled_for)
+      .map((r) => r.scheduled_for!)
+      .sort((a, b) => a.localeCompare(b))[0] ?? null;
+
+  return {
+    campaign,
+    steps: liveSteps,
+    next_send_at: nextSend,
+    counts,
+    recipients: recipients.map((r) => ({ ...r, step_label: labelFor(r.current_step ?? 0) })),
+  };
 }
 
 // ─── Prospecção cross-base: contatos → etapa de funil (cria deals) ─────────

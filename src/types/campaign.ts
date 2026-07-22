@@ -88,6 +88,8 @@ export interface Campaign {
   finished_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Derivado (não é coluna): próximo envio agendado das campanhas ativas. */
+  next_send_at?: string | null;
 }
 
 export type CampaignStepKind = "template" | "ai";

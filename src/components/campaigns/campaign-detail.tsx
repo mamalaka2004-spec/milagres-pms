@@ -14,11 +14,14 @@ import {
   Pause,
   Play,
   Clock,
+  Radio,
 } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
 import { StatsCard } from "@/components/dashboard/stats-card";
+import { CampaignLiveDrawer } from "./campaign-live-drawer";
+import { formatWhen, formatCountdown, formatWait } from "@/lib/campaigns/format";
 import {
   CAMPAIGN_STATUS_META,
   RECIPIENT_STATUS_META,
@@ -44,20 +47,33 @@ interface Metrics {
   steps: { step_id: string | null; kind: string; label: string; sent: number; delivered: number; read: number }[];
 }
 
+interface LiveStepInfo {
+  step_id: string;
+  wait_hours: number;
+  waiting: number;
+  next_send_at: string | null;
+}
+
 export function CampaignDetail({ campaignId }: { campaignId: string }) {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [recipients, setRecipients] = useState<CampaignRecipient[]>([]);
+  const [liveSteps, setLiveSteps] = useState<LiveStepInfo[]>([]);
+  const [nextSendAt, setNextSendAt] = useState<string | null>(null);
+  const [watching, setWatching] = useState(false);
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [m, c] = await Promise.all([
+      const [m, c, live] = await Promise.all([
         api<Metrics>(`/api/campaigns/${campaignId}/metrics`),
         api<Campaign & { recipients: CampaignRecipient[] }>(`/api/campaigns/${campaignId}`),
+        api<{ steps: LiveStepInfo[]; next_send_at: string | null }>(`/api/campaigns/${campaignId}/live`),
       ]);
       setMetrics(m);
       setRecipients(c.recipients || []);
+      setLiveSteps(live.steps || []);
+      setNextSendAt(live.next_send_at);
     } catch {
       /* mantém último estado */
     }
@@ -140,8 +156,29 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
             {totals.total} destinatário(s) · {steps.length ? `${steps.length} passo(s)` : "sem passos"} ·
             intervalo {campaign.min_interval_seconds}–{campaign.max_interval_seconds}s
           </p>
+          {(canPause || canResume) && (
+            <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-brand-700">
+              <Clock size={11} />
+              {canResume ? (
+                <span className="font-normal text-gray-500">pausada — retome para voltar a enviar</span>
+              ) : nextSendAt ? (
+                <>
+                  Próximo envio {formatWhen(nextSendAt)}
+                  <span className="font-normal text-gray-400">({formatCountdown(nextSendAt)})</span>
+                </>
+              ) : (
+                <span className="font-normal text-gray-400">nenhum envio na fila</span>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setWatching(true)}
+            className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+          >
+            <Radio size={13} className={canPause ? "animate-pulse" : undefined} /> Acompanhar envios
+          </button>
           {canPause && (
             <button onClick={() => control("pause")} disabled={busy} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">
               <Pause size={13} /> Pausar
@@ -193,31 +230,60 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
         )}
       </div>
 
-      {/* Por passo */}
+      {/* Por passo — inclui quando cada follow-up sai */}
       {steps.length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">Cadência por passo</h3>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold text-gray-900">Cadência por passo</h3>
+            <p className="text-[11px] text-gray-400">
+              Follow-ups saem só para quem <b>não respondeu</b>, no prazo configurado.
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-[11px] uppercase tracking-wide text-gray-400">
                   <th className="pb-2 pr-4 font-medium">Passo</th>
-                  <th className="pb-2 pr-4 font-medium">Tipo</th>
+                  <th className="pb-2 pr-4 font-medium">Quando sai</th>
                   <th className="pb-2 pr-4 font-medium">Enviadas</th>
                   <th className="pb-2 pr-4 font-medium">Entregues</th>
-                  <th className="pb-2 font-medium">Lidas</th>
+                  <th className="pb-2 pr-4 font-medium">Lidas</th>
+                  <th className="pb-2 font-medium">Na fila</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {steps.map((s) => (
-                  <tr key={s.step_id ?? s.label}>
-                    <td className="py-2 pr-4 font-medium text-gray-800">{s.label}</td>
-                    <td className="py-2 pr-4 text-gray-500">{s.kind === "ai" ? "IA" : "Template"}</td>
-                    <td className="py-2 pr-4">{s.sent}</td>
-                    <td className="py-2 pr-4">{s.delivered}</td>
-                    <td className="py-2">{s.read}</td>
-                  </tr>
-                ))}
+                {steps.map((s, i) => {
+                  const live = liveSteps.find((l) => l.step_id === s.step_id);
+                  return (
+                    <tr key={s.step_id ?? s.label}>
+                      <td className="py-2 pr-4">
+                        <span className="font-medium text-gray-800">{s.label}</span>
+                        {s.kind === "ai" && (
+                          <span className="ml-1.5 rounded-full bg-purple-50 px-1.5 py-0.5 text-[9px] font-semibold text-purple-600">
+                            IA
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-xs text-gray-500">
+                        {i === 0
+                          ? "no disparo"
+                          : `${formatWait(live?.wait_hours ?? 0)} sem resposta`}
+                      </td>
+                      <td className="py-2 pr-4">{s.sent}</td>
+                      <td className="py-2 pr-4">{s.delivered}</td>
+                      <td className="py-2 pr-4">{s.read}</td>
+                      <td className="py-2 text-xs">
+                        {live && live.waiting > 0 ? (
+                          <span className="text-brand-700">
+                            {live.waiting} · próximo {formatWhen(live.next_send_at)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -263,6 +329,12 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
           </ul>
         )}
       </div>
+
+      <CampaignLiveDrawer
+        campaignId={watching ? campaignId : null}
+        open={watching}
+        onOpenChange={setWatching}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks, Pause, Play, Pencil, Copy } from "lucide-react";
+import { Megaphone, Target, Plus, Send, Trash2, Loader2, Clock, CheckCircle2, XCircle, ListChecks, Pause, Play, Pencil, Copy, Radio, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
@@ -10,6 +10,8 @@ import { ContactPicker } from "./contact-picker";
 import { ContactListsTab } from "./contact-lists-tab";
 import { FunnelTargetSelect } from "./funnel-target-select";
 import { CadenceBuilder, EMPTY_STEP, type CadenceStepDraft } from "./cadence-builder";
+import { CampaignLiveDrawer } from "./campaign-live-drawer";
+import { formatWhen, formatCountdown } from "@/lib/campaigns/format";
 import {
   AntibanSettings,
   ANTIBAN_DEFAULTS,
@@ -69,6 +71,7 @@ function CampaignsTab() {
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
+  const [liveId, setLiveId] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -139,10 +142,22 @@ function CampaignsTab() {
       ) : (
         <ul className="space-y-2">
           {campaigns.map((c) => (
-            <CampaignRow key={c.id} campaign={c} onChanged={load} onEdit={() => setEditing(c)} />
+            <CampaignRow
+              key={c.id}
+              campaign={c}
+              onChanged={load}
+              onEdit={() => setEditing(c)}
+              onWatch={() => setLiveId(c.id)}
+            />
           ))}
         </ul>
       )}
+
+      <CampaignLiveDrawer
+        campaignId={liveId}
+        open={!!liveId}
+        onOpenChange={(o) => !o && setLiveId(null)}
+      />
     </div>
   );
 }
@@ -407,10 +422,12 @@ function CampaignRow({
   campaign,
   onChanged,
   onEdit,
+  onWatch,
 }: {
   campaign: Campaign;
   onChanged: () => void;
   onEdit: () => void;
+  onWatch: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [confirmSend, setConfirmSend] = useState(false);
@@ -422,6 +439,8 @@ function CampaignRow({
   const canSend = campaign.status === "draft";
   const canPause = campaign.status === "sending" || campaign.status === "scheduled";
   const canResume = campaign.status === "paused";
+  const isActive = canPause;
+  const jaDisparou = campaign.status !== "draft";
 
   async function control(action: "pause" | "resume") {
     setBusy(true);
@@ -511,6 +530,23 @@ function CampaignRow({
             {campaign.total_count} destinatário(s)
             {campaign.status !== "draft" && ` · ${campaign.sent_count} enviados · ${campaign.failed_count} falhas`}
           </p>
+          {/* Próximo disparo — sem isto a campanha parece parada enquanto só
+              aguarda a janela/o intervalo entre envios. */}
+          {isActive && (
+            <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-[11px] font-medium text-brand-700">
+              <Clock size={11} />
+              {campaign.next_send_at ? (
+                <>
+                  Próximo envio {formatWhen(campaign.next_send_at)}
+                  <span className="font-normal text-gray-400">
+                    ({formatCountdown(campaign.next_send_at)})
+                  </span>
+                </>
+              ) : (
+                <span className="font-normal text-gray-400">nenhum envio na fila</span>
+              )}
+            </p>
+          )}
           {(campaign.status === "sending" || campaign.status === "sent" || campaign.status === "failed") &&
             campaign.total_count > 0 && (
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -519,6 +555,21 @@ function CampaignRow({
             )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {jaDisparou && (
+            <button
+              onClick={onWatch}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium",
+                isActive
+                  ? "bg-brand-50 text-brand-700 hover:bg-brand-100"
+                  : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
+              title="Ver quem já recebeu, quem está na fila e quando sai cada follow-up"
+            >
+              {isActive ? <Radio size={13} className="animate-pulse" /> : <BarChart3 size={13} />}
+              Acompanhar
+            </button>
+          )}
           {canSend && (
             <button
               onClick={() => setConfirmSend(true)}
