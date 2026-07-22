@@ -5,6 +5,7 @@ import {
   findOrCreateConversation,
 } from "@/lib/db/queries/whatsapp";
 import { isOutsideBusinessHours } from "@/lib/whatsapp/auth";
+import { handleCampaignInbound } from "@/lib/campaigns/inbound";
 import { createNotification } from "@/lib/notifications/create";
 import { rehostInboundMedia } from "@/lib/whatsapp/media";
 import { inboundWebhookSchema } from "@/lib/validations/whatsapp";
@@ -113,6 +114,26 @@ export async function POST(request: NextRequest) {
       bumpUnread: !fromMe,
     });
 
+    // Resposta de destinatário de campanha: para a cadência, trata opt-out por
+    // keyword e marca o lead como prospecção fria. Nunca derruba o webhook.
+    let cameFromCampaign = false;
+    let campaignOptOut = false;
+    if (!fromMe) {
+      try {
+        const res = await handleCampaignInbound({
+          companyId: line.company_id,
+          conversationId: conv.id,
+          contactPhone,
+          text: payload.text ?? null,
+          line: { provider_instance: line.provider_instance, provider_token: line.provider_token },
+        });
+        cameFromCampaign = res.cameFromCampaign;
+        campaignOptOut = res.optedOut;
+      } catch (e) {
+        console.error("[inbound] campaign handling failed:", e);
+      }
+    }
+
     // In-app notification (#18): alerta a equipe sobre nova mensagem recebida.
     // Fire-and-forget — nunca deve derrubar o webhook.
     if (!fromMe) {
@@ -133,18 +154,23 @@ export async function POST(request: NextRequest) {
 
     // Decide whether the AI should auto-reply (n8n calls /api/whatsapp/ai-reply if true).
     // Never auto-reply to our own outgoing messages.
+    // Conversas vindas de campanha: a IA responde MESMO em horário comercial
+    // (override só para respostas de campanha); opt-out silencia a IA.
     const aiShouldRespond =
       !fromMe &&
+      !campaignOptOut &&
       aiMasterEnabled &&
       line.ai_enabled &&
       conv.ai_active &&
       conv.status === "open" &&
-      isOutsideBusinessHours(line.business_hours);
+      (isOutsideBusinessHours(line.business_hours) || cameFromCampaign);
 
     return apiSuccess({
       conversation_id: conv.id,
       message_id: message.id,
       ai_should_respond: aiShouldRespond,
+      came_from_campaign: cameFromCampaign,
+      campaign_opt_out: campaignOptOut,
     });
   } catch (error) {
     return apiServerError(error);

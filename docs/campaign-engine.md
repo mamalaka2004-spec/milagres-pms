@@ -72,6 +72,32 @@ curl -s -X POST \
 # → {"ok":true,"processed":N}
 ```
 
+## Inbound — resposta, opt-out e Sarah (Etapa 3)
+
+Fluxo real dos webhooks (verificado nas instâncias Evolution):
+- **Vendas** (instância `milagres`): eventos → n8n `/webhook/whatsapp-chat`
+  (workflow **Milagres Completo** / Sarah). O node "PMS Mirror - Inbound" desse
+  workflow reposta cada mensagem do lead em `/api/webhooks/whatsapp/inbound` —
+  é aí que `handleCampaignInbound` roda.
+- **Reservas** (instância `milagres_hosp_res`): eventos → n8n
+  `/webhook/milagres-wa-inbound` (workflow **MILAGRES - WhatsApp Reservas -
+  Inbound**) → mesma rota inbound.
+
+O que acontece na resposta de um destinatário de campanha
+(`src/lib/campaigns/inbound.ts`):
+- Mensagem normal → recipients viram `replied` (cadência PARA), `replied_count`
+  incrementa, `whatsapp_lead_data` ganha `origem='prospeccao_fria'` e a IA
+  responde mesmo em horário comercial (override do gate só p/ campanha).
+- Keyword de opt-out (mensagem curta ≤4 palavras: "sair", "parar"…) → contato
+  `do_not_contact` (LGPD), recipients `opted_out`, confirmação curta enviada,
+  `ai_active=false` e pausa da Sarah via `WHATSAPP_AI_CONTROL_WEBHOOK_URL`
+  (best-effort).
+
+Delivered/read: evento `MESSAGES_UPDATE` habilitado na instância de Vendas;
+ambos os workflows n8n ganharam o branch "Status Update → PMS shape" →
+`POST /api/webhooks/whatsapp/status` (mapeia `DELIVERY_ACK→delivered`,
+`READ/PLAYED→read`; mesma credencial de secret do inbound).
+
 ## Pontos de atenção
 
 - **BATCH_SIZE=1** no worker: nunca aumentar sem revisar o timeout da função
