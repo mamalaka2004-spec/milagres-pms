@@ -375,6 +375,102 @@ export async function enqueueCampaign(
   return { queued, skipped };
 }
 
+// ─── Métricas (página de detalhe) ──────────────────────────────────────────
+export interface CampaignMetrics {
+  totals: {
+    total: number;
+    queued: number; // pending + sending
+    reached: number; // sent + delivered + replied (recebeu ≥1 mensagem)
+    delivered: number; // delivered_at preenchido
+    read: number; // read_at preenchido
+    replied: number;
+    opted_out: number;
+    failed: number;
+    skipped: number;
+  };
+  rates: { delivery: number; read: number; response: number };
+  daily: { day: string; enviadas: number; respostas: number }[];
+  steps: {
+    step_id: string | null;
+    order_index: number;
+    kind: string;
+    label: string;
+    sent: number;
+    delivered: number;
+    read: number;
+  }[];
+}
+
+export async function getCampaignMetrics(campaignId: string): Promise<CampaignMetrics> {
+  const client = db();
+  const [{ data: recData }, { data: msgData }, steps] = await Promise.all([
+    (client.from("campaign_recipients") as any)
+      .select("status, delivered_at, read_at, replied_at")
+      .eq("campaign_id", campaignId)
+      .limit(5000),
+    (client.from("campaign_messages") as any)
+      .select("step_id, sent_at, delivered_at, read_at")
+      .eq("campaign_id", campaignId)
+      .limit(5000),
+    listSteps(campaignId),
+  ]);
+  const recs = (recData as any[]) || [];
+  const msgs = (msgData as any[]) || [];
+
+  const by = (fn: (r: any) => boolean) => recs.filter(fn).length;
+  const totals = {
+    total: recs.length,
+    queued: by((r) => r.status === "pending" || r.status === "sending"),
+    reached: by((r) => ["sent", "delivered", "replied"].includes(r.status)),
+    delivered: by((r) => !!r.delivered_at),
+    read: by((r) => !!r.read_at),
+    replied: by((r) => r.status === "replied"),
+    opted_out: by((r) => r.status === "opted_out"),
+    failed: by((r) => r.status === "failed"),
+    skipped: by((r) => r.status === "skipped"),
+  };
+  // opted_out também recebeu mensagem antes de sair.
+  totals.reached += totals.opted_out;
+
+  const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
+  const rates = {
+    delivery: pct(totals.delivered, totals.reached),
+    read: pct(totals.read, totals.reached),
+    response: pct(totals.replied, totals.reached),
+  };
+
+  // Série diária: envios (campaign_messages) × respostas (replied_at).
+  const dayMap = new Map<string, { enviadas: number; respostas: number }>();
+  const bump = (iso: string | null, field: "enviadas" | "respostas") => {
+    if (!iso) return;
+    const day = iso.slice(0, 10);
+    const cur = dayMap.get(day) ?? { enviadas: 0, respostas: 0 };
+    cur[field]++;
+    dayMap.set(day, cur);
+  };
+  for (const m of msgs) bump(m.sent_at, "enviadas");
+  for (const r of recs) bump(r.replied_at, "respostas");
+  const daily = [...dayMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, v]) => ({ day, ...v }));
+
+  // Por passo da cadência.
+  const stepRows = steps.map((s, i) => {
+    const ofStep = msgs.filter((m) => m.step_id === s.id);
+    return {
+      step_id: s.id,
+      order_index: s.order_index,
+      kind: s.kind,
+      label: i === 0 ? "Mensagem inicial" : `Follow-up ${i}`,
+      sent: ofStep.length,
+      delivered: ofStep.filter((m) => !!m.delivered_at).length,
+      read: ofStep.filter((m) => !!m.read_at).length,
+    };
+  });
+
+  return { totals, rates, daily, steps: stepRows };
+}
+
 // ─── Prospecção cross-base: contatos → etapa de funil (cria deals) ─────────
 export async function assignContactsToStage(
   companyId: string,

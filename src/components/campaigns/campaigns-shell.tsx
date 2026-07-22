@@ -392,7 +392,9 @@ function CampaignRow({ campaign, onChanged }: { campaign: Campaign; onChanged: (
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-semibold text-gray-900">{campaign.name}</span>
+            <a href={`/campaigns/${campaign.id}`} className="truncate font-semibold text-gray-900 hover:text-brand-600 hover:underline">
+              {campaign.name}
+            </a>
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{ color: meta.color, background: `${meta.color}18` }}
