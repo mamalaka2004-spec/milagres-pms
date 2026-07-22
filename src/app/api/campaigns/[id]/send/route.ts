@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const { queued, skipped } = await enqueueCampaign(campaign, {
       scheduledAt,
-      listIds: parsed.data.list_ids,
+      listIds: parsed.data.list_ids ?? campaign.audience?.list_ids,
     });
     if (queued === 0) {
       return apiError(

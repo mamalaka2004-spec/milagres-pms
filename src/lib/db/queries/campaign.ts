@@ -38,26 +38,42 @@ export async function getCampaign(id: string): Promise<Campaign | null> {
   return (data as Campaign | null) ?? null;
 }
 
+const ANTIBAN_FIELDS = [
+  "min_interval_seconds",
+  "max_interval_seconds",
+  "daily_limit",
+  "hourly_limit",
+  "schedule",
+  "simulate_typing",
+  "typing_seconds_min",
+  "typing_seconds_max",
+  "opt_out_keywords",
+  "skip_active_conversations",
+  "audience",
+] as const;
+
 export async function createCampaign(
   companyId: string,
   createdBy: string | null,
   input: Record<string, unknown>
 ): Promise<Campaign> {
+  const row: Record<string, unknown> = {
+    company_id: companyId,
+    name: input.name,
+    line_id: input.line_id ?? null,
+    message_template: input.message_template,
+    media_url: input.media_url ?? null,
+    media_mime_type: input.media_mime_type ?? null,
+    throttle_seconds: input.throttle_seconds ?? 30,
+    target_pipeline_id: input.target_pipeline_id ?? null,
+    target_stage_id: input.target_stage_id ?? null,
+    scheduled_at: input.scheduled_at ?? null,
+    status: "draft",
+    created_by: createdBy,
+  };
+  for (const f of ANTIBAN_FIELDS) if (input[f] !== undefined) row[f] = input[f];
   const { data, error } = await (db().from("campaigns") as any)
-    .insert({
-      company_id: companyId,
-      name: input.name,
-      line_id: input.line_id ?? null,
-      message_template: input.message_template,
-      media_url: input.media_url ?? null,
-      media_mime_type: input.media_mime_type ?? null,
-      throttle_seconds: input.throttle_seconds ?? 30,
-      target_pipeline_id: input.target_pipeline_id ?? null,
-      target_stage_id: input.target_stage_id ?? null,
-      scheduled_at: input.scheduled_at ?? null,
-      status: "draft",
-      created_by: createdBy,
-    })
+    .insert(row)
     .select("*")
     .single();
   if (error) throw error;
@@ -217,6 +233,34 @@ export async function ensureStepFromTemplate(campaign: Campaign): Promise<Campai
   });
   if (error) throw error;
   return listSteps(campaign.id);
+}
+
+/** Substitui todos os passos da campanha (replace-all, ordem = índice). */
+export async function replaceSteps(
+  campaignId: string,
+  steps: Array<Record<string, unknown>>
+): Promise<CampaignStep[]> {
+  const client = db();
+  const { error: delErr } = await (client.from("campaign_steps") as any)
+    .delete()
+    .eq("campaign_id", campaignId);
+  if (delErr) throw delErr;
+  if (steps.length) {
+    const rows = steps.map((s, i) => ({
+      campaign_id: campaignId,
+      order_index: i,
+      kind: s.kind,
+      body: s.body ?? null,
+      ai_prompt: s.ai_prompt ?? null,
+      media_url: s.media_url ?? null,
+      media_mime_type: s.media_mime_type ?? null,
+      wait_hours: s.wait_hours ?? 0,
+      variant: s.variant ?? "A",
+    }));
+    const { error } = await (client.from("campaign_steps") as any).insert(rows);
+    if (error) throw error;
+  }
+  return listSteps(campaignId);
 }
 
 // ─── Enqueue (substitui o disparo via n8n) ─────────────────────────────────

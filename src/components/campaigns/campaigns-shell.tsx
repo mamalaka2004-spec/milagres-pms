@@ -9,13 +9,22 @@ import { ConfirmDialog } from "@/components/ui";
 import { ContactPicker } from "./contact-picker";
 import { ContactListsTab } from "./contact-lists-tab";
 import { FunnelTargetSelect } from "./funnel-target-select";
-import { CAMPAIGN_STATUS_META, type Campaign, type ContactLite } from "@/types/campaign";
+import { CadenceBuilder, EMPTY_STEP, type CadenceStepDraft } from "./cadence-builder";
+import { AntibanSettings, ANTIBAN_DEFAULTS, type AntibanConfig } from "./antiban-settings";
+import {
+  CAMPAIGN_STATUS_META,
+  type Campaign,
+  type ContactLite,
+  type ContactList,
+} from "@/types/campaign";
 
 interface LineLite {
   id: string;
   label: string;
   phone: string;
   purpose: string;
+  warmup_enabled?: boolean;
+  warmup_start_date?: string | null;
 }
 
 export function CampaignsShell() {
@@ -130,8 +139,10 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [name, setName] = useState("");
   const [lines, setLines] = useState<LineLite[]>([]);
   const [lineId, setLineId] = useState<string>("");
-  const [message, setMessage] = useState("");
-  const [throttle, setThrottle] = useState(30);
+  const [steps, setSteps] = useState<CadenceStepDraft[]>([{ ...EMPTY_STEP, wait_hours: 0 }]);
+  const [antiban, setAntiban] = useState<AntibanConfig>(ANTIBAN_DEFAULTS);
+  const [lists, setLists] = useState<ContactList[]>([]);
+  const [listIds, setListIds] = useState<string[]>([]);
   const [recipients, setRecipients] = useState<ContactLite[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -139,13 +150,35 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
     api<LineLite[]>(`/api/whatsapp/lines`)
       .then((ls) => {
         setLines(ls);
-        setLineId(ls[0]?.id ?? "");
+        // Campanhas são de Vendas por padrão — pré-seleciona a linha sales.
+        setLineId(ls.find((l) => l.purpose === "sales")?.id ?? ls[0]?.id ?? "");
       })
       .catch(() => setLines([]));
+    api<ContactList[]>(`/api/contact-lists`).then(setLists).catch(() => setLists([]));
   }, []);
 
+  const line = lines.find((l) => l.id === lineId) ?? null;
+  const firstStep = steps[0];
+  const stepsValid = steps.every(
+    (s) => (s.kind === "template" ? s.body.trim().length > 0 : s.ai_prompt.trim().length > 0)
+  );
+
+  async function toggleWarmup(enabled: boolean) {
+    if (!line) return;
+    try {
+      const res = await api<{ warmup_enabled: boolean; warmup_start_date: string | null }>(
+        `/api/whatsapp/lines/${line.id}/warmup`,
+        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ warmup_enabled: enabled }) }
+      );
+      setLines((ls) => ls.map((l) => (l.id === line.id ? { ...l, ...res } : l)));
+      toast({ title: enabled ? "Warmup ativado" : "Warmup desligado", variant: "success" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "", variant: "error" });
+    }
+  }
+
   async function save() {
-    if (!name.trim() || !message.trim() || saving) return;
+    if (!name.trim() || !stepsValid || saving) return;
     setSaving(true);
     try {
       const campaign = await api<Campaign>(`/api/campaigns`, {
@@ -154,8 +187,22 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
         body: JSON.stringify({
           name: name.trim(),
           line_id: lineId || null,
-          message_template: message.trim(),
-          throttle_seconds: throttle,
+          message_template:
+            firstStep.kind === "template" ? firstStep.body.trim() : "(mensagem gerada por IA)",
+          ...antiban,
+          audience: listIds.length ? { list_ids: listIds } : null,
+        }),
+      });
+      await api(`/api/campaigns/${campaign.id}/steps`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          steps: steps.map((s, i) => ({
+            kind: s.kind,
+            body: s.kind === "template" ? s.body.trim() : null,
+            ai_prompt: s.kind === "ai" ? s.ai_prompt.trim() : null,
+            wait_hours: i === 0 ? 0 : s.wait_hours,
+          })),
         }),
       });
       if (recipients.length > 0) {
@@ -165,7 +212,11 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
           body: JSON.stringify({ contact_ids: recipients.map((r) => r.id) }),
         });
       }
-      toast({ title: "Campanha criada", description: `${recipients.length} destinatário(s)`, variant: "success" });
+      toast({
+        title: "Campanha criada",
+        description: `${steps.length} passo(s) · ${listIds.length} lista(s) · ${recipients.length} contato(s) avulso(s)`,
+        variant: "success",
+      });
       onSaved();
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "", variant: "error" });
@@ -182,7 +233,7 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex.: Promoção de feriado"
+            placeholder="Ex.: Prospecção investidores — julho"
             className="w-full rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
           />
         </div>
@@ -204,33 +255,55 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600">
-          Mensagem <span className="text-gray-400">— use <code className="rounded bg-gray-100 px-1">{"{{nome}}"}</code> para personalizar</span>
+        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+          Mensagens da cadência{" "}
+          <span className="text-gray-400">— follow-ups só saem para quem não respondeu</span>
         </label>
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows={4}
-          placeholder="Olá {{nome}}! Temos uma novidade pra você…"
-          className="w-full resize-y rounded-lg border border-gray-200 px-2.5 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        />
+        <CadenceBuilder steps={steps} onChange={setSteps} />
       </div>
 
-      <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-gray-600">Intervalo entre envios</label>
-        <input
-          type="number"
-          min={1}
-          max={600}
-          value={throttle}
-          onChange={(e) => setThrottle(Math.max(1, Number(e.target.value) || 1))}
-          className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40"
-        />
-        <span className="text-xs text-gray-400">segundos (evita bloqueio)</span>
+      <AntibanSettings
+        value={antiban}
+        onChange={setAntiban}
+        warmup={
+          line
+            ? {
+                enabled: !!line.warmup_enabled,
+                startDate: line.warmup_start_date ?? null,
+                onToggle: toggleWarmup,
+              }
+            : null
+        }
+      />
+
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-gray-600">Audiência — listas salvas</label>
+        {lists.length === 0 ? (
+          <p className="text-xs text-gray-400">Nenhuma lista ainda — crie na aba Listas.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {lists.map((l) => {
+              const sel = listIds.includes(l.id);
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() => setListIds(sel ? listIds.filter((x) => x !== l.id) : [...listIds, l.id])}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium",
+                    sel ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  {l.name} · {l.member_count ?? 0}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600">Destinatários (qualquer base)</label>
+        <label className="mb-1.5 block text-xs font-medium text-gray-600">Contatos avulsos (opcional)</label>
         <ContactPicker value={recipients} onChange={setRecipients} />
       </div>
 
@@ -240,7 +313,7 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
         </button>
         <button
           onClick={save}
-          disabled={saving || !name.trim() || !message.trim()}
+          disabled={saving || !name.trim() || !stepsValid}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
           {saving && <Loader2 size={15} className="animate-spin" />} Salvar rascunho
