@@ -47,15 +47,37 @@ export function randInt(min: number, max: number): number {
 /** Sleep ms. */
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** "HH:MM" → minutos desde a meia-noite. */
+function toMinutes(hhmm: string, fallback: number): number {
+  const [h, m] = (hhmm || "").split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return fallback;
+  return h * 60 + m;
+}
+
 /**
- * Compute the next valid datetime (ISO) inside the schedule window, starting at `from`.
- * Returns `from` itself when already inside the window.
+ * Janela utilizável? Exige ao menos um dia e fim DEPOIS do início. Uma janela
+ * invertida (ex.: 09:00→07:00) não contém instante algum — o guard evita que a
+ * campanha seja agendada para uma data distante e "suma" em silêncio.
  */
-export function nextSlot(from: Date, schedule: CampaignSchedule): Date {
+export function windowIsValid(schedule: CampaignSchedule): boolean {
+  const days = schedule?.days?.length ? schedule.days : [1, 2, 3, 4, 5];
+  return days.length > 0 &&
+    toMinutes(schedule?.end_time ?? "", 18 * 60) > toMinutes(schedule?.start_time ?? "", 9 * 60);
+}
+
+/**
+ * Compute the next valid datetime inside the schedule window, starting at `from`.
+ * Returns `from` itself when already inside the window; `null` when the window
+ * is invalid or there is no slot within the next 14 days.
+ */
+export function nextSlot(from: Date, schedule: CampaignSchedule): Date | null {
+  if (!windowIsValid(schedule)) return null;
   const tz = schedule.timezone || "America/Sao_Paulo";
   const days = schedule.days?.length ? schedule.days : [1, 2, 3, 4, 5];
-  const [sh, sm] = (schedule.start_time || "09:00").split(":").map(Number);
-  const [eh, em] = (schedule.end_time || "18:00").split(":").map(Number);
+  const sh = Math.floor(toMinutes(schedule.start_time, 9 * 60) / 60);
+  const sm = toMinutes(schedule.start_time, 9 * 60) % 60;
+  const eh = Math.floor(toMinutes(schedule.end_time, 18 * 60) / 60);
+  const em = toMinutes(schedule.end_time, 18 * 60) % 60;
 
   // Iterate at most 14 days ahead.
   let cursor = new Date(from);
@@ -84,12 +106,13 @@ export function nextSlot(from: Date, schedule: CampaignSchedule): Date {
     // jump to next minute step (coarse — 1 minute is good enough since intervals are ≥ 30s)
     cursor = new Date(cursor.getTime() + 60_000);
   }
-  return cursor;
+  return null;
 }
 
 /** True when `now` falls inside the schedule window. */
 export function isInsideWindow(now: Date, schedule: CampaignSchedule): boolean {
   const slot = nextSlot(now, schedule);
+  if (!slot) return false;
   return slot.getTime() === now.getTime() || slot.getTime() - now.getTime() < 60_000;
 }
 

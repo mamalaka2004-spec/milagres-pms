@@ -10,7 +10,12 @@ import { ContactPicker } from "./contact-picker";
 import { ContactListsTab } from "./contact-lists-tab";
 import { FunnelTargetSelect } from "./funnel-target-select";
 import { CadenceBuilder, EMPTY_STEP, type CadenceStepDraft } from "./cadence-builder";
-import { AntibanSettings, ANTIBAN_DEFAULTS, type AntibanConfig } from "./antiban-settings";
+import {
+  AntibanSettings,
+  ANTIBAN_DEFAULTS,
+  scheduleWindowIsValid,
+  type AntibanConfig,
+} from "./antiban-settings";
 import {
   CAMPAIGN_STATUS_META,
   type Campaign,
@@ -162,6 +167,7 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const stepsValid = steps.every(
     (s) => (s.kind === "template" ? s.body.trim().length > 0 : s.ai_prompt.trim().length > 0)
   );
+  const windowOk = scheduleWindowIsValid(antiban.schedule);
 
   async function toggleWarmup(enabled: boolean) {
     if (!line) return;
@@ -313,7 +319,8 @@ function ComposeCampaign({ onClose, onSaved }: { onClose: () => void; onSaved: (
         </button>
         <button
           onClick={save}
-          disabled={saving || !name.trim() || !stepsValid}
+          disabled={saving || !name.trim() || !stepsValid || !windowOk}
+          title={!windowOk ? "Corrija a janela de envio em Proteção antiban" : undefined}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
           {saving && <Loader2 size={15} className="animate-spin" />} Salvar rascunho

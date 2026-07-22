@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, ChevronDown, ChevronRight, Flame } from "lucide-react";
+import { ShieldCheck, ChevronDown, ChevronRight, Flame, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+
+/** Janela utilizável? Fim precisa ser depois do início (espelha o backend). */
+export function scheduleWindowIsValid(s: { days: number[]; start_time: string; end_time: string }): boolean {
+  const [sh, sm] = (s.start_time || "").split(":").map(Number);
+  const [eh, em] = (s.end_time || "").split(":").map(Number);
+  if ([sh, sm, eh, em].some(Number.isNaN)) return false;
+  return s.days.length > 0 && eh * 60 + em > sh * 60 + sm;
+}
 
 /** Config antiban da campanha (colunas da migration 036). */
 export interface AntibanConfig {
@@ -46,6 +54,7 @@ export function AntibanSettings({
   warmup?: WarmupInfo | null;
 }) {
   const [open, setOpen] = useState(false);
+  const windowOk = scheduleWindowIsValid(value.schedule);
 
   function patch(p: Partial<AntibanConfig>) {
     onChange({ ...value, ...p });
@@ -71,6 +80,11 @@ export function AntibanSettings({
         {open ? <ChevronDown size={15} className="text-gray-400" /> : <ChevronRight size={15} className="text-gray-400" />}
         <ShieldCheck size={15} className="text-brand-600" />
         <span className="text-sm font-medium text-gray-800">Proteção antiban</span>
+        {!windowOk && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+            <AlertTriangle size={10} /> janela inválida
+          </span>
+        )}
         <span className="ml-auto text-[11px] text-gray-400">
           {value.min_interval_seconds}–{value.max_interval_seconds}s · {value.daily_limit}/dia · {value.hourly_limit}/h ·{" "}
           {value.schedule.start_time}–{value.schedule.end_time}
@@ -120,10 +134,16 @@ export function AntibanSettings({
                   </button>
                 ))}
               </div>
-              <input type="time" value={value.schedule.start_time} onChange={(e) => patch({ schedule: { ...value.schedule, start_time: e.target.value } })} className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm" />
+              <input type="time" value={value.schedule.start_time} onChange={(e) => patch({ schedule: { ...value.schedule, start_time: e.target.value } })} className={cn("rounded-lg border px-2 py-1.5 text-sm", windowOk ? "border-gray-200" : "border-red-300")} />
               <span className="text-xs text-gray-400">às</span>
-              <input type="time" value={value.schedule.end_time} onChange={(e) => patch({ schedule: { ...value.schedule, end_time: e.target.value } })} className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm" />
+              <input type="time" value={value.schedule.end_time} onChange={(e) => patch({ schedule: { ...value.schedule, end_time: e.target.value } })} className={cn("rounded-lg border px-2 py-1.5 text-sm", windowOk ? "border-gray-200" : "border-red-300")} />
             </div>
+            {!windowOk && (
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-red-600">
+                <AlertTriangle size={11} />
+                O horário final deve ser maior que o inicial e ao menos um dia precisa estar marcado — senão nada é enviado.
+              </p>
+            )}
           </div>
 
           <div>

@@ -9,7 +9,7 @@ import { canonicalBR } from "@/lib/whatsapp/phone";
 import { createDeal } from "@/lib/db/queries/funnel";
 import { getContactsByIds } from "@/lib/db/queries/contacts";
 import { listMemberContactIds } from "@/lib/db/queries/contact-lists";
-import { nextSlot, randInt } from "@/lib/campaigns/schedule";
+import { nextSlot, randInt, windowIsValid, describeWindow } from "@/lib/campaigns/schedule";
 import type {
   Campaign,
   CampaignRecipient,
@@ -273,6 +273,15 @@ export async function enqueueCampaign(
 ): Promise<{ queued: number; skipped: number }> {
   const client = db();
 
+  // Guard: janela invertida/vazia nunca contém instante algum — sem isto os
+  // destinatários seriam agendados para uma data distante e a campanha ficaria
+  // parada sem explicação.
+  if (!windowIsValid(campaign.schedule)) {
+    throw new Error(
+      `Janela de envio inválida (${describeWindow(campaign.schedule)}). O horário final precisa ser maior que o inicial.`
+    );
+  }
+
   // Audiência extra vinda de listas salvas.
   if (opts.listIds?.length) {
     const contactIds = await listMemberContactIds(opts.listIds);
@@ -316,6 +325,11 @@ export async function enqueueCampaign(
   const schedule = campaign.schedule;
   const startAt = opts.scheduledAt ? new Date(opts.scheduledAt) : new Date();
   let cursor = nextSlot(startAt.getTime() > Date.now() ? startAt : new Date(), schedule);
+  if (!cursor) {
+    throw new Error(
+      `Sem horário válido nos próximos 14 dias para a janela ${describeWindow(schedule)}.`
+    );
+  }
 
   let queued = 0;
   let skipped = 0;
@@ -353,13 +367,17 @@ export async function enqueueCampaign(
         .eq("id", r.id)
     );
     queued++;
-    cursor = nextSlot(
+    // Avança o cursor pelo gap randômico, reancorando na janela. Se a fila for
+    // tão longa que passe de 14 dias, mantém o último horário válido (os
+    // últimos saem juntos no fim da janela) em vez de sumir do calendário.
+    const next = nextSlot(
       new Date(
         cursor.getTime() +
           randInt(campaign.min_interval_seconds || 30, campaign.max_interval_seconds || 90) * 1000
       ),
       schedule
     );
+    if (next) cursor = next;
   }
   // Em lotes para não abrir centenas de conexões simultâneas.
   for (let i = 0; i < updates.length; i += 20) {

@@ -22,6 +22,7 @@ import {
   sleep,
   isInsideWindow,
   nextSlot,
+  windowIsValid,
   startOfDayUtc,
   type CampaignSchedule,
 } from "./campaign-utils.ts";
@@ -101,8 +102,20 @@ Deno.serve(async (req) => {
 
     for (const camp of campaigns) {
       const schedule = (camp.schedule ?? {}) as CampaignSchedule;
+      if (!windowIsValid(schedule)) {
+        console.warn(
+          "[campaign-tick] janela de envio inválida — campanha ignorada",
+          camp.id,
+          JSON.stringify(schedule)
+        );
+        continue;
+      }
       if (!isInsideWindow(new Date(), schedule)) continue;
       if (!camp.line_id) continue;
+
+      // nextSlot pode não achar horário em 14 dias; nesse caso usamos a data
+      // crua — o próprio tick só processa dentro da janela, então é seguro.
+      const slotOr = (d: Date): Date => nextSlot(d, schedule) ?? d;
 
       // ── Linha de disparo (instância + token próprios) ──
       const { data: line } = await admin
@@ -219,13 +232,13 @@ Deno.serve(async (req) => {
         if (dailyCap > 0) {
           const sentToday = await countSentSince(startOfDayUtc(new Date(), tz).toISOString());
           if (sentToday >= dailyCap) {
-            await requeue(rec, nextSlot(new Date(Date.now() + 24 * 60 * 60_000), schedule));
+            await requeue(rec, slotOr(new Date(Date.now() + 24 * 60 * 60_000)));
             continue;
           }
         }
         const sentLastHour = await countSentSince(new Date(Date.now() - 60 * 60_000).toISOString());
         if (sentLastHour >= hourlyCap) {
-          await requeue(rec, nextSlot(new Date(Date.now() + 10 * 60_000), schedule));
+          await requeue(rec, slotOr(new Date(Date.now() + 10 * 60_000)));
           continue;
         }
 
@@ -405,7 +418,7 @@ Deno.serve(async (req) => {
           const nextStep = effective[nextIndex];
           if (nextStep) {
             const waitMs = Math.max(0, Number(nextStep.wait_hours ?? 0)) * 3_600_000;
-            const when = nextSlot(new Date(Date.now() + waitMs), schedule);
+            const when = slotOr(new Date(Date.now() + waitMs));
             await admin
               .from("campaign_recipients")
               .update({

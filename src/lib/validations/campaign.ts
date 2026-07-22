@@ -1,12 +1,23 @@
 import { z } from "zod";
 
 /** Janela de envio (dias 0=dom…6=sáb, horários locais do timezone). */
-export const campaignScheduleSchema = z.object({
-  timezone: z.string().min(3).max(60).default("America/Sao_Paulo"),
-  days: z.array(z.number().int().min(0).max(6)).min(1).default([1, 2, 3, 4, 5, 6]),
-  start_time: z.string().regex(/^[0-2][0-9]:[0-5][0-9]$/).default("09:00"),
-  end_time: z.string().regex(/^[0-2][0-9]:[0-5][0-9]$/).default("19:00"),
-});
+export const campaignScheduleSchema = z
+  .object({
+    timezone: z.string().min(3).max(60).default("America/Sao_Paulo"),
+    days: z.array(z.number().int().min(0).max(6)).min(1, "Escolha ao menos 1 dia").default([1, 2, 3, 4, 5, 6]),
+    start_time: z.string().regex(/^[0-2][0-9]:[0-5][0-9]$/).default("09:00"),
+    end_time: z.string().regex(/^[0-2][0-9]:[0-5][0-9]$/).default("19:00"),
+  })
+  // Janela invertida (ex.: 09:00→07:00) não contém instante algum: a campanha
+  // ficaria eternamente "fora da janela" e nada seria enviado.
+  .refine(
+    (s) => {
+      const [sh, sm] = s.start_time.split(":").map(Number);
+      const [eh, em] = s.end_time.split(":").map(Number);
+      return eh * 60 + em > sh * 60 + sm;
+    },
+    { message: "O horário final deve ser maior que o inicial", path: ["end_time"] }
+  );
 
 export const campaignCreateSchema = z.object({
   name: z.string().min(2, "Nome obrigatório").max(120),

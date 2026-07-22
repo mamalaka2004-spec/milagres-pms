@@ -42,10 +42,20 @@ export async function POST(req: NextRequest, { params }: Params) {
         ? new Date(parsed.data.scheduled_at).toISOString()
         : null;
 
-    const { queued, skipped } = await enqueueCampaign(campaign, {
-      scheduledAt,
-      listIds: parsed.data.list_ids ?? campaign.audience?.list_ids,
-    });
+    let queued = 0;
+    let skipped = 0;
+    try {
+      ({ queued, skipped } = await enqueueCampaign(campaign, {
+        scheduledAt,
+        listIds: parsed.data.list_ids ?? campaign.audience?.list_ids,
+      }));
+    } catch (e) {
+      // Janela de envio inválida/sem slot → erro claro em vez de fila fantasma.
+      if (e instanceof Error && /Janela de envio|Sem horário válido/.test(e.message)) {
+        return apiError(e.message, 400);
+      }
+      throw e;
+    }
     if (queued === 0) {
       return apiError(
         skipped > 0
