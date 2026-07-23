@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { FunnelBoard } from "@/components/funnel/funnel-board";
 import { FunnelList } from "@/components/funnel/funnel-list";
+import { TagPicker } from "@/components/funnel/tag-picker";
+import type { Tag } from "@/types/funnel";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MediaContent } from "@/components/chat/media-content";
 import { api, formatTime } from "@/lib/chat/utils";
@@ -79,8 +81,7 @@ export function SalesShell() {
 }
 
 function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[]; activeLine: LineRow; onSwitchLine: (id: string) => void; }) {
-  const [view, setView] = useState<"conversas" | "funil">("conversas");
-  const [funnelView, setFunnelView] = useState<"kanban" | "lista">("kanban");
+  const [view, setView] = useState<"conversas" | "kanban" | "lista">("conversas");
   const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
 
   // Chegou de /vendas?conversation=<id> (atalho "abrir conversa" da página
@@ -97,7 +98,11 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
     <div className={cn(SHELL_HEIGHT, "flex flex-col gap-3")}>
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
-          {([{ id: "conversas", label: "Conversas", icon: MessageSquare }, { id: "funil", label: "Funil", icon: LayoutGrid }] as const).map((v) => (
+          {([
+            { id: "conversas", label: "Conversas", icon: MessageSquare },
+            { id: "kanban", label: "Kanban", icon: LayoutGrid },
+            { id: "lista", label: "Lista", icon: List },
+          ] as const).map((v) => (
             <button key={v.id} onClick={() => setView(v.id)} aria-pressed={view === v.id}
               className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 flex items-center gap-1.5",
                 view === v.id ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700")}>
@@ -105,17 +110,6 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
             </button>
           ))}
         </div>
-        {view === "funil" && (
-          <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
-            {([{ id: "kanban", label: "Kanban", icon: LayoutGrid }, { id: "lista", label: "Lista", icon: List }] as const).map((v) => (
-              <button key={v.id} onClick={() => setFunnelView(v.id)} aria-pressed={funnelView === v.id}
-                className={cn("px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 flex items-center gap-1.5",
-                  funnelView === v.id ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700")}>
-                <v.icon size={12} /> {v.label}
-              </button>
-            ))}
-          </div>
-        )}
         {lines.length > 1 && (
           <div className="flex gap-1 p-1 bg-gray-100/70 rounded-xl">
             {lines.map((l) => (
@@ -129,9 +123,9 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
         )}
       </div>
 
-      {view === "funil" ? (
+      {view === "kanban" || view === "lista" ? (
         <div className="flex-1 border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden min-h-0 p-3 flex flex-col">
-          {funnelView === "lista" ? (
+          {view === "lista" ? (
             <FunnelList
               type="vendas"
               onOpenDeal={(deal) => {
@@ -435,6 +429,38 @@ function senderLabel(sender: WaMessageSender, direction: WaMessageDirection): st
   return "";
 }
 
+/** Tags da conversa (tabela conversation_tags) — mesmo esquema de tags do funil. */
+function ConversationTags({ conversationId }: { conversationId: string }) {
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api<Tag[]>(`/api/whatsapp/conversations/${conversationId}/tags`)
+      .then((tags) => { if (!cancelled) setTagIds(tags.map((t) => t.id)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [conversationId]);
+
+  async function apply(ids: string[]) {
+    setTagIds(ids);
+    setSaving(true);
+    try {
+      await api(`/api/whatsapp/conversations/${conversationId}/tags`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tag_ids: ids }),
+      });
+    } catch {
+      /* PUT best-effort; o próximo GET reflete o estado real */
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <TagPicker type="vendas" value={tagIds} onChange={apply} triggerLabel={saving ? "Salvando…" : "Adicionar tags"} />;
+}
+
 function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onChange: () => void }) {
   const lead = conversation.lead_data;
   const [stage, setStage] = useState<LeadStage | "">((lead?.lead_stage as LeadStage) || "");
@@ -491,6 +517,10 @@ function LeadPanel({ conversation, onChange }: { conversation: SalesConvRow; onC
             {lead.marcelo_handoff_at && <div className="text-xs flex items-center justify-between"><span className="text-gray-500">Handoff Marcelo</span><span className="font-medium">{formatTime(lead.marcelo_handoff_at)}</span></div>}
           </div>
         )}
+
+        <div><label className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Tags da conversa</label>
+          <div className="mt-1"><ConversationTags conversationId={conversation.id} /></div>
+        </div>
 
         <div><label className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Stage</label>
           <select value={stage} onChange={(e) => setStage(e.target.value as LeadStage | "")} className={cn(inputCls, "bg-white")}>

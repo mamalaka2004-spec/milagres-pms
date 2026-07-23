@@ -21,6 +21,7 @@ import {
   ListPlus,
   Megaphone,
   Target,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
@@ -28,6 +29,7 @@ import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui";
 import { StarRating } from "./star-rating";
 import { ContactFormDialog } from "./contact-form-dialog";
+import { ContactViewDialog } from "./contact-view-dialog";
 import { NameCleanupDialog } from "./name-cleanup-dialog";
 import { NameChangesTab } from "./name-changes-tab";
 import { SelectionActionDialog } from "./selection-action-dialog";
@@ -98,6 +100,7 @@ function ContactsList() {
   // Dialogs
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ContactLite | null>(null);
+  const [viewing, setViewing] = useState<ContactLite | null>(null);
   const [deleting, setDeleting] = useState<ContactLite | null>(null);
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [selectionAction, setSelectionAction] = useState<"list" | "campaign" | "prospect" | null>(null);
@@ -447,11 +450,8 @@ function ContactsList() {
                       {allOnPageSelected && <Check size={11} />}
                     </button>
                   </th>
-                  <th className="px-4 py-2.5 font-medium">Contato</th>
+                  <th className="px-4 py-2.5 font-medium">Nome</th>
                   <th className="px-3 py-2.5 font-medium">Telefone / WhatsApp</th>
-                  <th className="px-3 py-2.5 font-medium">Nome</th>
-                  <th className="px-3 py-2.5 font-medium">Sobrenome</th>
-                  <th className="px-3 py-2.5 font-medium">Nome social</th>
                   <th className="px-3 py-2.5 font-medium">Instagram</th>
                   <th className="px-3 py-2.5 font-medium">Unidade</th>
                   <th className="px-4 py-2.5 font-medium">Categoria</th>
@@ -481,9 +481,13 @@ function ContactsList() {
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
-                          <span className={cn("font-medium", c.do_not_contact ? "text-gray-400 line-through" : "text-gray-900")}>
+                          <button
+                            onClick={() => setViewing(c)}
+                            className={cn("font-medium hover:text-brand-600 hover:underline", c.do_not_contact ? "text-gray-400 line-through" : "text-gray-900")}
+                            title="Ver ficha do contato"
+                          >
                             {c.display_name || "—"}
-                          </span>
+                          </button>
                           {dirtyName && !c.do_not_contact && (
                             <span
                               className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600"
@@ -527,19 +531,6 @@ function ContactsList() {
                             </>
                           )}
                         </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {c.first_name ? (
-                          <span className="font-medium text-gray-800">{c.first_name}</span>
-                        ) : (
-                          <span className="text-[11px] italic text-amber-600">sem nome</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-gray-600">
-                        {c.last_name || <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-3 py-2.5 text-gray-600">
-                        {c.social_name || <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-3 py-2.5">
                         {c.instagram_handle ? (
@@ -593,6 +584,13 @@ function ContactsList() {
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center justify-end gap-0.5">
+                          <button
+                            onClick={() => setViewing(c)}
+                            className="rounded-lg p-1.5 text-gray-300 hover:text-brand-600"
+                            title="Ver ficha"
+                          >
+                            <Eye size={15} />
+                          </button>
                           <button
                             onClick={() => {
                               setEditing(c);
@@ -682,6 +680,20 @@ function ContactsList() {
           </div>
         )}
       </div>
+
+      <ContactViewDialog
+        contact={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(c) => {
+          setViewing(null);
+          setEditing(c);
+          setFormOpen(true);
+        }}
+        onDelete={(c) => {
+          setViewing(null);
+          setDeleting(c);
+        }}
+      />
 
       <ContactFormDialog
         open={formOpen}

@@ -89,11 +89,21 @@ export async function getContactsByIds(companyId: string, ids: string[]): Promis
 export interface ContactInput {
   display_name?: string | null;
   phone?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  social_name?: string | null;
+  instagram_handle?: string | null;
   category?: string | null;
   tags?: string[];
   rating?: number | null;
   notes?: string | null;
   do_not_contact?: boolean;
+}
+
+/** Normaliza um @handle digitado (remove @, espaços, url). */
+function cleanHandle(raw: string | null | undefined): string | null {
+  const s = (raw ?? "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/.*$/, "");
+  return s ? s.toLowerCase() : null;
 }
 
 export async function createContact(
@@ -120,6 +130,12 @@ export async function createContact(
       phone_e164: phoneE164,
       phone_canonical: canonical,
       display_name: input.display_name?.trim() || null,
+      first_name: input.first_name?.trim() || null,
+      last_name: input.last_name?.trim() || null,
+      social_name: input.social_name?.trim() || null,
+      instagram_handle: cleanHandle(input.instagram_handle),
+      name_reviewed_at: new Date().toISOString(),
+      name_source: "manual",
       category: input.category ?? "lead",
       tags: input.tags ?? [],
       rating: input.rating ?? null,
@@ -140,6 +156,20 @@ export async function updateContact(
 ): Promise<ContactLite> {
   const patch: Record<string, unknown> = {};
   if (input.display_name !== undefined) patch.display_name = input.display_name?.trim() || null;
+  if (input.first_name !== undefined) patch.first_name = input.first_name?.trim() || null;
+  if (input.last_name !== undefined) patch.last_name = input.last_name?.trim() || null;
+  if (input.social_name !== undefined) patch.social_name = input.social_name?.trim() || null;
+  if (input.instagram_handle !== undefined) patch.instagram_handle = cleanHandle(input.instagram_handle);
+  // Edição manual dos nomes = revisado por uma pessoa.
+  if (
+    input.first_name !== undefined ||
+    input.last_name !== undefined ||
+    input.social_name !== undefined ||
+    input.display_name !== undefined
+  ) {
+    patch.name_source = "manual";
+    patch.name_reviewed_at = new Date().toISOString();
+  }
   if (input.category !== undefined) patch.category = input.category;
   if (input.tags !== undefined) patch.tags = input.tags;
   if (input.rating !== undefined) patch.rating = input.rating;

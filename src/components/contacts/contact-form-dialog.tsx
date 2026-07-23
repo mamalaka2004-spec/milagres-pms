@@ -34,6 +34,10 @@ export function ContactFormDialog({
   onSaved: (c: ContactLite) => void;
 }) {
   const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [socialName, setSocialName] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [phone, setPhone] = useState("");
   const [category, setCategory] = useState("lead");
   const [tags, setTags] = useState<string[]>([]);
@@ -46,6 +50,10 @@ export function ContactFormDialog({
   useEffect(() => {
     if (!open) return;
     setName(contact?.display_name ?? "");
+    setFirstName(contact?.first_name ?? "");
+    setLastName(contact?.last_name ?? "");
+    setSocialName(contact?.social_name ?? "");
+    setInstagram(contact?.instagram_handle ?? "");
     setPhone(contact?.phone_e164 ?? "");
     setCategory(contact?.category ?? "lead");
     setTags(contact?.tags ?? []);
@@ -55,6 +63,9 @@ export function ContactFormDialog({
     setDnc(contact?.do_not_contact ?? false);
   }, [open, contact]);
 
+  // Se o "Nome" (exibição) estiver vazio, monta a partir das partes.
+  const effectiveName = name.trim() || [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") || socialName.trim();
+
   function addTag(raw: string) {
     const t = raw.trim().toLowerCase();
     if (!t || tags.includes(t)) return;
@@ -63,11 +74,15 @@ export function ContactFormDialog({
   }
 
   async function save() {
-    if (!name.trim() || !phone.trim() || saving) return;
+    if (!effectiveName || !phone.trim() || saving) return;
     setSaving(true);
     try {
       const body = JSON.stringify({
-        display_name: name.trim(),
+        display_name: effectiveName,
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        social_name: socialName.trim() || null,
+        instagram_handle: instagram.trim() || null,
         phone: phone.trim(),
         category,
         tags,
@@ -105,12 +120,37 @@ export function ContactFormDialog({
         <DialogBody className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Nome *</label>
+              <label className={labelClass}>Nome (exibição) *</label>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" className={inputClass} />
+              <p className="mt-1 text-[10px] text-gray-400">É o nome que aparece na lista. Se vazio, usa Primeiro + Sobrenome.</p>
             </div>
             <div>
               <label className={labelClass}>Telefone (com DDD) *</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55 82 99999-9999" className={inputClass} />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className={labelClass}>Primeiro nome</label>
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="João" className={inputClass} />
+              <p className="mt-1 text-[10px] text-gray-400">Usado no <code className="rounded bg-gray-100 px-1">{"{{primeiro_nome}}"}</code> da campanha.</p>
+            </div>
+            <div>
+              <label className={labelClass}>Sobrenome</label>
+              <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Silva" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Nome social</label>
+              <input value={socialName} onChange={(e) => setSocialName(e.target.value)} placeholder="Como prefere ser chamado" className={inputClass} />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Instagram</label>
+            <div className="flex items-center rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-brand-400/40">
+              <span className="pl-2.5 text-sm text-gray-400">@</span>
+              <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="usuario" className="w-full rounded-lg px-1.5 py-2 text-sm focus:outline-none" />
             </div>
           </div>
 
@@ -179,7 +219,7 @@ export function ContactFormDialog({
           </button>
           <button
             onClick={save}
-            disabled={saving || !name.trim() || !phone.trim()}
+            disabled={saving || !effectiveName || !phone.trim()}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
           >
             {saving && <Loader2 size={15} className="animate-spin" />} {contact ? "Salvar" : "Criar contato"}
