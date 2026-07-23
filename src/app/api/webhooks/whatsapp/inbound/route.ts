@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/queries/whatsapp";
 import { isOutsideBusinessHours } from "@/lib/whatsapp/auth";
 import { handleCampaignInbound } from "@/lib/campaigns/inbound";
+import { maybePauseOnHumanReply } from "@/lib/whatsapp/human-takeover";
 import { createNotification } from "@/lib/notifications/create";
 import { rehostInboundMedia } from "@/lib/whatsapp/media";
 import { inboundWebhookSchema } from "@/lib/validations/whatsapp";
@@ -114,6 +115,24 @@ export async function POST(request: NextRequest) {
       bumpUnread: !fromMe,
     });
 
+    // Takeover humano: alguém do time respondeu direto pelo WhatsApp → pausa a
+    // IA desta conversa (com guardas para não confundir com o eco da própria
+    // IA). Nunca derruba o webhook.
+    let humanTookOver = false;
+    if (fromMe) {
+      try {
+        humanTookOver = await maybePauseOnHumanReply({
+          companyId: line.company_id,
+          conversationId: conv.id,
+          contactPhone,
+          aiActive: conv.ai_active === true,
+          message,
+        });
+      } catch (e) {
+        console.error("[inbound] human-takeover check failed:", e);
+      }
+    }
+
     // Resposta de destinatário de campanha: para a cadência, trata opt-out por
     // keyword e marca o lead como prospecção fria. Nunca derruba o webhook.
     let cameFromCampaign = false;
@@ -168,6 +187,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess({
       conversation_id: conv.id,
       message_id: message.id,
+      human_took_over: humanTookOver,
       ai_should_respond: aiShouldRespond,
       came_from_campaign: cameFromCampaign,
       campaign_opt_out: campaignOptOut,
