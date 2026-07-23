@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Loader2, Bot, Save, X, Sparkles } from "lucide-react";
+import { Plus, Trash2, Loader2, Bot, Save, X, Sparkles, MessageSquare } from "lucide-react";
 import { Button, Input, Textarea, Select, ConfirmDialog, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
+import { AgentPlaygroundDialog } from "./agent-playground-dialog";
 import {
   TOOL_CATALOG,
   PROVIDER_MODELS,
@@ -48,6 +49,7 @@ export function AiAgentsShell({ canEdit }: { canEdit: boolean }) {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [playgroundOpen, setPlaygroundOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [ags, binds, aiSettings] = await Promise.all([
@@ -160,7 +162,15 @@ export function AiAgentsShell({ canEdit }: { canEdit: boolean }) {
         </div>
 
         {/* Editor */}
-        <div>
+        <div className="space-y-3">
+          {selectedId && (
+            <button
+              onClick={() => setPlaygroundOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100"
+            >
+              <MessageSquare size={15} /> Testar no Playground
+            </button>
+          )}
           {draft ? (
             <AgentEditor
               key={selectedId ?? "new"}
@@ -187,6 +197,13 @@ export function AiAgentsShell({ canEdit }: { canEdit: boolean }) {
           )}
         </div>
       </div>
+
+      <AgentPlaygroundDialog
+        agentId={playgroundOpen ? selectedId : null}
+        agentName={draft?.name}
+        open={playgroundOpen}
+        onOpenChange={setPlaygroundOpen}
+      />
     </div>
   );
 }
