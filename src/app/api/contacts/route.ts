@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       minRating: sp.get("min_rating") ? Number(sp.get("min_rating")) : undefined,
       doNotContact:
         sp.get("dnc") === "1" ? true : sp.get("dnc") === "0" ? false : undefined,
+      nameStatus: (sp.get("name_status") as "pendente" | "sem_nome" | "ok" | null) ?? undefined,
       limit: sp.get("limit") ? Math.min(200, Number(sp.get("limit"))) : 50,
       offset: sp.get("offset") ? Number(sp.get("offset")) : 0,
     };

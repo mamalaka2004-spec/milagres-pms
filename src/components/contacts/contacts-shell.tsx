@@ -49,6 +49,7 @@ export function ContactsShell() {
   const [tag, setTag] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [dnc, setDnc] = useState("");
+  const [nameStatus, setNameStatus] = useState("");
   const [allTags, setAllTags] = useState<string[]>([]);
 
   // Dialogs
@@ -80,6 +81,7 @@ export function ContactsShell() {
       if (tag) params.set("tag", tag);
       if (minRating) params.set("min_rating", String(minRating));
       if (dnc) params.set("dnc", dnc);
+      if (nameStatus) params.set("name_status", nameStatus);
       const res = await api<{ contacts: ContactLite[]; total: number }>(`/api/contacts?${params}`);
       setContacts(res.contacts);
       setTotal(res.total);
@@ -89,7 +91,7 @@ export function ContactsShell() {
     } finally {
       setLoading(false);
     }
-  }, [q, category, tag, minRating, dnc, page]);
+  }, [q, category, tag, minRating, dnc, nameStatus, page]);
 
   useEffect(() => {
     const t = setTimeout(load, 250);
@@ -151,7 +153,7 @@ export function ContactsShell() {
   // Reset de página quando o filtro muda.
   useEffect(() => {
     setPage(0);
-  }, [q, category, tag, minRating, dnc]);
+  }, [q, category, tag, minRating, dnc, nameStatus]);
 
   async function toggleDnc(c: ContactLite) {
     const next = !c.do_not_contact;
@@ -230,6 +232,12 @@ export function ContactsShell() {
           <option value="">Todos</option>
           <option value="0">Contatáveis</option>
           <option value="1">Não contatar</option>
+        </select>
+        <select value={nameStatus} onChange={(e) => setNameStatus(e.target.value)} className={selectClass}>
+          <option value="">Qualquer nome</option>
+          <option value="ok">Nome tratado</option>
+          <option value="sem_nome">Sem primeiro nome</option>
+          <option value="pendente">Não revisado</option>
         </select>
         <div className="ml-auto flex items-center gap-2">
           <button

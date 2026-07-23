@@ -9,7 +9,6 @@
 // resolve com segurança.
 // ===========================================================================
 
-const HANDLE_NOISE = /^[@._\-\s]+|[@._\-\s]+$/g;
 const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu;
 
 /** Palavras que denunciam rótulo de origem, não nome de pessoa. */
@@ -18,6 +17,65 @@ const SOURCE_WORDS = [
   "cliente", "lead", "contato", "site", "anuncio", "anúncio", "trafego", "tráfego",
   "olx", "airbnb", "booking", "indicacao", "indicação", "grupo",
 ];
+
+/**
+ * Marcadores de relacionamento/status que aparecem colados no nome na base
+ * real ("Beth Campos Cliente", "BANIDA Daiane"). Não são nome — viram tag.
+ */
+export const RELATIONSHIP_MARKERS = [
+  "cliente", "clientes", "banida", "banido", "pagante", "troca", "sorteio", "sorteios",
+  "lista", "adm", "divulgação", "divulgacao", "part", "portaria", "réveillon", "reveillon",
+  "espertinha", "esperta", "babaca", "invasora", "vaza tag", "rouba tag", "rouba grupo",
+  "pilantra", "hóspede", "hospede", "proprietário", "proprietario", "fornecedor",
+];
+
+/** Termos que indicam PERFIL DE NEGÓCIO, não pessoa física. */
+const BUSINESS_WORDS = [
+  "store", "loja", "atelie", "ateliê", "atellie", "agencia", "agência", "blog", "oficial",
+  "premios", "prêmios", "sorteios", "modas", "acessorios", "acessórios", "importados",
+  "biquinis", "biquínis", "locacoes", "locações", "design", "studio", "estudio", "espaco",
+  "espaço", "emporio", "empório", "receitas", "dicas", "mundo", "casa", "lar", "rede",
+  "burger", "clinica", "clínica", "consultoria", "assessoria", "fotografia", "retratos",
+  "makeup", "maquiagem", "crochet", "croche", "artes", "capas", "cosmeticos", "cosméticos",
+];
+
+export interface HandleInfo {
+  /** Handle sem "@" e em minúsculas (ex.: "joao.silva"). */
+  handle: string | null;
+  /** Texto que sobra fora do handle — costuma ser o nome real. */
+  rest: string;
+}
+
+/**
+ * Separa o @handle do resto do texto. Na base real o nome verdadeiro
+ * frequentemente vem DEPOIS do handle ("@amamaedavalen_ Renata").
+ */
+export function parseHandle(raw: string | null | undefined): HandleInfo {
+  const s = (raw ?? "").trim();
+  if (!s) return { handle: null, rest: "" };
+  const match = s.match(/@([A-Za-z0-9._]{2,})/);
+  const rest = s.replace(/@[A-Za-z0-9._]+/g, " ").replace(/\s+/g, " ").trim();
+  return { handle: match ? match[1].toLowerCase() : null, rest };
+}
+
+/** Handle/nome que aparenta ser negócio (loja, ateliê, blog) e não pessoa. */
+export function looksLikeBusiness(text: string | null | undefined): boolean {
+  const s = (text ?? "").toLowerCase();
+  if (!s) return false;
+  return BUSINESS_WORDS.some((w) => s.includes(w));
+}
+
+/** Código de unidade do imóvel embutido no nome ("Ana Beatriz 206"). */
+export function extractUnitCode(raw: string | null | undefined): string | null {
+  const m = (raw ?? "").match(/\b(B0\d{2}|[124]\d{2})\b/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** Marcadores presentes no texto — viram sugestão de tag. */
+export function extractMarkers(raw: string | null | undefined): string[] {
+  const s = (raw ?? "").toLowerCase();
+  return RELATIONSHIP_MARKERS.filter((m) => new RegExp(`\\b${m}\\b`, "i").test(s));
+}
 
 /** Só dígitos/símbolos? Então não é nome. */
 export function looksLikePhone(s: string): boolean {

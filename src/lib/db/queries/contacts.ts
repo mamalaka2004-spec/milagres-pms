@@ -17,6 +17,9 @@ export interface ContactFilters {
   tag?: string;
   minRating?: number;
   doNotContact?: boolean; // true = só opt-out; false = só contatáveis
+  /** Qualidade do nome: 'pendente' = ainda não revisado; 'sem_nome' = sem
+   *  first_name (campanha sai sem saudação); 'ok' = já tem nome tratado. */
+  nameStatus?: "pendente" | "sem_nome" | "ok";
   limit?: number;
   offset?: number;
 }
@@ -30,6 +33,9 @@ function buildQuery(companyId: string, opts: ContactFilters, head = false) {
   if (opts.tag) query = query.contains("tags", [opts.tag]);
   if (opts.minRating) query = query.gte("rating", opts.minRating);
   if (opts.doNotContact !== undefined) query = query.eq("do_not_contact", opts.doNotContact);
+  if (opts.nameStatus === "pendente") query = query.is("name_reviewed_at", null);
+  if (opts.nameStatus === "sem_nome") query = query.is("first_name", null);
+  if (opts.nameStatus === "ok") query = query.not("first_name", "is", null);
   if (opts.q && opts.q.trim()) {
     const q = opts.q.trim().replace(/[%,]/g, "");
     query = query.or(`display_name.ilike.%${q}%,phone_e164.ilike.%${q}%,phone_canonical.ilike.%${q}%`);
