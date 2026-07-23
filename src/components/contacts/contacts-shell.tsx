@@ -201,6 +201,11 @@ function ContactsList() {
     const t = window.prompt("Tag a adicionar nos contatos selecionados:");
     if (t?.trim()) bulk("add_tags", { tags: [t.trim()] }, "Tag adicionada");
   }
+  function bulkRemoveTag() {
+    const opcoes = allTags.length ? ` (em uso: ${allTags.slice(0, 12).join(", ")})` : "";
+    const t = window.prompt(`Tag a remover dos contatos selecionados${opcoes}:`);
+    if (t?.trim()) bulk("remove_tags", { tags: [t.trim()] }, "Tag removida");
+  }
 
   /** Seleciona TODOS os contatos que batem no filtro atual (além da página). */
   async function selectAllMatching() {
@@ -392,7 +397,10 @@ function ContactsList() {
           </select>
 
           <button onClick={bulkAddTag} disabled={bulkBusy} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-            <TagIcon size={12} /> Add tag
+            <TagIcon size={12} /> + tag
+          </button>
+          <button onClick={bulkRemoveTag} disabled={bulkBusy} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            <TagIcon size={12} /> − tag
           </button>
 
           {lists.length > 0 && (

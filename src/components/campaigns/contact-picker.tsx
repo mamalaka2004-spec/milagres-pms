@@ -202,7 +202,7 @@ function PickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="w-[96vw] max-w-5xl">
         <DialogHeader>
           <DialogTitle>Selecionar contatos</DialogTitle>
         </DialogHeader>
@@ -283,8 +283,8 @@ function PickerDialog({
             </div>
           )}
 
-          {/* Resultados */}
-          <div className="h-[58vh] overflow-y-auto rounded-xl border border-gray-200 scrollbar-thin">
+          {/* Resultados — grade responsiva (1 col no mobile, 2 no tablet, 3 no desktop) */}
+          <div className="h-[52vh] overflow-y-auto rounded-xl border border-gray-200 scrollbar-thin p-1.5 sm:h-[56vh]">
             {loading ? (
               <div className="flex h-full items-center justify-center text-gray-400">
                 <Loader2 className="animate-spin" size={18} />
@@ -294,48 +294,49 @@ function PickerDialog({
                 Nenhum contato encontrado. Use &quot;Novo contato&quot; para cadastrar.
               </div>
             ) : (
-              <ul className="divide-y divide-gray-50">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
                 {results.map((c) => {
                   const sel = selectedIds.has(c.id);
                   return (
-                    <li key={c.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(c)}
-                        className={cn("flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-gray-50", sel && "bg-brand-50/60")}
-                      >
-                        <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded border", sel ? "border-brand-500 bg-brand-500 text-white" : "border-gray-300")}>
-                          {sel && <Check size={13} />}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="truncate text-sm font-medium text-gray-900">
-                              {c.first_name
-                                ? [c.first_name, c.last_name].filter(Boolean).join(" ")
-                                : c.display_name || c.phone_e164 || c.phone_canonical}
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggle(c)}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors",
+                        sel ? "border-brand-300 bg-brand-50/60" : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                      )}
+                    >
+                      <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded border", sel ? "border-brand-500 bg-brand-500 text-white" : "border-gray-300")}>
+                        {sel && <Check size={13} />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="truncate text-sm font-medium text-gray-900">
+                            {c.first_name
+                              ? [c.first_name, c.last_name].filter(Boolean).join(" ")
+                              : c.display_name || c.phone_e164 || c.phone_canonical}
+                          </span>
+                          {c.instagram_handle && (
+                            <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-pink-500">
+                              <Instagram size={9} /> {c.instagram_handle}
                             </span>
-                            {c.instagram_handle && (
-                              <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-pink-500">
-                                <Instagram size={9} /> {c.instagram_handle}
-                              </span>
-                            )}
-                            {c.do_not_contact && (
-                              <span className="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">
-                                Não contatar
-                              </span>
-                            )}
-                          </div>
-                          <div className="truncate text-[11px] text-gray-400">
-                            {c.phone_e164 || c.phone_canonical}
-                            {c.category && ` · ${CONTACT_CATEGORY_LABELS[c.category] ?? c.category}`}
-                            {(c.tags?.length ?? 0) > 0 && ` · ${c.tags!.slice(0, 3).join(", ")}`}
-                          </div>
+                          )}
+                          {c.do_not_contact && (
+                            <span className="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">
+                              Não contatar
+                            </span>
+                          )}
                         </div>
-                      </button>
-                    </li>
+                        <div className="truncate text-[11px] text-gray-400">
+                          {c.phone_e164 || c.phone_canonical}
+                          {c.category && ` · ${CONTACT_CATEGORY_LABELS[c.category] ?? c.category}`}
+                        </div>
+                      </div>
+                    </button>
                   );
                 })}
-              </ul>
+              </div>
             )}
           </div>
 
