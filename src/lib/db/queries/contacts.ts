@@ -8,7 +8,7 @@ import { canonicalBR } from "@/lib/whatsapp/phone";
 import type { ContactLite } from "@/types/campaign";
 
 const COLS =
-  "id, display_name, phone_e164, phone_canonical, category, unit_hint, line_id, tags, rating, notes, do_not_contact, source, created_at, first_name, last_name, social_name, name_reviewed_at";
+  "id, display_name, phone_e164, phone_canonical, category, unit_hint, line_id, tags, rating, notes, do_not_contact, source, created_at, first_name, last_name, social_name, name_reviewed_at, instagram_handle, name_confidence, name_source, raw_label";
 
 export interface ContactFilters {
   q?: string;

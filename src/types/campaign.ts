@@ -167,6 +167,11 @@ export interface ContactLite {
   last_name?: string | null;
   social_name?: string | null;
   name_reviewed_at?: string | null;
+  /** Organização de nomes (migration 041). */
+  instagram_handle?: string | null;
+  name_confidence?: "alta" | "media" | "baixa" | null;
+  name_source?: "manual" | "heuristic" | "ai" | "import" | null;
+  raw_label?: string | null;
 }
 
 export const CONTACT_CATEGORY_LABELS: Record<string, string> = {

@@ -12,9 +12,10 @@ import {
   ChevronRight,
   Sparkles,
   Check,
-  X,
-  ListPlus,
+  Instagram,
   Tag as TagIcon,
+  BookUser,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
@@ -23,6 +24,7 @@ import { ConfirmDialog } from "@/components/ui";
 import { StarRating } from "./star-rating";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { NameCleanupDialog } from "./name-cleanup-dialog";
+import { NameChangesTab } from "./name-changes-tab";
 import { nameNeedsReview } from "@/lib/contacts/name";
 import { CONTACT_CATEGORY_LABELS, type ContactLite, type ContactList } from "@/types/campaign";
 
@@ -38,6 +40,33 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function ContactsShell() {
+  const [tab, setTab] = useState<"lista" | "alteracoes">("lista");
+  return (
+    <div className="space-y-5">
+      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+        {([
+          { id: "lista", label: "Contatos", icon: BookUser },
+          { id: "alteracoes", label: "Nomes organizados", icon: History },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+              tab === t.id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+            )}
+          >
+            <t.icon size={14} /> {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === "lista" ? <ContactsList /> : <NameChangesTab />}
+    </div>
+  );
+}
+
+function ContactsList() {
   const [contacts, setContacts] = useState<ContactLite[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -354,6 +383,11 @@ export function ContactsShell() {
                     </button>
                   </th>
                   <th className="px-4 py-2.5 font-medium">Contato</th>
+                  <th className="px-3 py-2.5 font-medium">Nome</th>
+                  <th className="px-3 py-2.5 font-medium">Sobrenome</th>
+                  <th className="px-3 py-2.5 font-medium">Nome social</th>
+                  <th className="px-3 py-2.5 font-medium">Instagram</th>
+                  <th className="px-3 py-2.5 font-medium">Unidade</th>
                   <th className="px-4 py-2.5 font-medium">Categoria</th>
                   <th className="px-4 py-2.5 font-medium">Tags</th>
                   <th className="px-4 py-2.5 font-medium">Rating</th>
@@ -400,8 +434,38 @@ export function ContactsShell() {
                         </div>
                         <div className="text-[11px] text-gray-400">
                           {c.phone_e164 || c.phone_canonical}
-                          {c.first_name && ` · ${c.first_name}${c.last_name ? ` ${c.last_name}` : ""}`}
                         </div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {c.first_name ? (
+                          <span className="font-medium text-gray-800">{c.first_name}</span>
+                        ) : (
+                          <span className="text-[11px] italic text-amber-600">sem nome</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-gray-600">
+                        {c.last_name || <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-gray-600">
+                        {c.social_name || <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {c.instagram_handle ? (
+                          <a
+                            href={`https://instagram.com/${c.instagram_handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-pink-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Instagram size={11} /> {c.instagram_handle}
+                          </a>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-[11px] text-gray-600">
+                        {c.unit_hint || <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-4 py-2.5">
                         {c.category ? (
