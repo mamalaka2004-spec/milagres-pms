@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Search, Loader2, Check, X, UserPlus, Users, Plus, ChevronLeft, ChevronRight, Instagram } from "lucide-react";
+import { Search, Loader2, Check, X, UserPlus, Users, Plus, ChevronLeft, ChevronRight, Instagram, List, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
 import { toast } from "@/components/ui/use-toast";
@@ -98,6 +98,7 @@ function PickerDialog({
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"lista" | "cards">("lista");
 
   // Criação rápida
   const [creating, setCreating] = useState(false);
@@ -202,7 +203,7 @@ function PickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[96vw] max-w-5xl">
+      <DialogContent className="w-[96vw] sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Selecionar contatos</DialogTitle>
         </DialogHeader>
@@ -262,9 +263,19 @@ function PickerDialog({
             </div>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
-              <span>
-                <b className="text-gray-800">{value.length}</b> selecionado(s) · {total} no filtro
-              </span>
+              <div className="flex items-center gap-2">
+                <span>
+                  <b className="text-gray-800">{value.length}</b> selecionado(s) · {total} no filtro
+                </span>
+                <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
+                  <button onClick={() => setViewMode("lista")} title="Lista" className={cn("rounded p-1", viewMode === "lista" ? "bg-brand-500 text-white" : "text-gray-400 hover:text-gray-600")}>
+                    <List size={13} />
+                  </button>
+                  <button onClick={() => setViewMode("cards")} title="Cards" className={cn("rounded p-1", viewMode === "cards" ? "bg-brand-500 text-white" : "text-gray-400 hover:text-gray-600")}>
+                    <LayoutGrid size={13} />
+                  </button>
+                </div>
+              </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setCreating(true)} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
                   <Plus size={12} /> Novo contato
@@ -294,7 +305,13 @@ function PickerDialog({
                 Nenhum contato encontrado. Use &quot;Novo contato&quot; para cadastrar.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+              <div
+                className={cn(
+                  viewMode === "cards"
+                    ? "grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3"
+                    : "grid grid-cols-1 gap-1 sm:grid-cols-2"
+                )}
+              >
                 {results.map((c) => {
                   const sel = selectedIds.has(c.id);
                   return (
@@ -303,8 +320,15 @@ function PickerDialog({
                       type="button"
                       onClick={() => toggle(c)}
                       className={cn(
-                        "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors",
-                        sel ? "border-brand-300 bg-brand-50/60" : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                        "flex items-center gap-2 rounded-lg text-left transition-colors",
+                        viewMode === "cards" ? "border px-2.5 py-2" : "px-2 py-1.5",
+                        sel
+                          ? viewMode === "cards"
+                            ? "border-brand-300 bg-brand-50/60"
+                            : "bg-brand-50/60"
+                          : viewMode === "cards"
+                          ? "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                          : "hover:bg-gray-50"
                       )}
                     >
                       <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded border", sel ? "border-brand-500 bg-brand-500 text-white" : "border-gray-300")}>
