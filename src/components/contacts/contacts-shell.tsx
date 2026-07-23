@@ -31,6 +31,7 @@ import { StarRating } from "./star-rating";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { ContactViewDialog } from "./contact-view-dialog";
 import { NameCleanupDialog } from "./name-cleanup-dialog";
+import { TagManagerDialog } from "./tag-manager-dialog";
 import { NameChangesTab } from "./name-changes-tab";
 import { SelectionActionDialog } from "./selection-action-dialog";
 import { nameNeedsReview } from "@/lib/contacts/name";
@@ -103,6 +104,7 @@ function ContactsList() {
   const [viewing, setViewing] = useState<ContactLite | null>(null);
   const [deleting, setDeleting] = useState<ContactLite | null>(null);
   const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const [selectionAction, setSelectionAction] = useState<"list" | "campaign" | "prospect" | null>(null);
 
   // Seleção em massa
@@ -325,6 +327,13 @@ function ContactsList() {
           <option value="pendente">Não revisado</option>
         </select>
         <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setTagManagerOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            title="Ver todas as etiquetas com contagem, renomear e excluir em lote"
+          >
+            <TagIcon size={15} /> Etiquetas
+          </button>
           <button
             onClick={() => setCleanupOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100"
@@ -748,6 +757,16 @@ function ContactsList() {
           setSelected(new Set());
           load();
         }}
+      />
+
+      <TagManagerDialog
+        open={tagManagerOpen}
+        onOpenChange={setTagManagerOpen}
+        onChanged={() => {
+          load();
+          loadTags();
+        }}
+        onFilterTag={(t) => setTag(t)}
       />
 
       <SelectionActionDialog

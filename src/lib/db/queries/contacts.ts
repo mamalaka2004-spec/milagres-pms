@@ -211,11 +211,75 @@ export async function listContactTags(companyId: string): Promise<string[]> {
     .select("tags")
     .eq("company_id", companyId)
     .not("tags", "eq", "{}")
-    .limit(2000);
+    .limit(5000);
   if (error) throw error;
   const set = new Set<string>();
   for (const row of (data as { tags: string[] }[]) || []) {
     for (const t of row.tags || []) if (t?.trim()) set.add(t.trim());
   }
   return [...set].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+/** Todas as etiquetas com a contagem de contatos que as usam. */
+export async function listContactTagsWithCount(companyId: string): Promise<{ tag: string; count: number }[]> {
+  const { data, error } = await (createAdminClient().from("whatsapp_contacts") as any)
+    .select("tags")
+    .eq("company_id", companyId)
+    .not("tags", "eq", "{}")
+    .limit(5000);
+  if (error) throw error;
+  const counts = new Map<string, number>();
+  for (const row of (data as { tags: string[] }[]) || []) {
+    for (const t of row.tags || []) {
+      const key = t?.trim();
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, "pt-BR"));
+}
+
+/** Renomeia uma etiqueta em toda a base (mescla se o destino já existir). */
+export async function renameContactTag(companyId: string, from: string, to: string): Promise<number> {
+  const src = from.trim();
+  const dst = to.trim().toLowerCase();
+  if (!src || !dst) return 0;
+  const db = createAdminClient();
+  const { data } = await (db.from("whatsapp_contacts") as any)
+    .select("id, tags")
+    .eq("company_id", companyId)
+    .contains("tags", [src])
+    .limit(5000);
+  const rows = (data as { id: string; tags: string[] }[]) || [];
+  const updates = rows.map((r) => {
+    const set = new Set((r.tags || []).map((t) => (t === src ? dst : t)));
+    return (db.from("whatsapp_contacts") as any)
+      .update({ tags: [...set] })
+      .eq("id", r.id)
+      .eq("company_id", companyId);
+  });
+  for (let i = 0; i < updates.length; i += 25) await Promise.all(updates.slice(i, i + 25));
+  return rows.length;
+}
+
+/** Remove uma etiqueta de toda a base. */
+export async function deleteContactTag(companyId: string, tag: string): Promise<number> {
+  const t = tag.trim();
+  if (!t) return 0;
+  const db = createAdminClient();
+  const { data } = await (db.from("whatsapp_contacts") as any)
+    .select("id, tags")
+    .eq("company_id", companyId)
+    .contains("tags", [t])
+    .limit(5000);
+  const rows = (data as { id: string; tags: string[] }[]) || [];
+  const updates = rows.map((r) =>
+    (db.from("whatsapp_contacts") as any)
+      .update({ tags: (r.tags || []).filter((x) => x !== t) })
+      .eq("id", r.id)
+      .eq("company_id", companyId)
+  );
+  for (let i = 0; i < updates.length; i += 25) await Promise.all(updates.slice(i, i + 25));
+  return rows.length;
 }
