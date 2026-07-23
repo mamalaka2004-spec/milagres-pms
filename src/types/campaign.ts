@@ -175,10 +175,14 @@ export interface ContactLite {
 }
 
 export const CONTACT_CATEGORY_LABELS: Record<string, string> = {
-  guest: "Hóspede",
-  guest_maybe: "Hóspede?",
   lead: "Lead",
+  guest: "Hóspede",
   provider: "Fornecedor",
-  spam: "Spam",
   personal: "Pessoal",
+  spam: "Spam",
+  // guest_maybe foi unificado em guest; mantido só como fallback de leitura.
+  guest_maybe: "Hóspede",
 };
+
+/** Categorias selecionáveis (sem os aliases de compat). */
+export const CONTACT_CATEGORIES = ["lead", "guest", "provider", "personal", "spam"] as const;

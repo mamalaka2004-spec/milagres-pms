@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
@@ -72,6 +74,9 @@ export function NameChangesTab() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRevert, setConfirmRevert] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ first: string; last: string; social: string }>({ first: "", last: "", social: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,6 +103,41 @@ export function NameChangesTab() {
   useEffect(() => {
     setPage(0);
   }, [source, confidence]);
+
+  function startEdit(r: ChangeRow) {
+    setEditId(r.id);
+    setDraft({ first: r.first_name ?? "", last: r.last_name ?? "", social: r.social_name ?? "" });
+  }
+
+  async function saveEdit(r: ChangeRow) {
+    setSavingEdit(true);
+    try {
+      const display = [draft.first.trim(), draft.last.trim()].filter(Boolean).join(" ") || null;
+      await api(`/api/contacts/${r.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: draft.first.trim() || null,
+          last_name: draft.last.trim() || null,
+          social_name: draft.social.trim() || null,
+          display_name: display,
+        }),
+      });
+      setRows((rs) =>
+        rs.map((x) =>
+          x.id === r.id
+            ? { ...x, first_name: draft.first.trim() || null, last_name: draft.last.trim() || null, social_name: draft.social.trim() || null, display_name: display, name_source: "manual", changed: true }
+            : x
+        )
+      );
+      setEditId(null);
+      toast({ title: "Nome atualizado", variant: "success" });
+    } catch (e) {
+      toast({ title: "Erro ao salvar", description: e instanceof Error ? e.message : "", variant: "error" });
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   async function revert(ids: string[]) {
     if (ids.length === 0) return;
@@ -212,6 +252,20 @@ export function NameChangesTab() {
                     </button>
                   )}
                   <div className="min-w-0 flex-1">
+                    {editId === r.id ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <input autoFocus value={draft.first} onChange={(e) => setDraft((d) => ({ ...d, first: e.target.value }))} placeholder="Nome" className="min-w-0 flex-1 basis-24 rounded border border-gray-200 px-2 py-1 text-sm" />
+                        <input value={draft.last} onChange={(e) => setDraft((d) => ({ ...d, last: e.target.value }))} placeholder="Sobrenome" className="min-w-0 flex-1 basis-24 rounded border border-gray-200 px-2 py-1 text-sm" />
+                        <input value={draft.social} onChange={(e) => setDraft((d) => ({ ...d, social: e.target.value }))} placeholder="Social" className="min-w-0 flex-1 basis-20 rounded border border-gray-200 px-2 py-1 text-sm" />
+                        <button onClick={() => saveEdit(r)} disabled={savingEdit} className="inline-flex items-center gap-1 rounded bg-brand-500 px-2 py-1 text-xs text-white disabled:opacity-50">
+                          {savingEdit ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />} Salvar
+                        </button>
+                        <button onClick={() => setEditId(null)} className="rounded p-1 text-gray-400 hover:text-gray-600">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                    <>
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       {r.changed ? (
                         <>
@@ -261,8 +315,19 @@ export function NameChangesTab() {
                       )}
                       {r.category && <span>{CONTACT_CATEGORY_LABELS[r.category] ?? r.category}</span>}
                     </div>
+                    </>
+                    )}
                   </div>
-                  {r.can_revert && (
+                  {editId !== r.id && (
+                    <button
+                      onClick={() => startEdit(r)}
+                      className="shrink-0 rounded-lg p-1.5 text-gray-300 hover:text-brand-600"
+                      title="Editar nome"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
+                  {r.can_revert && editId !== r.id && (
                     <button
                       onClick={() => revert([r.id])}
                       disabled={busy}

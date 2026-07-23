@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Plus,
@@ -16,6 +17,10 @@ import {
   Tag as TagIcon,
   BookUser,
   History,
+  MessageCircle,
+  ListPlus,
+  Megaphone,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { api } from "@/lib/chat/utils";
@@ -25,10 +30,11 @@ import { StarRating } from "./star-rating";
 import { ContactFormDialog } from "./contact-form-dialog";
 import { NameCleanupDialog } from "./name-cleanup-dialog";
 import { NameChangesTab } from "./name-changes-tab";
+import { SelectionActionDialog } from "./selection-action-dialog";
 import { nameNeedsReview } from "@/lib/contacts/name";
 import { CONTACT_CATEGORY_LABELS, type ContactLite, type ContactList } from "@/types/campaign";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZES = [25, 50, 100];
 
 const CATEGORY_COLORS: Record<string, string> = {
   guest: "#3b82f6",
@@ -38,6 +44,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   spam: "#ef4444",
   personal: "#6b7280",
 };
+
+/** Só dígitos (para wa.me). */
+function waLink(phone: string | null | undefined): string {
+  const d = (phone || "").replace(/\D/g, "");
+  return `https://wa.me/${d}`;
+}
 
 export function ContactsShell() {
   const [tab, setTab] = useState<"lista" | "alteracoes">("lista");
@@ -67,10 +79,12 @@ export function ContactsShell() {
 }
 
 function ContactsList() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<ContactLite[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
 
   // Filtros
   const [q, setQ] = useState("");
@@ -86,12 +100,25 @@ function ContactsList() {
   const [editing, setEditing] = useState<ContactLite | null>(null);
   const [deleting, setDeleting] = useState<ContactLite | null>(null);
   const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [selectionAction, setSelectionAction] = useState<"list" | "campaign" | "prospect" | null>(null);
 
   // Seleção em massa
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [lists, setLists] = useState<ContactList[]>([]);
+
+  /** Parâmetros dos filtros ativos (compartilhado entre lista e "selecionar todos"). */
+  const filterParams = useCallback(() => {
+    const p = new URLSearchParams();
+    if (q.trim()) p.set("q", q.trim());
+    if (category) p.set("category", category);
+    if (tag) p.set("tag", tag);
+    if (minRating) p.set("min_rating", String(minRating));
+    if (dnc) p.set("dnc", dnc);
+    if (nameStatus) p.set("name_status", nameStatus);
+    return p;
+  }, [q, category, tag, minRating, dnc, nameStatus]);
 
   const loadTags = useCallback(() => {
     api<string[]>(`/api/contacts/tags`).then(setAllTags).catch(() => setAllTags([]));
@@ -100,17 +127,10 @@ function ContactsList() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        paged: "1",
-        limit: String(PAGE_SIZE),
-        offset: String(page * PAGE_SIZE),
-      });
-      if (q.trim()) params.set("q", q.trim());
-      if (category) params.set("category", category);
-      if (tag) params.set("tag", tag);
-      if (minRating) params.set("min_rating", String(minRating));
-      if (dnc) params.set("dnc", dnc);
-      if (nameStatus) params.set("name_status", nameStatus);
+      const params = filterParams();
+      params.set("paged", "1");
+      params.set("limit", String(pageSize));
+      params.set("offset", String(page * pageSize));
       const res = await api<{ contacts: ContactLite[]; total: number }>(`/api/contacts?${params}`);
       setContacts(res.contacts);
       setTotal(res.total);
@@ -120,7 +140,7 @@ function ContactsList() {
     } finally {
       setLoading(false);
     }
-  }, [q, category, tag, minRating, dnc, nameStatus, page]);
+  }, [filterParams, pageSize, page]);
 
   useEffect(() => {
     const t = setTimeout(load, 250);
@@ -179,10 +199,38 @@ function ContactsList() {
     if (t?.trim()) bulk("add_tags", { tags: [t.trim()] }, "Tag adicionada");
   }
 
+  /** Seleciona TODOS os contatos que batem no filtro atual (além da página). */
+  async function selectAllMatching() {
+    setBulkBusy(true);
+    try {
+      const res = await api<{ ids: string[] }>(`/api/contacts?ids=1&${filterParams()}`);
+      setSelected(new Set(res.ids));
+      toast({ title: `${res.ids.length} contato(s) selecionado(s)`, variant: "success" });
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "", variant: "error" });
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  /** Abre o chat interno do contato (sem duplicar conversa existente). */
+  async function openConversation(c: ContactLite) {
+    try {
+      const res = await api<{ conversation_id: string }>(`/api/contacts/${c.id}/start-conversation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      router.push(`/vendas?conversation=${res.conversation_id}`);
+    } catch (e) {
+      toast({ title: "Não foi possível abrir a conversa", description: e instanceof Error ? e.message : "", variant: "error" });
+    }
+  }
+
   // Reset de página quando o filtro muda.
   useEffect(() => {
     setPage(0);
-  }, [q, category, tag, minRating, dnc, nameStatus]);
+  }, [q, category, tag, minRating, dnc, nameStatus, pageSize]);
 
   async function toggleDnc(c: ContactLite) {
     const next = !c.do_not_contact;
@@ -222,7 +270,7 @@ function ContactsList() {
     }
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const selectClass =
     "rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/40";
 
@@ -294,8 +342,25 @@ function ContactsList() {
           <span className="text-xs font-semibold text-brand-900">
             {selected.size} selecionado(s)
           </span>
+          {selected.size < total && (
+            <button onClick={selectAllMatching} disabled={bulkBusy} className="text-xs font-medium text-brand-600 hover:underline">
+              selecionar todos os {total}
+            </button>
+          )}
           <button onClick={() => setSelected(new Set())} className="text-xs text-gray-500 hover:underline">
             limpar
+          </button>
+          <div className="mx-1 h-4 w-px bg-brand-200" />
+
+          {/* Ações rápidas: transformar a seleção em lista / campanha / prospecção */}
+          <button onClick={() => setSelectionAction("list")} disabled={bulkBusy} className="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-white px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50">
+            <ListPlus size={12} /> Nova lista
+          </button>
+          <button onClick={() => setSelectionAction("campaign")} disabled={bulkBusy} className="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-white px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50">
+            <Megaphone size={12} /> Nova campanha
+          </button>
+          <button onClick={() => setSelectionAction("prospect")} disabled={bulkBusy} className="inline-flex items-center gap-1 rounded-lg border border-brand-300 bg-white px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50">
+            <Target size={12} /> Prospecção
           </button>
           <div className="mx-1 h-4 w-px bg-brand-200" />
 
@@ -383,6 +448,7 @@ function ContactsList() {
                     </button>
                   </th>
                   <th className="px-4 py-2.5 font-medium">Contato</th>
+                  <th className="px-3 py-2.5 font-medium">Telefone / WhatsApp</th>
                   <th className="px-3 py-2.5 font-medium">Nome</th>
                   <th className="px-3 py-2.5 font-medium">Sobrenome</th>
                   <th className="px-3 py-2.5 font-medium">Nome social</th>
@@ -432,8 +498,34 @@ function ContactsList() {
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-gray-400">
-                          {c.phone_e164 || c.phone_canonical}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] tabular-nums text-gray-600">
+                            {c.phone_e164 || c.phone_canonical || "—"}
+                          </span>
+                          {(c.phone_e164 || c.phone_canonical) && (
+                            <>
+                              <button
+                                onClick={() => openConversation(c)}
+                                className="rounded p-1 text-brand-500 hover:bg-brand-50"
+                                title="Abrir conversa no PMS (sem duplicar)"
+                              >
+                                <MessageCircle size={13} />
+                              </button>
+                              <a
+                                href={waLink(c.phone_e164 || c.phone_canonical)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded p-1 text-green-600 hover:bg-green-50"
+                                title="Abrir no WhatsApp (wa.me)"
+                              >
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+                                  <path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.5-.3-.5.3-.5.8-1.6.1-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z" />
+                                </svg>
+                              </a>
+                            </>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
@@ -537,12 +629,32 @@ function ContactsList() {
       </div>
 
       {/* Paginação */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>
-          {total} contato(s){total > PAGE_SIZE && ` · página ${page + 1} de ${totalPages}`}
-        </span>
-        {total > PAGE_SIZE && (
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2">
+          <span>{total} contato(s)</span>
+          <span className="text-gray-300">·</span>
+          <label className="flex items-center gap-1">
+            por página:
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-xs"
+            >
+              {PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {totalPages > 1 && (
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(0)}
+              disabled={page === 0}
+              className="rounded-lg border border-gray-200 px-2 py-1 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+            >
+              «
+            </button>
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
@@ -550,12 +662,22 @@ function ContactsList() {
             >
               <ChevronLeft size={14} />
             </button>
+            <span className="px-2">
+              página <b className="text-gray-700">{page + 1}</b> de {totalPages}
+            </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="rounded-lg border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
             >
               <ChevronRight size={14} />
+            </button>
+            <button
+              onClick={() => setPage(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              className="rounded-lg border border-gray-200 px-2 py-1 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+            >
+              »
             </button>
           </div>
         )}
@@ -603,6 +725,17 @@ function ContactsList() {
         onOpenChange={setCleanupOpen}
         contactIds={selected.size > 0 ? [...selected] : undefined}
         onApplied={() => {
+          setSelected(new Set());
+          load();
+        }}
+      />
+
+      <SelectionActionDialog
+        action={selectionAction}
+        contactIds={[...selected]}
+        onClose={() => setSelectionAction(null)}
+        onDone={() => {
+          setSelectionAction(null);
           setSelected(new Set());
           load();
         }}

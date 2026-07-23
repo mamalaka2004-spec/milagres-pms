@@ -68,6 +68,13 @@ export async function listContactsPaged(
   return { contacts: (data as ContactLite[]) || [], total: count ?? 0 };
 }
 
+/** Só os IDs que batem no filtro — para "selecionar todos" além da página atual. */
+export async function listContactIds(companyId: string, opts: ContactFilters = {}): Promise<string[]> {
+  const { data, error } = await buildQuery(companyId, opts).limit(5000);
+  if (error) throw error;
+  return ((data as { id: string }[]) || []).map((r) => r.id);
+}
+
 export async function getContactsByIds(companyId: string, ids: string[]): Promise<ContactLite[]> {
   if (!ids.length) return [];
   const { data, error } = await (createAdminClient().from("whatsapp_contacts") as any)

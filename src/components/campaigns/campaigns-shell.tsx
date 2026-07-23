@@ -86,6 +86,19 @@ function CampaignsTab() {
     load();
   }, [load]);
 
+  // Chegou de /campaigns?edit=<id> (atalho "Nova campanha" da página Contatos):
+  // abre o compositor já em edição na campanha recém-criada.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get("edit");
+    if (!editId) return;
+    api<Campaign & { recipients?: unknown }>(`/api/campaigns/${editId}`)
+      .then((c) => setEditing(c))
+      .catch(() => {});
+    // limpa o param para não reabrir ao navegar
+    window.history.replaceState({}, "", "/campaigns");
+  }, []);
+
   // Auto-refresh enquanto houver campanha em envio.
   useEffect(() => {
     const anySending = campaigns.some((c) => c.status === "sending");

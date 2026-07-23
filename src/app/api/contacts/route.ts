@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireFullAccess, requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/audit/log";
 import { apiSuccess, apiError, apiUnauthorized, apiForbidden, apiServerError } from "@/lib/api/response";
-import { searchContacts, listContactsPaged, createContact } from "@/lib/db/queries/contacts";
+import { searchContacts, listContactsPaged, listContactIds, createContact } from "@/lib/db/queries/contacts";
 import { contactCreateSchema } from "@/lib/validations/contact";
 
 export async function GET(req: NextRequest) {
@@ -21,7 +21,11 @@ export async function GET(req: NextRequest) {
       limit: sp.get("limit") ? Math.min(200, Number(sp.get("limit"))) : 50,
       offset: sp.get("offset") ? Number(sp.get("offset")) : 0,
     };
-    // paged=1 → { contacts, total } (página Contatos); sem paged → array (pickers).
+    // ids=1 → só os IDs do filtro (seleção "todos"); paged=1 → { contacts, total };
+    // sem nada → array (pickers legados).
+    if (sp.get("ids") === "1") {
+      return apiSuccess({ ids: await listContactIds(user.company_id, filters) });
+    }
     if (sp.get("paged") === "1") {
       return apiSuccess(await listContactsPaged(user.company_id, filters));
     }

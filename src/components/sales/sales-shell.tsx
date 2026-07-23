@@ -83,6 +83,16 @@ function SalesWorkspace({ lines, activeLine, onSwitchLine }: { lines: LineRow[];
   const [funnelView, setFunnelView] = useState<"kanban" | "lista">("kanban");
   const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
 
+  // Chegou de /vendas?conversation=<id> (atalho "abrir conversa" da página
+  // Contatos): foca essa conversa e garante que estamos na aba Conversas.
+  useEffect(() => {
+    const cid = new URLSearchParams(window.location.search).get("conversation");
+    if (!cid) return;
+    setView("conversas");
+    setFocusLeadId(cid);
+    window.history.replaceState({}, "", "/vendas");
+  }, []);
+
   return (
     <div className={cn(SHELL_HEIGHT, "flex flex-col gap-3")}>
       <div className="flex flex-wrap items-center gap-2">
