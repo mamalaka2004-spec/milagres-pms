@@ -86,8 +86,8 @@ export function AgentPlaygroundDialog({
               <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-xs text-gray-400">
                 <Bot size={22} />
                 Escreva como se fosse o lead (ex.: &quot;quem é você?&quot;, &quot;me fala mais&quot;, &quot;quanto custa?&quot;)
-                e veja como a {agentName || "IA"} responderia. Simulação de estilo — não roda as ferramentas
-                de imóveis nem envia nada.
+                e veja como a {agentName || "IA"} responderia. Ela consulta o catálogo de imóveis de verdade
+                (por orçamento) — mas nada é enviado por WhatsApp nem gera lead.
               </div>
             ) : (
               messages.map((m, i) => (
