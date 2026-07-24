@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Target, Loader2, Search, Bot, BotOff, AlertCircle, Phone, Sparkles,
   LayoutGrid, MessageSquare, ChevronLeft, Maximize2, Minimize2,
-  PanelRightClose, PanelRightOpen, List,
+  PanelRightClose, PanelRightOpen, List, Hand,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -156,6 +156,7 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [onlyHandoff, setOnlyHandoff] = useState(false);
   const [mobileThread, setMobileThread] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
@@ -186,11 +187,13 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
   }, [supabase, lineId, loadConversations]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return conversations;
-    const q = search.toLowerCase();
-    return conversations.filter((c) =>
-      (c.contact_name || "").toLowerCase().includes(q) || (c.contact_phone || "").includes(q) || (c.lead_data?.objetivo || "").toLowerCase().includes(q));
-  }, [conversations, search]);
+    const q = search.trim().toLowerCase();
+    return conversations.filter((c) => {
+      if (onlyHandoff && !c.lead_data?.marcelo_handoff_at) return false;
+      if (!q) return true;
+      return (c.contact_name || "").toLowerCase().includes(q) || (c.contact_phone || "").includes(q) || (c.lead_data?.objetivo || "").toLowerCase().includes(q);
+    });
+  }, [conversations, search, onlyHandoff]);
 
   const grouped = useMemo(() => {
     const buckets: Record<LeadStage | "_unstaged", SalesConvRow[]> = {
@@ -205,6 +208,7 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
 
   const selected = conversations.find((c) => c.id === selectedId) || null;
   const totalUnread = conversations.reduce((a, c) => a + (c.unread_count || 0), 0);
+  const handoffCount = conversations.filter((c) => c.lead_data?.marcelo_handoff_at).length;
   const select = (id: string) => { setSelectedId(id); setMobileThread(true); };
 
   return (
@@ -212,9 +216,23 @@ function SalesPipeline({ lineId, focusLeadId }: { lineId: string; focusLeadId?: 
       {/* Pipeline list grouped by stage */}
       <aside className={cn("w-full lg:w-[330px] xl:w-[370px] shrink-0 border-r border-gray-200 flex-col min-h-0 bg-gray-50/40", mobileThread ? "hidden" : "flex", focusMode ? "lg:hidden" : "lg:flex")}>
         <div className="p-3 border-b border-gray-100 bg-white space-y-2.5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-bold text-gray-800">Leads</h2>
-            {totalUnread > 0 && <span className="text-[10px] font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full">{totalUnread} não lidas</span>}
+            <div className="flex items-center gap-1.5">
+              {handoffCount > 0 && (
+                <button
+                  onClick={() => setOnlyHandoff((v) => !v)}
+                  title="Conversas que a IA passou para um humano — clique para filtrar"
+                  className={cn(
+                    "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors duration-150",
+                    onlyHandoff ? "bg-rose-600 text-white border-rose-600" : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                  )}
+                >
+                  <Hand size={11} /> {handoffCount} handoff
+                </button>
+              )}
+              {totalUnread > 0 && <span className="text-[10px] font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full">{totalUnread} não lidas</span>}
+            </div>
           </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
@@ -286,6 +304,11 @@ function LeadCard({ conv, active, onSelect }: { conv: SalesConvRow; active: bool
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className={cn("text-[11px] truncate flex-1", conv.unread_count > 0 ? "text-gray-700" : "text-gray-500")}>{conv.last_message_text || "—"}</span>
+            {conv.lead_data?.marcelo_handoff_at && (
+              <span className="inline-flex items-center gap-0.5 bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" title="Handoff — a IA passou para um humano">
+                <Hand size={9} /> handoff
+              </span>
+            )}
             {conf !== null && conf !== undefined && (
               <span className={cn("text-[10px] font-bold px-1 rounded", conf >= 8 ? "bg-emerald-50 text-emerald-700" : conf >= 5 ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700")}>{conf}/10</span>
             )}
