@@ -25,6 +25,7 @@ Diferenciais de percepção de valor para usar no discurso de vendas:
   hospedagens muito disputadas**, o que eleva a percepção de valor e o interesse de
   investidores.
 - **Clima bom quase o ano inteiro** → temporada longa, menos sazonalidade, melhor ocupação.
+- **Acesso:** ~100 km / ~1h30 de Maceió (aeroporto).
 - **Operação de short stay já ativa** em todos os imóveis do catálogo (links Airbnb reais) →
   prova de potencial de renda para o investidor, não só promessa.
 
@@ -118,7 +119,8 @@ Faixa de entrada: **R$ 720 mil** (Tamoná 07). Topo: **R$ 2,2 mi** (Cobertura Ma
 - **Locação (operação ativa):** até 10 hóspedes · 3 banheiros · cozinha totalmente equipada ·
   churrasqueira a carvão.
 - **Vídeo:** https://youtu.be/YoxkOJ4T2Aw
-- **Airbnb:** _a confirmar_ (há uma "Cobertura Vista Coqueiros" na operação — validar se é esta).
+- **Airbnb (operação ativa):** https://www.airbnb.com.br/rooms/885070988722208207 (anúncio
+  "Cobertura Vista Coqueiros" — vista deslumbrante para os coqueirais).
 - **Posicionamento:** produto premium/topo do catálogo → cobertura, para o comprador de maior
   ticket. _(Não constava no PDF; preço informado pelo cliente: R$ 2.200.000.)_
 
@@ -126,12 +128,12 @@ Faixa de entrada: **R$ 720 mil** (Tamoná 07). Topo: **R$ 2,2 mi** (Cobertura Ma
 
 ## 4. Pendências / a confirmar
 
-- **Kanui 206:** existe no sistema de locação (cobertura, 3 suítes, até 10 hóspedes), mas
-  **não temos preço de venda nem vídeo** informados. Definir se entra no catálogo de vendas.
-- **Airbnb da Cobertura Mar Bella (Kanui 201):** confirmar o link do anúncio (candidato:
-  "Cobertura Vista Coqueiros").
-- **Distância até Maceió / aeroporto:** confirmar tempo/quilometragem oficial para usar no
-  discurso (referência aproximada: ~100 km / ~2 h).
+- **Kanui 206:** existe no sistema de locação (cobertura, 3 suítes, até 10 hóspedes), mas sem
+  preço de venda/vídeo. **Decisão (24/jul): por ora NÃO entra no catálogo de vendas** — reavaliar
+  quando tiver material.
+- **Distância até Maceió:** **~100 km / ~1h30** (confirmado). Usar no discurso.
+- ~~Airbnb da Cobertura Mar Bella~~ — **resolvido:** é o anúncio "Cobertura Vista Coqueiros"
+  (rooms/885070988722208207).
 
 ---
 
