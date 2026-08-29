@@ -1,0 +1,77 @@
+{
+  "tamona07": {
+    "property_id": "3a4ef8d9-cff3-4601-92b3-a04d3300294d",
+    "files": [
+      "airbnb-00-1782183397126.jpg",
+      "airbnb-01-1782183400744.jpg",
+      "airbnb-02-1782183402548.jpg",
+      "airbnb-03-1782183404170.jpg",
+      "airbnb-04-1782183407227.jpg",
+      "airbnb-05-1782183409277.jpg",
+      "airbnb-06-1782183411536.jpg",
+      "airbnb-07-1782183414295.jpg"
+    ]
+  },
+  "villagreen": {
+    "property_id": "0430151c-73b5-4a7b-860c-dfd56dde924f",
+    "files": [
+      "airbnb-00-1782183589202.jpg",
+      "airbnb-02-1782183591729.jpg",
+      "airbnb-03-1782183594082.jpg",
+      "airbnb-04-1782183595354.jpg",
+      "airbnb-05-1782183597005.jpg",
+      "airbnb-06-1782183598732.jpg",
+      "airbnb-07-1782183600742.jpg"
+    ]
+  },
+  "tamona18": {
+    "property_id": "4de8b1ce-b543-41b8-a3ad-ba8bbf09ab2f",
+    "files": [
+      "airbnb-00-1777425365936.jpg",
+      "airbnb-01-1777425370378.jpg",
+      "airbnb-02-1777425372638.jpg",
+      "airbnb-03-1777425376722.jpg",
+      "airbnb-04-1777425380471.jpg",
+      "airbnb-05-1777425384294.jpg",
+      "airbnb-06-1777425388769.jpg",
+      "airbnb-07-1777425392170.jpg"
+    ]
+  },
+  "cotinguiba08": {
+    "property_id": "06a8bfdd-c58c-494e-b813-868d5b147e59",
+    "files": [
+      "airbnb-00-1777495979629.jpg",
+      "airbnb-01-1777495981471.jpg",
+      "airbnb-02-1777495983256.jpg",
+      "airbnb-03-1777495985237.jpg",
+      "airbnb-04-1777495986962.jpg",
+      "airbnb-05-1777495990700.jpg",
+      "airbnb-06-1777495992057.jpg",
+      "airbnb-07-1777495993687.jpg"
+    ]
+  },
+  "duplex116": {
+    "property_id": "ee88c020-9974-40de-8cab-e2aa833e1f56",
+    "files": [
+      "airbnb-00-1782183521993.jpg",
+      "airbnb-01-1782183524291.jpg",
+      "airbnb-03-1782183527558.jpg",
+      "airbnb-04-1782183529366.jpg",
+      "airbnb-05-1782183531917.jpg",
+      "airbnb-06-1782183533923.jpg",
+      "airbnb-07-1782183535590.jpg"
+    ]
+  },
+  "marbella": {
+    "property_id": "833b16b6-3e3c-4f88-a80b-92a6c548ba0c",
+    "files": [
+      "airbnb-00-1777496291820.jpg",
+      "airbnb-01-1777496293908.jpg",
+      "airbnb-02-1777496297815.jpg",
+      "airbnb-03-1777496299786.jpg",
+      "airbnb-05-1777496302920.jpg",
+      "airbnb-06-1777496304732.jpg",
+      "airbnb-07-1777496307132.jpg"
+    ]
+  }
+}

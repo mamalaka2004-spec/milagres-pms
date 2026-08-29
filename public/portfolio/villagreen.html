@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}</style>
+<title>Villa Green — Milagres Hospedagens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@300;400;500&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Portfólio Milagres Hospedagens
+   Tokens derivados de tailwind.config.ts (brand.* + cream)
+   Tema único e deliberado: material de marca, idêntico em
+   projetor, tela e impressão. Toda cor é pintada explicitamente.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  color-scheme: light;
+
+  /* areia / cream — brand.50→300 */
+  --cream:      #FDFBF7;
+  --sand-50:    #F7F5F0;
+  --sand-100:   #F0EBE0;
+  --sand-200:   #E2D9C8;
+  --sand-300:   #C9BBA4;
+
+  /* sage / oliva — brand.400→600 (a cor da marca) */
+  --sage-400:   #8A9B7E;
+  --sage-500:   #6B7F5E;
+  --olive-600:  #4A5A40;
+
+  /* mata — brand.700→900 */
+  --forest-700: #3A4832;
+  --forest-800: #2A3424;
+  --forest-900: #1A2416;
+
+  /* tinta: neutros com viés verde, nunca cinza puro */
+  --ink:        #1A2416;
+  --ink-soft:   #46503F;
+  --ink-mute:   #6E7767;
+
+  --rule:       #E2D9C8;
+  --rule-soft:  #EFE9DE;
+
+  --shadow-slide: 0 1px 3px rgb(26 36 22 / .06), 0 18px 48px -18px rgb(26 36 22 / .22);
+
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background:var(--sand-100);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Deck: rolagem com encaixe por slide ─────────────────── */
+.deck{
+  height:100vh;
+  overflow-y:auto;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+}
+.deck::-webkit-scrollbar{ display:none; }
+
+.slide-wrap{
+  height:100vh;
+  scroll-snap-align:center;
+  scroll-snap-stop:always;
+  display:grid;
+  place-items:center;
+  padding:clamp(12px,2.2vh,28px) clamp(12px,3vw,56px);
+}
+
+/* O palco 16:9. container-type faz toda a tipografia interna
+   escalar com a largura do slide (unidades cqi). */
+.slide{
+  container-type:inline-size;
+  width:100%;
+  max-width:min(1440px, calc((100vh - 2 * clamp(12px,2.2vh,28px)) * 16 / 9));
+  aspect-ratio:16/9;
+  background:var(--cream);
+  box-shadow:var(--shadow-slide);
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── Marca ────────────────────────────────────────────────── */
+.mark{ display:flex; align-items:center; gap:1.15cqi; }
+.mark-badge{
+  width:4.2cqi; height:4.2cqi; flex:none;
+  border-radius:50%;
+  background:var(--olive-600);
+  display:grid; place-items:center;
+}
+.mark-badge svg{ width:56%; height:56%; display:block; }
+.mark-leaf{ fill:var(--sand-100); }
+.mark-vein{ stroke:var(--olive-600); stroke-width:1.4; fill:none; }
+.mark-name{ line-height:1.12; }
+.mark-name b{
+  display:block;
+  font-family:var(--font-body);
+  font-weight:500;
+  font-size:1.32cqi;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--olive-600);
+}
+.mark-name span{
+  display:block;
+  font-family:var(--font-body);
+  font-weight:300;
+  font-size:.98cqi;
+  letter-spacing:.34em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.mark--light .mark-badge{ background:var(--cream); }
+.mark--light .mark-leaf{ fill:var(--olive-600); }
+.mark--light .mark-name b{ color:var(--cream); }
+.mark--light .mark-name span{ color:var(--sand-300); }
+
+/* ── Tipografia compartilhada ─────────────────────────────── */
+.eyebrow{
+  font-family:var(--font-body);
+  font-weight:500;
+  font-size:1.05cqi;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--sage-500);
+}
+.display{
+  font-family:var(--font-display);
+  font-weight:300;
+  line-height:1.02;
+  letter-spacing:-.005em;
+  text-wrap:balance;
+  margin:0;
+}
+.lede{
+  font-size:1.55cqi;
+  line-height:1.62;
+  color:var(--ink-soft);
+  max-width:62ch;
+  margin:0;
+}
+.price{
+  font-family:var(--font-mono);
+  font-weight:400;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;
+  color:var(--forest-800);
+}
+
+/* ═══ SLIDE 1 · Capa ══════════════════════════════════════ */
+.cover{ background:var(--forest-900); }
+.cover-img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  opacity:.78;
+}
+.cover-veil{
+  position:absolute; inset:0;
+  background:
+    linear-gradient(105deg, rgb(26 36 22 / .90) 0%, rgb(26 36 22 / .62) 44%, rgb(26 36 22 / .12) 100%),
+    linear-gradient(to top, rgb(26 36 22 / .80) 0%, rgb(26 36 22 / .30) 22%, rgb(26 36 22 / 0) 42%);
+}
+.cover-inner{
+  position:relative;
+  flex:1;
+  display:flex; flex-direction:column;
+  justify-content:space-between;
+  padding:5cqi 6cqi;
+}
+.cover-title{
+  font-size:8.4cqi;
+  color:var(--cream);
+  max-width:16ch;
+}
+.cover-title em{
+  font-style:italic;
+  font-weight:400;
+  color:var(--sand-300);
+}
+.cover-sub{
+  margin:2.4cqi 0 0;
+  font-size:1.6cqi;
+  font-weight:300;
+  line-height:1.6;
+  letter-spacing:.01em;
+  color:var(--sand-200);
+  max-width:46ch;
+}
+.cover-foot{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:3cqi;
+  border-top:1px solid rgb(226 217 200 / .28);
+  padding-top:2cqi;
+}
+.cover-stats{ display:flex; gap:4.5cqi; }
+.cover-stat b{
+  display:block;
+  font-family:var(--font-mono);
+  font-weight:300;
+  font-size:2.5cqi;
+  color:var(--cream);
+  font-variant-numeric:tabular-nums;
+}
+.cover-stat span{
+  display:block;
+  margin-top:.5cqi;
+  font-size:.98cqi;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--sage-400);
+}
+
+/* ═══ Cabeçalho dos slides internos ═══════════════════════ */
+.head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:2cqi;
+  padding:3.2cqi 5cqi 0;
+}
+.head-num{
+  font-family:var(--font-mono);
+  font-weight:300;
+  font-size:1.15cqi;
+  letter-spacing:.16em;
+  color:var(--ink-mute);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ═══ SLIDE 2 · A região ══════════════════════════════════ */
+.region{ padding:0 5cqi 4cqi; flex:1; display:flex; flex-direction:column; gap:2.6cqi; }
+.region-top{ display:grid; grid-template-columns:1.05fr .95fr; gap:5cqi; align-items:end; padding-top:2.4cqi; }
+.region-title{ font-size:5.4cqi; max-width:13ch; }
+.region-title em{ font-style:italic; color:var(--olive-600); }
+.pillars{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--rule);
+  margin-top:auto;
+}
+.pillar{ padding:2.4cqi 2.2cqi 0 0; border-right:1px solid var(--rule-soft); }
+.pillar:last-child{ border-right:0; padding-right:0; }
+.pillar h3{
+  margin:0 0 .9cqi;
+  font-family:var(--font-display);
+  font-weight:500;
+  font-size:2.15cqi;
+  line-height:1.14;
+  color:var(--forest-800);
+}
+.pillar p{ margin:0; font-size:1.24cqi; line-height:1.58; color:var(--ink-soft); }
+.pillar .k{
+  display:block; margin-bottom:1.4cqi;
+  font-family:var(--font-mono); font-weight:400;
+  font-size:1.02cqi; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--sage-400);
+}
+
+/* ═══ SLIDE 3 · Portfólio + régua de preços ═══════════════ */
+.folio{ padding:0 5cqi 3cqi; flex:1; display:flex; flex-direction:column; }
+.folio-title{ font-size:3.9cqi; margin:1.5cqi 0 .5cqi; }
+.folio-lede{ font-size:1.18cqi; line-height:1.55; color:var(--ink-soft); max-width:88ch; margin:0 0 2cqi; }
+
+/* Seis colunas: o portfólio inteiro lido de uma vez, ordenado por valor */
+.grid6{ display:grid; grid-template-columns:repeat(6,1fr); gap:1.35cqi; }
+.card{
+  background:var(--sand-50);
+  border:1px solid var(--rule-soft);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.card-img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+.card-body{ padding:1.05cqi 1.1cqi 1.2cqi; display:flex; flex-direction:column; gap:.3cqi; flex:1; }
+.card-cond{
+  font-family:var(--font-body); font-weight:500;
+  font-size:.7cqi; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--sage-500);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.card-name{
+  font-family:var(--font-display); font-weight:500;
+  font-size:1.72cqi; line-height:1.06; color:var(--forest-900); margin:0;
+}
+.card-specs{
+  font-family:var(--font-mono); font-weight:300;
+  font-size:.8cqi; line-height:1.45; color:var(--ink-mute);
+  font-variant-numeric:tabular-nums;
+}
+.card-price{ font-size:1.24cqi; margin-top:auto; padding-top:.7cqi; }
+
+/* Composição do VGV — quanto cada imóvel pesa nos R$ 6,8 mi.
+   Substitui uma régua linear, em que quatro dos seis colidiriam
+   na mesma faixa de preço. */
+.ladder{ margin-top:auto; padding-top:1.7cqi; border-top:1px solid var(--rule); }
+.ladder-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-mono); font-weight:300;
+  font-size:.95cqi; letter-spacing:.1em; color:var(--ink-mute);
+  font-variant-numeric:tabular-nums;
+}
+.ladder-head b{ font-weight:400; color:var(--forest-800); }
+
+.vgv{ display:flex; gap:.35cqi; margin-top:1.1cqi; }
+.vgv-seg{ display:flex; flex-direction:column; gap:.62cqi; min-width:0; }
+.vgv-bar{ height:1.15cqi; background:var(--sage-400); }
+.vgv-seg b{
+  font-family:var(--font-body); font-weight:500;
+  font-size:.82cqi; line-height:1.2; color:var(--forest-800);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.vgv-seg span{
+  font-family:var(--font-mono); font-weight:300;
+  font-size:.78cqi; line-height:1.2; color:var(--ink-mute);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ═══ SLIDES 4–9 · Ficha de imóvel ════════════════════════ */
+.unit{ flex:1; min-height:0; display:grid; grid-template-columns:1.02fr 1fr; }
+.unit--flip .unit-photo{ order:2; }
+/* min-height/width:0 — sem isso, uma foto em retrato impõe sua altura
+   intrínseca ao grid item (min-height:auto) e estoura o slide. */
+.unit-photo{ position:relative; overflow:hidden; background:var(--forest-800); min-height:0; min-width:0; }
+.unit-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.photo-tag{
+  position:absolute; left:0; bottom:2.6cqi;
+  display:flex; align-items:center; gap:.7cqi;
+  background:var(--cream);
+  padding:.85cqi 1.5cqi .85cqi 1.3cqi;
+  font-family:var(--font-body); font-weight:500;
+  font-size:.92cqi; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--olive-600);
+}
+.photo-tag i{ width:.5cqi; height:.5cqi; border-radius:50%; background:var(--sage-400); }
+
+.unit-body{
+  padding:3.4cqi 4.4cqi 3.4cqi 4cqi;
+  display:flex; flex-direction:column;
+  min-height:0; min-width:0;
+}
+.unit-cond{ margin-bottom:1.5cqi; }
+.unit-name{ font-size:5cqi; margin:0; color:var(--forest-900); }
+.unit-where{
+  margin:1.1cqi 0 0;
+  font-size:1.32cqi; line-height:1.5; color:var(--ink-mute);
+}
+.unit-specs{
+  display:flex; gap:2.8cqi;
+  margin:2.2cqi 0;
+  padding:1.5cqi 0;
+  border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
+}
+.spec b{
+  display:block;
+  font-family:var(--font-mono); font-weight:400;
+  font-size:1.85cqi; color:var(--forest-800);
+  font-variant-numeric:tabular-nums;
+}
+.spec span{
+  display:block; margin-top:.35cqi;
+  font-size:.9cqi; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.unit-desc{ margin:0 0 1.9cqi; font-size:1.36cqi; line-height:1.65; color:var(--ink-soft); }
+.benefits{ list-style:none; margin:0 0 auto; padding:0; display:flex; flex-direction:column; gap:.95cqi; }
+.benefits li{
+  position:relative; padding-left:2.1cqi;
+  font-size:1.3cqi; line-height:1.45; color:var(--forest-700);
+}
+.benefits li::before{
+  content:""; position:absolute; left:0; top:.42cqi;
+  width:1.05cqi; height:1.05cqi;
+  background:var(--sage-400);
+  clip-path:polygon(50% 0%, 100% 38%, 78% 100%, 22% 100%, 0% 38%);
+}
+.unit-foot{
+  margin-top:2.4cqi; padding-top:1.7cqi;
+  border-top:1px solid var(--rule);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:1.6cqi;
+}
+/* preços de 7 dígitos não podem quebrar linha e empurrar o slide */
+.unit-price{ font-size:2.9cqi; line-height:1; white-space:nowrap; flex:none; }
+.unit-price small{
+  display:block; margin-bottom:.6cqi;
+  font-family:var(--font-body); font-weight:500;
+  font-size:.92cqi; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.links{ display:flex; flex-direction:column; gap:.6cqi; align-items:flex-end; min-width:0; }
+.links a{
+  font-family:var(--font-mono); font-weight:400;
+  font-size:1.02cqi; letter-spacing:.02em; white-space:nowrap;
+  color:var(--olive-600); text-decoration:none;
+  border-bottom:1px solid var(--sand-200);
+  padding-bottom:.18cqi;
+  transition:color .18s ease, border-color .18s ease;
+}
+.links a:hover{ color:var(--forest-900); border-color:var(--sage-400); }
+.links a:focus-visible{ outline:2px solid var(--sage-400); outline-offset:3px; border-radius:2px; }
+
+/* ═══ SLIDE 10 · Fechamento ═══════════════════════════════ */
+.close{ background:var(--forest-900); }
+.close-inner{
+  flex:1; display:flex; flex-direction:column; justify-content:space-between;
+  padding:3.6cqi 5cqi;
+}
+.close-title{ font-size:4.9cqi; color:var(--cream); max-width:19ch; margin-top:1.8cqi; }
+.close-title em{ font-style:italic; color:var(--sand-300); }
+.close-cols{ display:grid; grid-template-columns:repeat(3,1fr); gap:3.6cqi; margin-top:auto; padding-top:2.2cqi; }
+.close-col{ border-top:1px solid rgb(226 217 200 / .26); padding-top:1.8cqi; }
+.close-col h4{
+  margin:0 0 1cqi;
+  font-family:var(--font-body); font-weight:500;
+  font-size:.98cqi; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--sage-400);
+}
+.close-col p{ margin:0; font-size:1.3cqi; line-height:1.6; color:var(--sand-200); font-weight:300; }
+.close-col p + p{ margin-top:.8cqi; }
+.close-note{
+  margin-top:1.9cqi; padding-top:1.3cqi;
+  border-top:1px solid rgb(226 217 200 / .16);
+  font-size:1.06cqi; line-height:1.55; color:var(--sage-400); font-weight:300;
+}
+
+/* ═══ Navegação ═══════════════════════════════════════════ */
+.nav{
+  position:fixed; right:clamp(10px,1.6vw,22px); top:50%;
+  transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:9px;
+  z-index:20;
+}
+.nav button{
+  width:9px; height:9px; padding:0;
+  border-radius:50%; border:1px solid var(--sand-300);
+  background:transparent; cursor:pointer;
+  transition:background .2s ease, transform .2s ease, border-color .2s ease;
+}
+.nav button:hover{ background:var(--sage-400); border-color:var(--sage-400); }
+.nav button[aria-current="true"]{ background:var(--olive-600); border-color:var(--olive-600); transform:scale(1.4); }
+.nav button:focus-visible{ outline:2px solid var(--olive-600); outline-offset:3px; }
+
+.hud{
+  position:fixed; left:clamp(10px,1.6vw,22px); bottom:clamp(10px,1.8vh,20px);
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--font-mono); font-weight:300; font-size:11px;
+  color:var(--ink-mute); font-variant-numeric:tabular-nums;
+  z-index:20;
+}
+.hud .sep{ width:1px; height:12px; background:var(--sand-300); }
+.hud kbd{
+  font-family:var(--font-mono); font-size:10px;
+  border:1px solid var(--sand-300); border-radius:3px;
+  padding:1px 4px; color:var(--ink-soft); background:var(--cream);
+}
+.hud button{
+  font-family:var(--font-body); font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  background:var(--cream); color:var(--olive-600);
+  border:1px solid var(--sand-200); border-radius:2px;
+  padding:5px 11px; cursor:pointer;
+  transition:background .18s ease, color .18s ease;
+}
+.hud button:hover{ background:var(--olive-600); color:var(--cream); border-color:var(--olive-600); }
+.hud button:focus-visible{ outline:2px solid var(--olive-600); outline-offset:2px; }
+
+@media (prefers-reduced-motion: reduce){
+  .deck{ scroll-behavior:auto; }
+  *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+}
+
+/* ═══ Impressão / PDF — um slide por página, paisagem ═════ */
+@media print{
+  @page{ size:297mm 167mm; margin:0; }
+  body{ background:#fff; }
+  .nav,.hud{ display:none !important; }
+  .deck{ height:auto; overflow:visible; }
+  .slide-wrap{ height:auto; padding:0; page-break-after:always; break-after:page; }
+  .slide{ max-width:none; width:297mm; height:167mm; aspect-ratio:auto; box-shadow:none; }
+  .cover,.close{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
+/* Telas estreitas: mantém o palco legível */
+@media (max-width: 720px){
+  .hud kbd,.hud .sep{ display:none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Slides exclusivos dos decks individuais (um por imóvel)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Capa do imóvel: foto inteira + faixa de identificação ── */
+.uc-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.uc-veil{
+  position:absolute; inset:0;
+  background:
+    linear-gradient(to top, rgb(26 36 22 / .86) 0%, rgb(26 36 22 / .42) 30%, rgb(26 36 22 / .04) 62%),
+    linear-gradient(105deg, rgb(26 36 22 / .58) 0%, rgb(26 36 22 / .12) 55%, rgb(26 36 22 / 0) 100%);
+}
+.uc-inner{
+  position:relative; flex:1;
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:4.2cqi 5.5cqi;
+}
+.uc-cond{
+  font-family:var(--font-body); font-weight:500;
+  font-size:1.05cqi; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--sand-300);
+}
+.uc-name{ font-size:8cqi; color:var(--cream); max-width:14ch; margin:.8cqi 0 0; }
+.uc-where{
+  margin:1.6cqi 0 0; font-size:1.5cqi; font-weight:300;
+  color:var(--sand-200); letter-spacing:.01em;
+}
+.uc-foot{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:3cqi;
+  border-top:1px solid rgb(226 217 200 / .3); padding-top:2cqi;
+}
+.uc-specs{ display:flex; gap:4.2cqi; }
+.uc-specs .spec b{ color:var(--cream); font-size:2.2cqi; }
+.uc-specs .spec span{ color:var(--sage-400); }
+.uc-price{
+  font-family:var(--font-mono); font-weight:400; font-size:3.1cqi; line-height:1;
+  color:var(--cream); white-space:nowrap; font-variant-numeric:tabular-nums;
+  text-align:right;
+}
+.uc-price small{
+  display:block; margin-bottom:.7cqi;
+  font-family:var(--font-body); font-weight:500;
+  font-size:.92cqi; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--sage-400);
+}
+
+/* ── Galeria: um mosaico, a foto de maior peso à esquerda ── */
+.gal{ padding:0 5cqi 3.4cqi; flex:1; display:flex; flex-direction:column; min-height:0; }
+.gal-title{ font-size:3.9cqi; margin:1.5cqi 0 .5cqi; }
+.gal-lede{ font-size:1.18cqi; line-height:1.55; color:var(--ink-soft); margin:0 0 1.8cqi; max-width:80ch; }
+/* 4x2 = 8 células; o destaque ocupa 4, sobram exatamente 4.
+   A galeria é montada com 5 fotos para fechar a grade sem sobras. */
+.gal-grid{
+  flex:1; min-height:0;
+  display:grid; gap:1.1cqi;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(2,1fr);
+  grid-auto-rows:0;          /* nada extra escapa para uma 3ª linha */
+  overflow:hidden;
+}
+.gal-grid figure{ margin:0; overflow:hidden; background:var(--sand-100); min-width:0; min-height:0; }
+.gal-grid img{ width:100%; height:100%; object-fit:cover; display:block; }
+.gal-grid figure:first-child{ grid-column:span 2; grid-row:span 2; }
+
+/* ── Fechamento do deck individual ── */
+.uclose-cta{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:3cqi;
+  margin-top:auto; padding-top:2.4cqi;
+  border-top:1px solid rgb(226 217 200 / .26);
+}
+.uclose-price{
+  font-family:var(--font-mono); font-weight:400; font-size:3.4cqi; line-height:1;
+  color:var(--cream); white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.uclose-price small{
+  display:block; margin-bottom:.7cqi;
+  font-family:var(--font-body); font-weight:500;
+  font-size:.92cqi; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--sage-400);
+}
+.uclose-links{ display:flex; flex-direction:column; gap:.7cqi; align-items:flex-end; }
+.uclose-links a{
+  font-family:var(--font-mono); font-size:1.05cqi; white-space:nowrap;
+  color:var(--sand-200); text-decoration:none;
+  border-bottom:1px solid rgb(226 217 200 / .32); padding-bottom:.2cqi;
+  transition:color .18s ease, border-color .18s ease;
+}
+.uclose-links a:hover{ color:var(--cream); border-color:var(--sage-400); }
+.uclose-links a:focus-visible{ outline:2px solid var(--sage-400); outline-offset:3px; }
+
+.hud-dl{
+  font-family:var(--font-body); font-size:11px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase; text-decoration:none;
+  background:var(--cream); color:var(--olive-600);
+  border:1px solid var(--sand-200); border-radius:2px;
+  padding:5px 11px; transition:background .18s ease, color .18s ease;
+}
+.hud-dl:hover{ background:var(--olive-600); color:var(--cream); border-color:var(--olive-600); }
+.hud-dl:focus-visible{ outline:2px solid var(--olive-600); outline-offset:2px; }
+</style>
+
+<div class="deck" id="deck">
+  <div class="slide-wrap" id="s0">
+    <section class="slide cover" aria-label="Capa">
+      <img class="uc-img" src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-02-1782183591729.jpg" alt="Piscina do Essence com deck de madeira, coqueiros e o mar ao fundo">
+      <div class="uc-veil"></div>
+      <div class="uc-inner">
+        <div class="mark mark--light"><span class="mark-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="mark-leaf" d="M12 2.2c4.6 3.4 6.7 7.2 6.7 10.8 0 3.7-3 6.9-6.7 8.8-3.7-1.9-6.7-5.1-6.7-8.8C5.3 9.4 7.4 5.6 12 2.2z"/><path class="mark-vein" d="M12 5.6v13.4"/></svg></span><span class="mark-name"><b>Milagres</b><span>Hospedagens</span></span></div>
+        <div>
+          <span class="uc-cond">Essence · unidade B001</span>
+          <h1 class="display uc-name">Villa Green</h1>
+          <p class="uc-where">Praia de Tatuamunha, Porto de Pedras · beira-mar</p>
+        </div>
+        <div class="uc-foot">
+          <div class="uc-specs"><div class="spec"><b>70 m²</b><span>Área</span></div><div class="spec"><b>2</b><span>Suítes</span></div><div class="spec"><b>6</b><span>Hóspedes</span></div></div>
+          <span class="uc-price"><small>Valor de venda</small>R$ 850.000</span>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="slide-wrap" id="s1">
+    <section class="slide" aria-label="Villa Green">
+      <div class="unit">
+        <div class="unit-photo">
+          <img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-02-1782183591729.jpg" alt="Piscina do Essence com deck de madeira, coqueiros e o mar ao fundo">
+          <span class="photo-tag"><i></i>Único beira-mar</span>
+        </div>
+        <div class="unit-body">
+          <span class="eyebrow unit-cond">Essence · unidade B001</span>
+          <h2 class="display unit-name">Villa Green</h2>
+          <p class="unit-where">Praia de Tatuamunha, Porto de Pedras · beira-mar</p>
+          <div class="unit-specs "><div class="spec"><b>70 m²</b><span>Área</span></div><div class="spec"><b>2</b><span>Suítes</span></div><div class="spec"><b>6</b><span>Hóspedes</span></div></div>
+          <p class="unit-desc">O único beira-mar do portfólio, e também o único térreo: 70 m² com varanda gourmet, assinados por arquitetos de nome e entregues decorados.</p>
+          <ul class="benefits">
+            <li>Beira-mar em Tatuamunha, na Rota Ecológica</li>
+            <li>Térreo — acessibilidade total, sem escadas</li>
+            <li>Varanda gourmet integrada à sala e à cozinha</li>
+            <li>Projeto e decoração de arquitetos renomados</li>
+          </ul>
+          <div class="unit-foot">
+            <span class="price unit-price"><small>Valor de venda</small>R$ 850.000</span>
+            <span class="links">
+              <a href="https://youtu.be/UNBHUlm_5mo" target="_blank" rel="noopener">Ver o vídeo do imóvel</a>
+              <a href="https://www.airbnb.com/rooms/1021250066188459698" target="_blank" rel="noopener">Ver anúncio no Airbnb</a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="slide-wrap" id="s2">
+    <section class="slide" aria-label="Galeria">
+      <div class="head"><div class="mark"><span class="mark-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="mark-leaf" d="M12 2.2c4.6 3.4 6.7 7.2 6.7 10.8 0 3.7-3 6.9-6.7 8.8-3.7-1.9-6.7-5.1-6.7-8.8C5.3 9.4 7.4 5.6 12 2.2z"/><path class="mark-vein" d="M12 5.6v13.4"/></svg></span><span class="mark-name"><b>Milagres</b><span>Hospedagens</span></span></div><span class="head-num">GALERIA</span></div>
+      <div class="gal">
+        <h2 class="display gal-title">Por dentro</h2>
+        <p class="gal-lede">As mesmas fotos do anúncio ativo no Airbnb — o imóvel exatamente
+          como ele é entregue, mobiliado e decorado.</p>
+        <div class="gal-grid"><figure><img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-00-1782183589202.jpg" alt="Ambiente do Villa Green"></figure><figure><img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-03-1782183594082.jpg" alt="Ambiente do Villa Green"></figure><figure><img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-04-1782183595354.jpg" alt="Ambiente do Villa Green"></figure><figure><img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-05-1782183597005.jpg" alt="Ambiente do Villa Green"></figure><figure><img src="https://xmmuenaaodlqubfotwzr.supabase.co/storage/v1/object/public/property-images/properties/0430151c-73b5-4a7b-860c-dfd56dde924f/airbnb-06-1782183598732.jpg" alt="Ambiente do Villa Green"></figure></div>
+      </div>
+    </section>
+  </div>
+  <div class="slide-wrap" id="s3">
+    <section class="slide" aria-label="A região">
+      <div class="head"><div class="mark"><span class="mark-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="mark-leaf" d="M12 2.2c4.6 3.4 6.7 7.2 6.7 10.8 0 3.7-3 6.9-6.7 8.8-3.7-1.9-6.7-5.1-6.7-8.8C5.3 9.4 7.4 5.6 12 2.2z"/><path class="mark-vein" d="M12 5.6v13.4"/></svg></span><span class="mark-name"><b>Milagres</b><span>Hospedagens</span></span></div><span class="head-num">A REGIÃO</span></div>
+      <div class="region">
+        <div class="region-top">
+          <h2 class="display region-title">Onde o metro quadrado ainda é <em>escasso</em></h2>
+          <p class="lede">A Rota Ecológica dos Milagres tem orla preservada, piscinas naturais
+            e poucos grandes empreendimentos — é essa escassez que sustenta a exclusividade e a
+            valorização. Fica a ~100 km de Maceió, 1h30 do aeroporto.</p>
+        </div>
+        <div class="pillars">
+          <div class="pillar"><span class="k">Demanda</span>
+            <h3>Capela dos Milagres</h3>
+            <p>Palco dos casamentos de famosos mais desejados do Brasil. Referência nacional
+               que puxa mídia e demanda para a região o ano inteiro.</p></div>
+          <div class="pillar"><span class="k">Sazonalidade</span>
+            <h3>Réveillon disputado</h3>
+            <p>Um dos eventos de virada mais concorridos do país. Datas e hospedagens esgotam
+               cedo e sustentam a diária no pico.</p></div>
+          <div class="pillar"><span class="k">Ocupação</span>
+            <h3>Clima o ano todo</h3>
+            <p>Temporada longa e menos sazonalidade que o litoral sul. Mais noites vendidas
+               por ano, receita melhor distribuída.</p></div>
+          <div class="pillar"><span class="k">Prova</span>
+            <h3>Operação já ativa</h3>
+            <p>Todos os imóveis já operam no Airbnb hoje. O investidor compra histórico real
+               de locação, não projeção.</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="slide-wrap" id="s4">
+    <section class="slide close" aria-label="Próximos passos">
+      <div class="close-inner">
+        <div class="mark mark--light"><span class="mark-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="mark-leaf" d="M12 2.2c4.6 3.4 6.7 7.2 6.7 10.8 0 3.7-3 6.9-6.7 8.8-3.7-1.9-6.7-5.1-6.7-8.8C5.3 9.4 7.4 5.6 12 2.2z"/><path class="mark-vein" d="M12 5.6v13.4"/></svg></span><span class="mark-name"><b>Milagres</b><span>Hospedagens</span></span></div>
+        <h2 class="display close-title">Pronto para render desde o <em>primeiro mês</em></h2>
+        <div class="close-cols">
+          <div class="close-col"><h4>O que você leva</h4>
+            <p>Porteira fechada: móveis planejados, decoração completa e enxoval de cama,
+               mesa e banho.</p>
+            <p>Anúncio ativo no Airbnb, com histórico de reservas já formado.</p></div>
+          <div class="close-col"><h4>Por que este</h4>
+            <p>Beira-mar em Tatuamunha, na Rota Ecológica.</p>
+            <p>Térreo — acessibilidade total, sem escadas.</p></div>
+          <div class="close-col"><h4>Próximo passo</h4>
+            <p>Enviamos o vídeo completo e o histórico de ocupação do imóvel.</p>
+            <p>Condições de pagamento e fechamento são tratados direto com o time comercial.</p></div>
+        </div>
+        <div class="uclose-cta">
+          <span class="uclose-price"><small>Villa Green · valor de venda</small>R$ 850.000</span>
+          <span class="uclose-links">
+            <a href="https://youtu.be/UNBHUlm_5mo" target="_blank" rel="noopener">Ver o vídeo do imóvel</a>
+            <a href="https://www.airbnb.com/rooms/1021250066188459698" target="_blank" rel="noopener">Ver anúncio no Airbnb</a>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav class="nav" id="nav" aria-label="Navegar pelos slides"></nav>
+
+<div class="hud">
+  <span id="counter">01 / 05</span>
+  <span class="sep"></span>
+  <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> navegar</span>
+  <span class="sep"></span>
+  <a class="hud-dl" href="pdf/villagreen.pdf" download>Baixar PDF</a>
+</div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide-wrap'));
+  var nav = document.getElementById('nav');
+  var counter = document.getElementById('counter');
+  var current = 0;
+  var labels = ["capa", "a ficha", "galeria", "a região", "próximos passos"];
+
+  slides.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Ir para ' + (labels[i] || ('slide ' + (i+1))));
+    b.addEventListener('click', function(){ go(i); });
+    nav.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(nav.children);
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function setCurrent(i){
+    if (i === current) return;
+    current = i;
+    dots.forEach(function(d, k){ d.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+    counter.textContent = pad(i + 1) + ' / ' + pad(slides.length);
+  }
+  function go(i){
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting) setCurrent(slides.indexOf(e.target)); });
+    }, { root: deck, threshold: 0.6 });
+    slides.forEach(function(s){ io.observe(s); });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' '){
+      e.preventDefault(); go(current + 1);
+    } else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp'){
+      e.preventDefault(); go(current - 1);
+    } else if (k === 'Home'){ e.preventDefault(); go(0); }
+    else if (k === 'End'){ e.preventDefault(); go(slides.length - 1); }
+  });
+  var btn = document.getElementById('btnPrint');
+  if (btn) btn.addEventListener('click', function(){ window.print(); });
+  dots[0].setAttribute('aria-current', 'true');
+  counter.textContent = '01 / ' + pad(slides.length);
+})();
+</script>
+</head>
+<body>
+</body>
+</html>
