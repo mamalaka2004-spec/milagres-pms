@@ -1,13 +1,18 @@
--- 042 — Site público de vendas + edição no PMS
+-- 042 — Site público de vendas: colunas e conteúdo
+--
+-- APLICADA em 29/08/2026 (via conector Supabase).
 --
 -- A tabela imoveis_milagres já alimentava a Sarah (tool consultar_imoveis).
 -- Aqui ela passa a alimentar também:
---   • o site público /venda e /venda/[slug] (leitura anônima, só publicados)
---   • a edição em Vendas › Imóveis no PMS (textos, preço e seleção de fotos)
+--   • o site público /venda e /venda/[slug]
+--   • a edição em Vendas › Imóveis à venda no PMS
 --
 -- As fotos são URLs do bucket público property-images — as mesmas do anúncio
 -- no Airbnb. `fotos` guarda a seleção e a ORDEM escolhidas pelo time;
 -- `foto_capa` é a que abre a página.
+--
+-- Só adiciona colunas e preenche conteúdo: nada existente é alterado.
+-- A parte de RLS ficou na 043, que ainda NÃO foi aplicada.
 
 ALTER TABLE public.imoveis_milagres
   ADD COLUMN IF NOT EXISTS slug        TEXT,
@@ -105,27 +110,3 @@ UPDATE public.imoveis_milagres SET
   publicado   = true
 WHERE unit_code = 'kanui-201';
 
--- ── RLS ───────────────────────────────────────────────────────────────
--- O site é público, então `anon` passa a ler esta tabela — mas só o que
--- está publicado e disponível. Leitura autenticada permanece ampla (o PMS
--- precisa enxergar rascunhos na listagem), e a escrita segue exclusiva do
--- backend com service role, que ignora RLS.
---
--- A Sarah (tool consultar_imoveis) usa createAdminClient/service role, logo
--- não é afetada. Se algum fluxo externo (n8n) ler esta tabela com a chave
--- anon, ele passa a ver só os publicados — confira antes de aplicar.
-ALTER TABLE public.imoveis_milagres ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "imoveis_venda_public_read" ON public.imoveis_milagres;
-CREATE POLICY "imoveis_venda_public_read"
-  ON public.imoveis_milagres
-  FOR SELECT
-  TO anon
-  USING (publicado = true AND disponivel = true);
-
-DROP POLICY IF EXISTS "imoveis_venda_auth_read" ON public.imoveis_milagres;
-CREATE POLICY "imoveis_venda_auth_read"
-  ON public.imoveis_milagres
-  FOR SELECT
-  TO authenticated
-  USING (true);
