@@ -615,6 +615,46 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["kb_articles"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["kb_articles"]["Insert"]>;
       };
+      /** Catálogo de venda: alimenta a Sarah, o site /venda e o editor do PMS. */
+      imoveis_milagres: {
+        Row: {
+          id: string;
+          unit_code: string;
+          slug: string | null;
+          property_id: string | null;
+          nome: string;
+          condominio: string | null;
+          preco: number;
+          area_m2: number | null;
+          suites: number | null;
+          hospedes: number | null;
+          localizacao: string | null;
+          distancia_praia: string | null;
+          descricao: string | null;
+          diferenciais: string | null;
+          beneficios: string[];
+          /** URLs do bucket property-images, na ordem exibida na galeria. */
+          fotos: string[];
+          foto_capa: string | null;
+          tag: string | null;
+          video_url: string | null;
+          airbnb_url: string | null;
+          airbnb_nota: number | null;
+          airbnb_badge: string | null;
+          airbnb_avaliacoes: number | null;
+          publicado: boolean;
+          disponivel: boolean;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["imoveis_milagres"]["Row"]> & {
+          unit_code: string;
+          nome: string;
+          preco: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["imoveis_milagres"]["Row"]>;
+      };
       whatsapp_contacts: {
         Row: {
           id: string;

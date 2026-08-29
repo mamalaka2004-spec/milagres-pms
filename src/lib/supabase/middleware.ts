@@ -9,10 +9,16 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/p/") ||
     pathname.startsWith("/apresentacao/") ||
     pathname.startsWith("/book/") ||
+    // Site de vendas: índice, páginas dos imóveis e o formulário de interesse.
+    pathname === "/venda" ||
+    pathname.startsWith("/venda/") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
     pathname === "/booking-success" ||
     pathname === "/faq" ||
     pathname === "/contact" ||
     pathname.startsWith("/api/booking/") ||
+    pathname.startsWith("/api/venda/") ||
     pathname.startsWith("/api/webhooks/");
 
   // Fast path: public pages need no auth — skip the Supabase client and the
