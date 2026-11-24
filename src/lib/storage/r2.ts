@@ -68,13 +68,25 @@ export async function r2Upload(
   const cfg = readConfig();
   if (!cfg) throw new Error("R2 not configured");
   const url = `https://${cfg.accountId}.r2.cloudflarestorage.com/${cfg.bucket}/${encodeKey(key)}`;
-  const res = await getClient(cfg).fetch(url, {
+  const bytes = body instanceof Uint8Array ? body : new Uint8Array(body);
+  // Assina com aws4fetch, mas envia com fetch direto passando os bytes: se o corpo
+  // for repassado via Request, o Node envia em "chunked" (sem Content-Length) e o
+  // R2 recusa com 411 MissingContentLength.
+  const signed = await getClient(cfg).sign(url, {
     method: "PUT",
-    body: body as BodyInit,
+    body: bytes as unknown as BodyInit,
     headers: {
       "Content-Type": opts.contentType,
       "Cache-Control": opts.cacheControl ?? "public, max-age=31536000, immutable",
     },
+  });
+  const headers = new Headers(signed.headers);
+  headers.set("Content-Length", String(bytes.byteLength));
+  const res = await fetch(signed.url, {
+    method: "PUT",
+    headers,
+    body: bytes as unknown as BodyInit,
+    cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
