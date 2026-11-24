@@ -7,6 +7,8 @@ import {
   findMessages,
   decodeMessage,
   jidToPhoneE164,
+  phoneFromKey,
+  isLidJid,
 } from "@/lib/whatsapp/evolution";
 import { findOrCreateConversation } from "@/lib/db/queries/whatsapp";
 import {
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const processChat = async (chat: (typeof slice)[number]): Promise<ChatResult> => {
       const res: ChatResult = { processed: 0, imported: 0, skipped: 0 };
-      const phone = jidToPhoneE164(chat.remoteJid);
+      let phone = jidToPhoneE164(chat.remoteJid);
       if (!phone) return res;
       if (chat.remoteJid.endsWith("@g.us")) return res; // groups: only 1:1 contacts
 
@@ -93,11 +95,21 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
       if (messages.length === 0) return res;
 
+      // Contato "@lid": usa o telefone real quando o Evolution o expõe na chave,
+      // para não criar uma conversa duplicada com o identificador de privacidade.
+      if (isLidJid(chat.remoteJid)) {
+        for (const m of messages) {
+          const alt = phoneFromKey(m.key as unknown as Record<string, unknown>);
+          if (alt) { phone = alt; break; }
+        }
+      }
+      const inboundName = messages.find((m) => !m.key?.fromMe && m.pushName)?.pushName ?? null;
+
       const conv = await findOrCreateConversation({
         companyId: line.company_id,
         lineId: line.id,
         contactPhone: phone,
-        contactName: chat.pushName ?? null,
+        contactName: chat.pushName ?? inboundName,
       });
       res.processed = 1;
 
