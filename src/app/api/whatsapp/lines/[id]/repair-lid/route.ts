@@ -22,10 +22,11 @@ interface Params {
 const bodySchema = z
   .object({
     apply: z.boolean().default(false),
+    delete_empty: z.boolean().default(false),
     limit: z.number().int().min(1).max(60).default(30),
     offset: z.number().int().min(0).default(0),
   })
-  .default({ apply: false, limit: 30, offset: 0 });
+  .default({ apply: false, delete_empty: false, limit: 30, offset: 0 });
 
 type Conv = {
   id: string;
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { id: lineId } = await params;
     const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return apiError("Validation failed", 400, parsed.error.flatten());
-    const { apply, limit, offset } = parsed.data;
+    const { apply, delete_empty, limit, offset } = parsed.data;
 
     const supabase = createAdminClient();
     const { data: lineData } = await supabase.from("whatsapp_lines").select("*").eq("id", lineId).maybeSingle();
@@ -68,13 +69,21 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (line.company_id !== user.company_id) return apiForbidden();
     const instance = line.provider_instance || undefined;
 
-    const { data: convData, error: convErr } = await supabase
-      .from("whatsapp_conversations")
-      .select("id, contact_phone, contact_name, last_message_at, last_message_text, unread_count")
-      .eq("line_id", lineId)
-      .order("created_at", { ascending: true });
-    if (convErr) return apiError(convErr.message, 500);
-    const convs = (convData as Conv[]) || [];
+    // Lê TODAS as conversas da linha (o PostgREST devolve no máximo 1000 por consulta).
+    const convs: Conv[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data: page, error: convErr } = await supabase
+        .from("whatsapp_conversations")
+        .select("id, contact_phone, contact_name, last_message_at, last_message_text, unread_count")
+        .eq("line_id", lineId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, from + 999);
+      if (convErr) return apiError(convErr.message, 500);
+      const rows = (page as Conv[]) || [];
+      convs.push(...rows);
+      if (rows.length < 1000) break;
+    }
 
     const byCanon = new Map<string, Conv>();
     for (const c of convs) {
@@ -107,6 +116,35 @@ export async function POST(req: NextRequest, { params }: Params) {
       // opcional
     }
 
+    // Modo separado: apaga conversas @lid SEM nenhuma mensagem e sem negócio/campanha ligados.
+    if (delete_empty) {
+      const lidIds = lidConvs.map((c) => c.id);
+      const empties: string[] = [];
+      for (let i = 0; i < lidIds.length; i += 200) {
+        const chunk = lidIds.slice(i, i + 200);
+        const [{ data: withMsg }, { data: withDeal }, { data: withRec }] = await Promise.all([
+          supabase.from("whatsapp_messages").select("conversation_id").in("conversation_id", chunk),
+          supabase.from("funnel_deals").select("conversation_id").in("conversation_id", chunk),
+          supabase.from("campaign_recipients").select("conversation_id").in("conversation_id", chunk),
+        ]);
+        const used = new Set<string>(
+          [...((withMsg as { conversation_id: string }[]) || []),
+           ...((withDeal as { conversation_id: string }[]) || []),
+           ...((withRec as { conversation_id: string }[]) || [])].map((r) => r.conversation_id),
+        );
+        empties.push(...chunk.filter((id) => !used.has(id)));
+      }
+      let deleted = 0;
+      if (apply) {
+        for (let i = 0; i < empties.length; i += 200) {
+          const chunk = empties.slice(i, i + 200);
+          const { error } = await (supabase.from("whatsapp_conversations") as AnyTable).delete().in("id", chunk);
+          if (!error) deleted += chunk.length;
+        }
+      }
+      return apiSuccess({ apply, mode: "delete_empty", lid_conversations_total: lidConvs.length, empty_found: empties.length, deleted });
+    }
+
     const keyFieldsSeen = new Set<string>();
     const report: Array<Record<string, unknown>> = [];
     let resolvedPhone = 0, resolvedName = 0, merged = 0, renamed = 0, unresolved = 0;
@@ -137,23 +175,35 @@ export async function POST(req: NextRequest, { params }: Params) {
       const target = canon ? byCanon.get(canon) : undefined;
       const action = !phone ? "sem_telefone" : target ? "juntar" : "trocar_numero";
       if (!phone) unresolved++;
-      if (report.length < 8) report.push({ conv: lc.id, lid: lidDigits, phone, name, action });
+      report.push({ conv: lc.id, lid: lidDigits, phone, name, action, target: target?.id ?? null });
 
       if (!apply) continue;
 
       if (target) {
         // Junta na conversa existente (com o telefone real).
-        const { data: tMsgs } = await supabase
+        // Remove da conversa LID as mensagens que já existem no destino (mesmo external_id),
+        // consultando a partir da conversa LID (pequena) para não bater no limite de 1000.
+        const { data: lMsgs } = await supabase
           .from("whatsapp_messages")
           .select("external_id")
-          .eq("conversation_id", target.id)
-          .not("external_id", "is", null);
-        const existing = new Set(((tMsgs as { external_id: string }[]) || []).map((r) => r.external_id));
-        if (existing.size > 0) {
-          await (supabase.from("whatsapp_messages") as AnyTable)
-            .delete()
-            .eq("conversation_id", lc.id)
-            .in("external_id", Array.from(existing));
+          .eq("conversation_id", lc.id)
+          .not("external_id", "is", null)
+          .range(0, 4999);
+        const lIds = ((lMsgs as { external_id: string }[]) || []).map((r) => r.external_id);
+        for (let i = 0; i < lIds.length; i += 200) {
+          const chunk = lIds.slice(i, i + 200);
+          const { data: dup } = await supabase
+            .from("whatsapp_messages")
+            .select("external_id")
+            .eq("conversation_id", target.id)
+            .in("external_id", chunk);
+          const dupIds = ((dup as { external_id: string }[]) || []).map((r) => r.external_id);
+          if (dupIds.length > 0) {
+            await (supabase.from("whatsapp_messages") as AnyTable)
+              .delete()
+              .eq("conversation_id", lc.id)
+              .in("external_id", dupIds);
+          }
         }
         await (supabase.from("whatsapp_messages") as AnyTable).update({ conversation_id: target.id }).eq("conversation_id", lc.id);
         await (supabase.from("funnel_deals") as AnyTable).update({ conversation_id: target.id }).eq("conversation_id", lc.id);
