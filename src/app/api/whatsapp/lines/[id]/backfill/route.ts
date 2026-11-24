@@ -146,7 +146,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         rows.push({
           conversation_id: conv.id,
           direction: fromMe ? "outbound" : "inbound",
-          sender: fromMe ? "ai" : "guest",
+          sender: fromMe ? "agent" : "guest",
           text: decoded.text,
           message_type: decoded.messageType,
           media_mime_type: decoded.mediaMimeType,

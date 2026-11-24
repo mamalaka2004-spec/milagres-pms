@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { rehostInboundMediaDetailed } from "@/lib/whatsapp/media";
+import { rehostInboundMediaDetailed, transcribeAudio } from "@/lib/whatsapp/media";
 import {
   apiSuccess,
   apiError,
@@ -15,10 +15,14 @@ export const maxDuration = 60;
 
 const bodySchema = z
   .object({
-    since_days: z.number().int().min(1).max(30).default(7),
+    since_days: z.number().int().min(1).max(60).default(7),
     limit: z.number().int().min(1).max(30).default(20),
+    conversation_id: z.string().uuid().optional(),
+    // inclui mídias importadas do histórico (sem arquivo: media_url vazio)
+    include_missing: z.boolean().default(false),
+    transcribe: z.boolean().default(false),
   })
-  .default({ since_days: 7, limit: 20 });
+  .default({ since_days: 7, limit: 20, include_missing: false, transcribe: false });
 
 /**
  * Reprocessa mídias recebidas que ficaram com o link criptografado do WhatsApp
@@ -30,34 +34,38 @@ export async function POST(req: NextRequest) {
     const user = await requireRole(["admin", "manager"]);
     const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return apiError("Validation failed", 400, parsed.error.flatten());
-    const { since_days, limit } = parsed.data;
+    const { since_days, limit, conversation_id, include_missing, transcribe } = parsed.data;
 
     const supabase = createAdminClient();
     const since = new Date(Date.now() - since_days * 86_400_000).toISOString();
-    const { data: rows, error } = await supabase
+    let q = supabase
       .from("whatsapp_messages")
       .select(
-        "id, conversation_id, external_id, metadata, whatsapp_conversations!inner(company_id, whatsapp_lines!inner(provider, provider_instance, provider_token))",
+        "id, conversation_id, external_id, message_type, metadata, whatsapp_conversations!inner(company_id, whatsapp_lines!inner(provider, provider_instance, provider_token))",
       )
-      .like("media_url", "%mmg.whatsapp.net%")
+      .in("message_type", ["image", "audio", "video", "document"])
+      .or(include_missing ? "media_url.like.*mmg.whatsapp.net*,media_url.is.null" : "media_url.like.*mmg.whatsapp.net*")
       .not("external_id", "is", null)
       .gte("created_at", since)
       .eq("whatsapp_conversations.company_id", user.company_id)
       .order("created_at", { ascending: false })
       .limit(limit);
+    if (conversation_id) q = q.eq("conversation_id", conversation_id);
+    const { data: rows, error } = await q;
     if (error) return apiError(error.message, 500);
 
     type Row = {
       id: string;
       conversation_id: string;
       external_id: string;
+      message_type: string;
       metadata: Record<string, unknown> | null;
       whatsapp_conversations: {
         whatsapp_lines: { provider: string; provider_instance: string | null; provider_token: string | null };
       };
     };
 
-    const results: { id: string; ok: boolean; error?: string }[] = [];
+    const results: { id: string; ok: boolean; error?: string; transcript?: string | null }[] = [];
     for (const r of (rows ?? []) as unknown as Row[]) {
       const line = r.whatsapp_conversations.whatsapp_lines;
       if (line.provider !== "evolution" || !line.provider_instance) continue;
@@ -73,12 +81,17 @@ export async function POST(req: NextRequest) {
           .eq("id", r.id);
         results.push({ id: r.id, ok: false, error: out.error });
       } else {
-        const meta = { ...(r.metadata ?? {}) };
+        const meta: Record<string, unknown> = { ...(r.metadata ?? {}) };
         delete meta.media_rehost_error;
+        let transcript: string | null = null;
+        if (transcribe && r.message_type === "audio" && out.bytes) {
+          transcript = await transcribeAudio(out.bytes, out.mime);
+          if (transcript) meta.transcript = transcript;
+        }
         await (supabase.from("whatsapp_messages") as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           .update({ media_url: out.url, media_mime_type: out.mime, metadata: meta })
           .eq("id", r.id);
-        results.push({ id: r.id, ok: true });
+        results.push({ id: r.id, ok: true, transcript });
       }
     }
 

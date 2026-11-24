@@ -118,6 +118,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Modo separado: apaga conversas @lid SEM nenhuma mensagem e sem negócio/campanha ligados.
     if (delete_empty) {
+      // Desativado: a contagem por .in() batia no limite de 1000 linhas do PostgREST
+      // e marcava como "vazias" conversas que têm mensagens. Limpeza de vazias: via SQL.
+      return apiError("delete_empty desativado", 400);
+    }
+    if (false as boolean) {
       const lidIds = lidConvs.map((c) => c.id);
       const empties: string[] = [];
       for (let i = 0; i < lidIds.length; i += 200) {
