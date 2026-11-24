@@ -8,7 +8,7 @@ import { isOutsideBusinessHours } from "@/lib/whatsapp/auth";
 import { handleCampaignInbound } from "@/lib/campaigns/inbound";
 import { maybePauseOnHumanReply } from "@/lib/whatsapp/human-takeover";
 import { createNotification } from "@/lib/notifications/create";
-import { rehostInboundMedia } from "@/lib/whatsapp/media";
+import { rehostInboundMediaDetailed } from "@/lib/whatsapp/media";
 import { inboundWebhookSchema } from "@/lib/validations/whatsapp";
 import {
   apiSuccess,
@@ -81,15 +81,18 @@ export async function POST(request: NextRequest) {
     let mediaUrl = payload.media_url ?? null;
     let mediaMime = payload.media_mime_type ?? null;
     let fileName = payload.file_name ?? null;
+    let mediaRehostError: string | null = null;
     const isMedia = ["image", "audio", "video", "document"].includes(payload.message_type);
     if (isMedia && payload.external_id && line.provider === "evolution" && line.provider_instance) {
-      const rehosted = await rehostInboundMedia({
+      const rehosted = await rehostInboundMediaDetailed({
         externalId: payload.external_id,
         conversationId: conv.id,
         instance: line.provider_instance,
         apiKey: line.provider_token || undefined,
       });
-      if (rehosted) {
+      if ("error" in rehosted) {
+        mediaRehostError = rehosted.error;
+      } else {
         mediaUrl = rehosted.url;
         mediaMime = rehosted.mime || mediaMime;
         fileName = rehosted.fileName || fileName;
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest) {
       externalId: payload.external_id ?? null,
       status: fromMe ? "sent" : undefined,
       bumpUnread: !fromMe,
+      metadata: mediaRehostError ? { media_rehost_error: mediaRehostError } : undefined,
     });
 
     // Takeover humano: alguém do time respondeu direto pelo WhatsApp → pausa a
