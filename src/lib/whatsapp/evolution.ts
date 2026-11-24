@@ -307,3 +307,42 @@ export async function sendMedia(
   const id = (raw as { key?: { id?: string } })?.key?.id;
   return { external_id: id, raw };
 }
+
+/* ─────────────────────── @lid → telefone real ─────────────────────── */
+
+/** Raw contacts (all fields Evolution returns), used to map @lid → phone. */
+export async function findContactsRaw(instance?: string): Promise<Array<Record<string, unknown>>> {
+  const cfg = getConfig(instance);
+  const res = await fetch(`${cfg.baseUrl}/chat/findContacts/${cfg.instance}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
+    body: JSON.stringify({}),
+  });
+  const raw = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`Evolution findContacts failed: HTTP ${res.status}`);
+  const arr = Array.isArray(raw) ? raw : (raw as { contacts?: unknown[] })?.contacts || [];
+  return arr as Array<Record<string, unknown>>;
+}
+
+const PN_SUFFIX = /@s\.whatsapp\.net$/i;
+
+/**
+ * Real phone JID for a message key. Newer WhatsApp/Baileys address many contacts by a
+ * privacy "@lid" id; Evolution then exposes the phone in an alternate field
+ * (remoteJidAlt / senderPn / participantPn / participantAlt), depending on version.
+ * Returns E.164 ("+55...") or null when only the LID is known.
+ */
+export function phoneFromKey(key: Record<string, unknown> | null | undefined): string | null {
+  if (!key) return null;
+  const candidates = [key.remoteJid, key.remoteJidAlt, key.senderPn, key.participantPn, key.participantAlt];
+  for (const c of candidates) {
+    if (typeof c === "string" && PN_SUFFIX.test(c)) return jidToPhoneE164(c);
+  }
+  return null;
+}
+
+export function isLidJid(jid: string | null | undefined): boolean {
+  if (!jid) return false;
+  if (/@lid$/i.test(jid)) return true;
+  return jid.replace(/\D/g, "").length >= 14;
+}
