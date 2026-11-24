@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBase64FromMediaMessage } from "./evolution";
 import { isR2Enabled, r2Upload } from "@/lib/storage/r2";
+import { toFile } from "openai";
+import { getOpenAI } from "@/lib/ai/client";
 
 export const CHAT_MEDIA_BUCKET = "whatsapp-media";
 
@@ -79,7 +81,7 @@ export async function rehostInboundMediaDetailed(opts: {
   conversationId: string;
   instance?: string;
   apiKey?: string;
-}): Promise<{ url: string; mime: string; fileName: string | null } | { error: string }> {
+}): Promise<{ url: string; mime: string; fileName: string | null; bytes?: Buffer } | { error: string }> {
   try {
     let media: Awaited<ReturnType<typeof getBase64FromMediaMessage>> | null = null;
     let lastErr = "";
@@ -108,10 +110,28 @@ export async function rehostInboundMediaDetailed(opts: {
       console.error("[chat-media] upload falhou:", path, stored.error);
       return { error: `storage: ${stored.error}`.slice(0, 300) };
     }
-    return { url: stored.url, mime, fileName: media.fileName };
+    return { url: stored.url, mime, fileName: media.fileName, bytes };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[chat-media] rehost falhou:", opts.externalId, msg);
     return { error: msg.slice(0, 300) };
+  }
+}
+
+/** Transcreve um áudio (pt-BR) com a OpenAI. Retorna null se não der. */
+export async function transcribeAudio(bytes: Buffer, mime: string): Promise<string | null> {
+  try {
+    const ext = extForMime(mime);
+    const file = await toFile(bytes, `audio.${ext}`, { type: mime });
+    const r = await getOpenAI().audio.transcriptions.create({
+      file,
+      model: "gpt-4o-mini-transcribe",
+      language: "pt",
+    });
+    const text = (r as { text?: string }).text?.trim();
+    return text || null;
+  } catch (e) {
+    console.error("[chat-media] transcrição falhou:", e instanceof Error ? e.message : e);
+    return null;
   }
 }
