@@ -33,7 +33,8 @@ export async function storeChatMedia(
       const url = await r2Upload(path, bytes, { contentType: opts.contentType });
       return { url };
     } catch (e) {
-      return { error: e instanceof Error ? e.message : "R2 upload failed" };
+      // Não perde a mídia: registra e cai para o Supabase Storage.
+      console.error("[chat-media] R2 upload falhou, usando Supabase:", path, e instanceof Error ? e.message : e);
     }
   }
   const supabase = createAdminClient();
@@ -62,10 +63,40 @@ export async function rehostInboundMedia(opts: {
   instance?: string;
   apiKey?: string;
 }): Promise<{ url: string; mime: string; fileName: string | null } | null> {
+  const r = await rehostInboundMediaDetailed(opts);
+  return "error" in r ? null : r;
+}
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/**
+ * Same as rehostInboundMedia, but returns the failure reason so the caller can record
+ * it. Retries the Evolution download (the media is sometimes not ready yet when the
+ * webhook fires).
+ */
+export async function rehostInboundMediaDetailed(opts: {
+  externalId: string;
+  conversationId: string;
+  instance?: string;
+  apiKey?: string;
+}): Promise<{ url: string; mime: string; fileName: string | null } | { error: string }> {
   try {
-    const media = await getBase64FromMediaMessage(opts.externalId, opts.instance, opts.apiKey);
+    let media: Awaited<ReturnType<typeof getBase64FromMediaMessage>> | null = null;
+    let lastErr = "";
+    for (let attempt = 1; attempt <= 3 && !media; attempt++) {
+      try {
+        media = await getBase64FromMediaMessage(opts.externalId, opts.instance, opts.apiKey);
+      } catch (e) {
+        lastErr = e instanceof Error ? e.message : String(e);
+        if (attempt < 3) await sleep(attempt * 1500);
+      }
+    }
+    if (!media) {
+      console.error("[chat-media] Evolution getBase64 falhou:", opts.externalId, lastErr);
+      return { error: `evolution: ${lastErr}`.slice(0, 300) };
+    }
     const bytes = Buffer.from(media.base64, "base64");
-    if (bytes.length === 0) return null;
+    if (bytes.length === 0) return { error: "evolution: mídia vazia" };
     // Strip codec params (e.g. "audio/ogg; codecs=opus") — storage matches the base type.
     const mime = (media.mimetype.split(";")[0] || "application/octet-stream").trim();
     const ext = extForMime(mime);
@@ -73,9 +104,14 @@ export async function rehostInboundMedia(opts: {
     const path = `inbound/${opts.conversationId}/${safeId}.${ext}`;
 
     const stored = await storeChatMedia(path, bytes, { contentType: mime, upsert: true });
-    if ("error" in stored) return null;
+    if ("error" in stored) {
+      console.error("[chat-media] upload falhou:", path, stored.error);
+      return { error: `storage: ${stored.error}`.slice(0, 300) };
+    }
     return { url: stored.url, mime, fileName: media.fileName };
-  } catch {
-    return null;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[chat-media] rehost falhou:", opts.externalId, msg);
+    return { error: msg.slice(0, 300) };
   }
 }
