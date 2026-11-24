@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { storeChatMedia } from "@/lib/whatsapp/media";
 import { requireFullAccess } from "@/lib/auth";
 import {
   apiSuccess,
@@ -37,7 +37,7 @@ function extFor(name: string, mime: string): string {
 
 /**
  * Chat media upload — for the WhatsApp composer (image / audio / video / document).
- * Stores in the public bucket so Evolution can fetch the URL when sending. Returns
+ * Stores in public media storage (R2 or Supabase) so Evolution can fetch the URL when sending. Returns
  * { url, mime, name } which the client then posts to the messages endpoint as media_url.
  */
 export async function POST(request: NextRequest) {
@@ -63,14 +63,10 @@ export async function POST(request: NextRequest) {
     const ext = extFor(file.name || "", mime);
     const path = `outbound/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
-    const supabase = createAdminClient();
-    const { error: uploadError } = await supabase.storage
-      .from("whatsapp-media")
-      .upload(path, bytes, { contentType: mime, cacheControl: "3600", upsert: false });
-    if (uploadError) return apiError(`Falha no upload: ${uploadError.message}`, 500);
+    const stored = await storeChatMedia(path, bytes, { contentType: mime });
+    if ("error" in stored) return apiError(`Falha no upload: ${stored.error}`, 500);
 
-    const { data: { publicUrl } } = supabase.storage.from("whatsapp-media").getPublicUrl(path);
-    return apiSuccess({ url: publicUrl, mime, name: file.name || `arquivo.${ext}` });
+    return apiSuccess({ url: stored.url, mime, name: file.name || `arquivo.${ext}` });
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") return apiUnauthorized();
     if (error instanceof Error && error.message === "Forbidden") return apiForbidden();

@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "*.r2.dev",
+      },
+      {
+        protocol: "https",
         hostname: "a0.muscache.com",
         pathname: "/im/pictures/**",
       },
